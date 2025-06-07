@@ -56,9 +56,10 @@ namespace duckx
 
     void Document::load()
     {
-        if (!m_file) return;
+        if (!m_file)
+            return;
 
-        std::string xml_content = m_file->read_entry("word/document.xml");
+        const std::string xml_content = m_file->read_entry("word/document.xml");
         if (!m_document_xml.load_string(xml_content.c_str()))
         {
              throw std::runtime_error("Failed to parse word/document.xml");
@@ -75,6 +76,26 @@ namespace duckx
         }
 
         m_body = Body(bodyNode);
+
+        if (m_file->has_entry("word/_rels/document.xml.rels"))
+        {
+            m_rels_xml.load_string(m_file->read_entry("word/_rels/document.xml.rels").c_str());
+        }
+        else
+        {
+            m_rels_xml.load_string(DocxFile::get_document_rels_xml().c_str());
+        }
+
+        if (m_file->has_entry("[Content_Types].xml"))
+        {
+            m_content_types_xml.load_string(m_file->read_entry("[Content_Types].xml").c_str());
+        }
+        else
+        {
+            throw std::runtime_error("[Content_Types].xml is missing.");
+        }
+
+        m_media_manager = std::make_unique<MediaManager>(m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
     }
 
     void Document::save() const
@@ -86,6 +107,14 @@ namespace duckx
 
         m_file->write_entry("word/document.xml", writer.result);
 
+        xml_string_writer rels_writer;
+        m_rels_xml.print(rels_writer, "", pugi::format_raw);
+        m_file->write_entry("word/_rels/document.xml.rels", rels_writer.result);
+
+        xml_string_writer content_types_writer;
+        m_content_types_xml.print(content_types_writer, "", pugi::format_raw);
+        m_file->write_entry("[Content_Types].xml", content_types_writer.result);
+
         m_file->save();
     }
 
@@ -93,4 +122,9 @@ namespace duckx
     {
         return m_body;
     }
-}
+
+    MediaManager& Document::media() const
+    {
+        return *m_media_manager;
+    }
+} // namespace duckx

@@ -7,4 +7,5 @@
 #pragma once
 
 #include "Document.hpp"
+#include "Image.hpp"
 

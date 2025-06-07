@@ -34,7 +34,7 @@ namespace duckx
         std::string read_entry(const std::string& entry_name);
         void write_entry(const std::string& entry_name, const std::string& content);
 
-    private:
+    public:
         static void create_basic_structure(zip_t* zip);
         static std::string get_content_types_xml();
         static std::string get_app_xml();
@@ -42,6 +42,9 @@ namespace duckx
         static std::string get_rels_xml();
         static std::string get_document_rels_xml();
         static std::string get_empty_document_xml();
+        static std::string get_styles_xml();
+        static std::string get_settings_xml();
+        static std::string get_font_table_xml();
 
         std::string m_path;
         zip_t* m_zip_handle = nullptr;

@@ -20,16 +20,19 @@ set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/BaseElement.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/DocxFile.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/Body.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/MediaManager.hpp"
 
 )
 
 # Project source files
 set(DUCKX_PROJECT_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/duckx.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Image.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/Document.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/BaseElement.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/DocxFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/Body.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/MediaManager.cpp"
 )
 
 # Third-party header files
@@ -37,6 +40,7 @@ set(DUCKX_THIRD_PARTY_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugiconfig.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zip/zip.h"
+		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb/stb_image.h"
 )
 
 # Third-party source files
@@ -70,6 +74,7 @@ add_library(duckx::duckx ALIAS duckx)
 # Include directories needed to compile the library itself (PRIVATE)
 target_include_directories(duckx PRIVATE
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zip"     # For zip.h
+		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/stb"     # For stb_image.h
 )
 
 # Public include directories for consumers of the library
@@ -98,19 +103,21 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR) # Keep thi
 
 # Sample executables
 if (BUILD_SAMPLES)
-	set(SAMPLE1_SOURCES samples/sample1.cpp)
-	add_executable(duckx_sample1 ${SAMPLE1_SOURCES})
-	target_link_libraries(duckx_sample1 PRIVATE duckx::duckx)
-	# Optional: Organize sample sources in VS
-	# source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/samples" PREFIX "Sample Sources" FILES ${SAMPLE1_SOURCES} PARENT_TARGET duckx_sample1)
+	set(DUCKX_SAMPLES sample1 sample2 sample3)
 
+	foreach(SAMPLE_NAME IN LISTS DUCKX_SAMPLES)
+		add_executable(
+				duckx_${SAMPLE_NAME}
+				"samples/${SAMPLE_NAME}.cpp"
+		)
+		target_link_libraries(duckx_${SAMPLE_NAME} PRIVATE duckx::duckx)
+	endforeach()
 
-	set(SAMPLE2_SOURCES samples/sample2.cpp)
-	add_executable(duckx_sample2 ${SAMPLE2_SOURCES})
-	target_link_libraries(duckx_sample2 PRIVATE duckx::duckx)
-
+	# 复制文件的命令与循环无关，只需执行一次
 	file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/samples/my_test.docx"
-			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}") # CMAKE_CURRENT_BINARY_DIR is context-dependent, CMAKE_BINARY_DIR is project top-level binary dir
+			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+	file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
+			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 # Standard installation setup

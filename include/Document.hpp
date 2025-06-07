@@ -8,8 +8,10 @@
  */
 
 #pragma once
-#include "Body.hpp"
 #include <memory>
+#include "Body.hpp"
+
+#include "MediaManager.hpp"
 
 namespace duckx
 {
@@ -27,6 +29,7 @@ namespace duckx
 
         void save() const;
         Body& body();
+        MediaManager& media() const;
 
     private:
         explicit Document(std::unique_ptr<DocxFile> file);
@@ -34,6 +37,10 @@ namespace duckx
 
         std::unique_ptr<DocxFile> m_file;
         pugi::xml_document m_document_xml;
+        pugi::xml_document m_rels_xml;
+        pugi::xml_document m_content_types_xml;
+
         Body m_body;
+        std::unique_ptr<MediaManager> m_media_manager;
     };
 }

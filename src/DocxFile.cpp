@@ -6,11 +6,12 @@
  * @date: 2025.06.07
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
  */
-#include <iostream>
-
-
-#include <stdexcept>
 #include "DocxFile.hpp"
+
+#include <iostream>
+#include <stdexcept>
+#include <sstream>
+
 #include "zip.h"
 
 namespace duckx
@@ -190,29 +191,56 @@ namespace duckx
         zip_entry_write(zip, core.c_str(), core.length());
         zip_entry_close(zip);
 
-        // 5. word/_rels/document.xml.rels
-        zip_entry_open(zip, "word/_rels/document.xml.rels");
-        const std::string doc_rels = get_document_rels_xml();
-        zip_entry_write(zip, doc_rels.c_str(), doc_rels.length());
-        zip_entry_close(zip);
-
-        // 6. word/document.xml
+        // 步骤 5: word/document.xml (先创建主文档)
         zip_entry_open(zip, "word/document.xml");
         const std::string document_xml = get_empty_document_xml();
         zip_entry_write(zip, document_xml.c_str(), document_xml.length());
+        zip_entry_close(zip);
+
+        // 步骤 6: word/styles.xml
+        zip_entry_open(zip, "word/styles.xml");
+        const std::string styles = get_styles_xml(); // 调用新函数
+        zip_entry_write(zip, styles.c_str(), styles.length());
+        zip_entry_close(zip);
+
+        // 步骤 7: word/settings.xml
+        zip_entry_open(zip, "word/settings.xml");
+        const std::string settings = get_settings_xml(); // 调用新函数
+        zip_entry_write(zip, settings.c_str(), settings.length());
+        zip_entry_close(zip);
+
+        // 步骤 8: word/fontTable.xml
+        zip_entry_open(zip, "word/fontTable.xml");
+        const std::string font_table = get_font_table_xml(); // 调用新函数
+        zip_entry_write(zip, font_table.c_str(), font_table.length());
+        zip_entry_close(zip);
+
+        // 步骤 9 (原步骤5): word/_rels/document.xml.rels
+        // 现在它可以安全地引用上面创建的文件了
+        zip_entry_open(zip, "word/_rels/document.xml.rels");
+        const std::string doc_rels = get_document_rels_xml(); // 确保这个函数现在是完整的
+        zip_entry_write(zip, doc_rels.c_str(), doc_rels.length());
         zip_entry_close(zip);
     }
 
     std::string DocxFile::get_content_types_xml()
     {
-        return R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-    <Default Extension="xml" ContentType="application/xml"/>
-    <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-</Types>)";
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+               "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+               "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+               // 如果要支持图片，必须有下面这几行
+               "<Default Extension=\"png\" ContentType=\"image/png\"/>"
+               "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/>"
+               "<Default Extension=\"jpeg\" ContentType=\"image/jpeg\"/>"
+               // --- 以下是针对 Word 核心文件的 Override ---
+               "<Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
+               "<Override PartName=\"/word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
+               "<Override PartName=\"/word/settings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
+               "<Override PartName=\"/word/fontTable.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml\"/>"
+               "<Override PartName=\"/docProps/core.xml\" ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
+               "<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
+               "</Types>";
     }
 
     std::string DocxFile::get_rels_xml()
@@ -240,49 +268,92 @@ namespace duckx
 
     std::string DocxFile::get_core_xml()
     {
-        // 获取当前时间
         const auto now = std::time(nullptr);
         tm tm_utc{};
 
-#if defined(_MSC_VER) // 通常 gmtime_s 在MSVC下可用
-        const errno_t err = gmtime_s(&tm_utc, &now);
-        if (err == 0)
-        {
-        }
-        else
-        {
-            std::cerr << "Error: gmtime_s failed with code " << err << std::endl;
-        }
+#if defined(_MSC_VER)
+        // Microsoft Visual C++ 使用线程安全的 gmtime_s
+        gmtime_s(&tm_utc, &now);
+#elif defined(__unix__) || defined(__APPLE__) || defined(__linux__)
+        // GCC/Clang on Unix-like systems (Linux, macOS) 使用线程安全的 gmtime_r
+        gmtime_r(&now, &tm_utc);
 #else
-        std::cerr << "gmtime_s is not available or not checked for this compiler. Consider gmtime_r or C++20 <chrono>."
-                  << std::endl;
+        // 作为备选方案，使用非线程安全的 gmtime，这在单线程环境中是安全的。
+        // 在多线程环境中，这可能会有问题，但比无法编译要好。
+        tm* temp_tm = std::gmtime(&now);
+        if (temp_tm != nullptr) {
+            tm_utc = *temp_tm;
+        }
 #endif
+
         char datetime[32];
         std::strftime(datetime, sizeof(datetime), "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
 
-        return R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <dc:creator>DuckX</dc:creator>
-    <dcterms:created xsi:type="dcterms:W3CDTF">)" +
-            std::string(datetime) + R"(</dcterms:created>
-    <dcterms:modified xsi:type="dcterms:W3CDTF">)" +
-            std::string(datetime) + R"(</dcterms:modified>
-</cp:coreProperties>)";
+        std::ostringstream oss;
+        oss << R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>)"
+            << R"(<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">)"
+            << "<dc:creator>DuckX</dc:creator>"
+            << "<dcterms:created xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:created>"
+            << "<dcterms:modified xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:modified>"
+            << "</cp:coreProperties>";
+
+        return oss.str();
     }
 
     std::string DocxFile::get_document_rels_xml()
     {
-        return R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-</Relationships>)";
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+               "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
+               "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" Target=\"settings.xml\"/>"
+               "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" Target=\"fontTable.xml\"/>"
+               "</Relationships>";
     }
 
     std::string DocxFile::get_empty_document_xml()
     {
-        return R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-    <w:body>
-    </w:body>
-</w:document>)";
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+           "<w:document "
+           "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
+           "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" "
+           "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
+           "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
+           "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">"
+           "  <w:body>"
+           "  </w:body>"
+           "</w:document>";
     }
-}
+
+    std::string DocxFile::get_styles_xml()
+    {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+               "  <w:docDefaults>"
+               "    <w:rPrDefault><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz "
+               "w:val=\"24\"/></w:rPr></w:rPrDefault>"
+               "    <w:pPrDefault><w:pPr><w:spacing w:after=\"200\" w:line=\"276\" "
+               "w:lineRule=\"auto\"/></w:pPr></w:pPrDefault>"
+               "  </w:docDefaults>"
+               "  <w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\">"
+               "    <w:name w:val=\"Normal\"/>"
+               "  </w:style>"
+               "</w:styles>";
+    }
+    std::string DocxFile::get_settings_xml()
+    {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+               "  <w:zoom w:percent=\"100\"/>"
+               "</w:settings>";
+    }
+
+    std::string DocxFile::get_font_table_xml()
+    {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<w:fonts xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+               "  <w:font w:name=\"Times New Roman\">"
+               "    <w:panose1 w:val=\"02020603050405020304\"/>"
+               "  </w:font>"
+               "</w:fonts>";
+    }
+} // namespace duckx
