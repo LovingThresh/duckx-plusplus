@@ -1,6 +1,6 @@
 // main.cpp - Create, save, then open and edit
-#include "duckx.hpp"
 #include <iostream>
+#include "duckx.hpp"
 
 int main() {
     try {
