@@ -3896,7 +3896,7 @@ namespace detail {
     void ContextScopeBase::destroy() {
         if(std::uncaught_exception()) {
             std::ostringstream s;
-            this->stringify(&s);
+            stringify(&s);
             g_cs->stringifiedContexts.push_back(s.str().c_str());
         }
         g_infoContexts.pop_back();

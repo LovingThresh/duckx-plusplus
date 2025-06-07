@@ -1,72 +1,55 @@
-// main.cpp - Create, save, then open and edit
 #include <iostream>
 #include "duckx.hpp"
 
-int main() {
-    try {
-        // Step 1: Create empty document and save it
-        std::cout << "Step 1: Creating empty document..." << std::endl;
-        duckx::Document doc;
-        if (doc.create("test.docx")) {
-            std::cout << "Empty document created successfully" << std::endl;
-            doc.save();
-            std::cout << "Empty document saved" << std::endl;
-        } else {
-            std::cout << "Failed to create document" << std::endl;
-            return 1;
-        }
+int main()
+{
+    try
+    {
+        std::cout << "Step 1: Creating new document..." << std::endl;
 
-        // Step 2: Open the document we just created and add content
-        std::cout << "\nStep 2: Opening the document to add content..." << std::endl;
-        duckx::Document doc2("test.docx");
-        doc2.open();
+        auto doc = duckx::Document::create("test.docx");
+        std::cout << "Document object created successfully." << std::endl;
 
-        if (doc2.is_open()) {
-            std::cout << "Document opened successfully" << std::endl;
+        doc.save();
+        std::cout << "Empty document 'test.docx' saved." << std::endl;
 
-            // Use your exact working pattern
-            duckx::Paragraph p = doc2.paragraphs().insert_paragraph_after("You can insert text in ");
-            p.add_run("italic, ", duckx::italic);
-            p.add_run("bold, ", duckx::bold);
-            p.add_run("underline, ", duckx::underline);
-            p.add_run("superscript", duckx::superscript);
-            p.add_run(" or ");
-            p.add_run("subscript, ", duckx::subscript);
-            p.add_run("small caps, ", duckx::smallcaps);
-            p.add_run("and shadows, ", duckx::shadow);
-            p.add_run("and of course ");
-            p.add_run("combine them.", duckx::bold | duckx::italic | duckx::underline | duckx::smallcaps);
+        std::cout << "\nStep 2: Re-opening the document to add content..." << std::endl;
 
-            doc2.save();
-            std::cout << "Content added and document saved successfully!" << std::endl;
-        } else {
-            std::cout << "Failed to open the created document" << std::endl;
-            return 1;
-        }
+        auto doc2 = duckx::Document::open("test.docx");
+        std::cout << "Document 'test.docx' opened successfully." << std::endl;
 
-        // Step 3: Test creating another document with different approach
-        std::cout << "\nStep 3: Testing alternative approach..." << std::endl;
-        duckx::Document doc3;
-        if (doc3.create("test2.docx")) {
-            // Try to add content immediately after creation
-            std::cout << "Trying to add content immediately after creation..." << std::endl;
+        auto p = doc2.body().add_paragraph("You can insert text in ");
 
-            // Check if we can get paragraphs
-            auto& para = doc3.paragraphs();
-            if (para.has_next()) {
-                std::cout << "Found existing paragraph, trying to add content..." << std::endl;
-                // Try direct add_run on the first paragraph
-                para.add_run("Direct text addition test", duckx::bold);
-                doc3.save();
-                std::cout << "Direct method test saved" << std::endl;
-            } else {
-                std::cout << "No paragraphs found in newly created document" << std::endl;
-            }
-        }
+        p.add_run("italic, ", duckx::italic);
+        p.add_run("bold, ", duckx::bold);
+        p.add_run("underline, ", duckx::underline);
+        p.add_run("superscript", duckx::superscript);
+        p.add_run(" or ");
+        p.add_run("subscript, ", duckx::subscript);
+        p.add_run("small caps, ", duckx::smallcaps);
+        p.add_run("and shadows, ", duckx::shadow);
+        p.add_run("and of course ");
+        p.add_run("combine them.", duckx::bold | duckx::italic | duckx::underline | duckx::smallcaps);
 
-        std::cout << "\nAll tests completed!" << std::endl;
+        doc2.save();
+        std::cout << "Content added and document saved successfully!" << std::endl;
 
-    } catch (const std::exception& e) {
+        std::cout << "\nStep 3: Testing immediate modification after creation..." << std::endl;
+
+        auto doc3 = duckx::Document::create("test2.docx");
+        std::cout << "Document 'test2.docx' created." << std::endl;
+
+        doc3.body().add_paragraph("This content was added immediately after creation.", duckx::bold);
+        std::cout << "Content added directly to new document." << std::endl;
+
+        doc3.save();
+        std::cout << "Document 'test2.docx' saved." << std::endl;
+
+
+        std::cout << "\nAll tests completed successfully!" << std::endl;
+    }
+    catch (const std::exception& e)
+    {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }

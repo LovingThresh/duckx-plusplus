@@ -2,14 +2,27 @@
 #include <iostream>
 using namespace std;
 
-int main() {
-    duckx::Document doc("my_test.docx");
-    doc.open();
+int main()
+{
+    try
+    {
+        auto doc = duckx::Document::open("my_test.docx");
 
-    for (auto p = doc.paragraphs(); p.has_next(); p.next()) {
-        for (auto r = p.runs(); r.has_next(); r.next()) {
-            cout << r.get_text() << endl;
+        std::cout << "--- Document Content (using for-each loop) ---" << std::endl;
+
+        for (auto& p : doc.body().paragraphs())
+        {
+            for (auto& r : p.runs())
+            {
+                std::cout << r.get_text();
+            }
+            std::cout << std::endl;
         }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "An error occurred: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;

@@ -4,6 +4,7 @@
  * DuckX is a free library to work wirh docx files.
  */
 #pragma once
+#include <iterator>
 
 namespace pugi
 {
@@ -12,85 +13,92 @@ namespace pugi
 
 namespace duckx
 {
-    template <class T, class P, class C = P>
-    class Iterator
+    template <class T>
+    class ElementIterator
     {
-    private:
-        using ParentType = P;
-        using CurrentType = C;
-        ParentType parent{0};
-        CurrentType current{0};
-        mutable T buffer{};
-
     public:
-        Iterator() = default;
+        using iterator_category = std::input_iterator_tag;
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        using pointer = T*;
+        using reference = T&;
 
-        Iterator(ParentType parent, CurrentType current) : parent(parent), current(current)
+        explicit ElementIterator(T element) : m_current_element(std::move(element)), m_is_end(false)
+        {
+            // 如果初始节点无效，则这是一个 "end" 迭代器
+            if (!m_current_element.getNode())
+            {
+                m_is_end = true;
+            }
+        }
+
+        ElementIterator() : m_is_end(true)
         {
         }
 
-        bool operator!=(const Iterator& other) const
+        reference operator*()
         {
-            return parent != other.parent || current != other.current;
+            return m_current_element;
         }
 
-        bool operator==(const Iterator& other) const
+        pointer operator->()
         {
-            return !this->operator!=(other);
+            return &m_current_element;
         }
 
-        Iterator& operator++()
+        ElementIterator& operator++()
         {
-            this->current = this->current.next_sibling();
+            m_current_element.next();
+            // 如果 next() 使得节点无效，则迭代器到达末尾
+            if (!m_current_element.getNode())
+            {
+                m_is_end = true;
+            }
             return *this;
         }
 
-        auto operator*() const -> T const&
+        friend bool operator==(const ElementIterator& a, const ElementIterator& b)
         {
-            // Only update the buffer when the user wants to accces to the data
-            buffer.set_parent(parent);
-            buffer.set_current(current);
-            return buffer;
-        }
+            if (a.m_is_end && b.m_is_end)
+            {
+                return true;
+            }
+            if (a.m_is_end || b.m_is_end)
+            {
+                return false;
+            }
+            return a.m_current_element.getNode() == b.m_current_element.getNode();
+        };
 
-        auto operator->() const -> T const*
+        friend bool operator!=(const ElementIterator& a, const ElementIterator& b)
         {
-            return &(this->operator*());
-        }
-    };
+            return !(a == b);
+        };
 
-    class IteratorHelper
-    {
     private:
-        using P = pugi::xml_node;
-        template <class T>
-        static auto make_begin(T const& obj) -> Iterator<T, P>
-        {
-            return Iterator<T, P>(obj.m_parentNode, obj.m_currentNode);
-        }
-
-        template <class T>
-        static auto make_end(T const& obj) -> Iterator<T, P>
-        {
-            return Iterator<T, P>(obj.m_parentNode, static_cast<decltype(obj.m_parentNode)>(0));
-        }
-
-        template <class T>
-        friend auto begin(T const&) -> Iterator<T, P>;
-        template <class T>
-        friend auto end(T const&) -> Iterator<T, P>;
+        T m_current_element;
+        bool m_is_end;
     };
 
-    // Entry point
     template <class T>
-    auto begin(T const& obj) -> Iterator<T, pugi::xml_node>
+    class ElementRange
     {
-        return IteratorHelper::make_begin(obj);
-    }
+    public:
+        explicit ElementRange(T element_state) : m_element_state(element_state)
+        {
+        }
 
-    template <class T>
-    auto end(T const& obj) -> Iterator<T, pugi::xml_node>
-    {
-        return IteratorHelper::make_end(obj);
-    }
+        ElementIterator<T> begin()
+        {
+            return ElementIterator<T>(m_element_state);
+        }
+
+        ElementIterator<T> end()
+        {
+            return ElementIterator<T>();
+        }
+
+    private:
+        T m_element_state;
+    };
 } // namespace duckx

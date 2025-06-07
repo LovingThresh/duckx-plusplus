@@ -16,11 +16,20 @@ set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/constants.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/duckxiterator.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/Image.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/Document.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/BaseElement.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/DocxFile.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/Body.hpp"
+
 )
 
 # Project source files
 set(DUCKX_PROJECT_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/duckx.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Document.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/BaseElement.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/DocxFile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/Body.cpp"
 )
 
 # Third-party header files
@@ -34,10 +43,6 @@ set(DUCKX_THIRD_PARTY_HEADERS
 set(DUCKX_THIRD_PARTY_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zip/zip.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp"
-		include/Document.hpp
-		src/Document.cpp
-		include/BaseElement.hpp
-		src/BaseElement.cpp
 )
 
 # Add the library

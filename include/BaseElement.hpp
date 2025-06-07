@@ -12,6 +12,8 @@
 #include <pugixml.hpp>
 #include <string>
 
+#include "duckxiterator.hpp"
+
 namespace duckx
 {
     class DocxElement
@@ -48,8 +50,6 @@ namespace duckx
         std::string get_text() const;
         Run& next();
 
-    private:
-        friend class IteratorHelper;
     };
 
     // Paragraph contains a paragraph
@@ -63,15 +63,13 @@ namespace duckx
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
 
-        Run& runs();
+        ElementRange<Run> runs();
         Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
         Run& add_run(const char*, duckx::formatting_flag = duckx::none);
         Paragraph& insert_paragraph_after(const std::string&, duckx::formatting_flag = duckx::none);
         Paragraph& next();
 
     private:
-        friend class IteratorHelper;
-
         Run m_run;
     };
 
@@ -85,12 +83,10 @@ namespace duckx
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
 
-        Paragraph& paragraphs();
+        ElementRange<Paragraph> paragraphs();
         TableCell& next();
 
     private:
-        friend class IteratorHelper;
-
         Paragraph m_paragraph;
     };
 
@@ -104,12 +100,10 @@ namespace duckx
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
 
-        TableCell& cells();
+        ElementRange<TableCell> cells();
         TableRow& next();
 
     private:
-        friend class IteratorHelper;
-
         TableCell m_tableCell;
     };
 
@@ -124,11 +118,9 @@ namespace duckx
         bool has_next() const override;
 
         Table& next();
-        TableRow& rows();
+        ElementRange<TableRow> rows();
 
     private:
-        friend class IteratorHelper;
-
         TableRow m_tableRow;
     };
 } // namespace duckx

@@ -6,6 +6,5 @@
 
 #pragma once
 
-#include "BaseElement.hpp"
 #include "Document.hpp"
 

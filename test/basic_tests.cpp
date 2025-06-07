@@ -1,17 +1,18 @@
 #include <sstream>
-#include <duckx.hpp>
-
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "Document.hpp"
 #include "doctest.h"
 
-TEST_CASE("checks contents of my_test.docx") {
-    duckx::Document doc("my_test.docx");
-    doc.open();
+TEST_CASE("checks contents of my_test.docx")
+{
+    // 1. 使用新的静态工厂方法打开文档
+    auto doc = duckx::Document::open("my_test.docx");
 
     std::ostringstream ss;
 
-    for (duckx::Paragraph p = doc.paragraphs(); p.has_next(); p.next()) {
-        for (duckx::Run r = p.runs(); r.has_next(); r.next()) {
+    for (auto p : doc.body().paragraphs())
+    {
+        for (const auto& r : p.runs())
+        {
             ss << r.get_text() << std::endl;
         }
     }

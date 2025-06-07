@@ -8,43 +8,32 @@
  */
 
 #pragma once
-#include "BaseElement.hpp"
-
-struct zip_t;
+#include "Body.hpp"
+#include <memory>
 
 namespace duckx
 {
+    class DocxFile;
+
     class Document
     {
     public:
-        Document();
+        static Document open(const std::string& path);
+        static Document create(const std::string& path);
 
-        explicit Document(std::string);
-        bool create();
-        bool create(const std::string& filename);
+        Document(Document&&) noexcept;
+        Document& operator=(Document&&) noexcept;
+        ~Document();
 
-        void file(std::string);
-        void open();
         void save() const;
-        bool is_open() const;
-        Paragraph& paragraphs();
-        Table& tables();
+        Body& body();
 
     private:
-        static void create_basic_structure(zip_t* zip);
-        static std::string get_content_types_xml();
-        static std::string get_app_xml();
-        static std::string get_core_xml();
-        static std::string get_rels_xml();
-        static std::string get_document_rels_xml();
-        static std::string get_empty_document_xml();
+        explicit Document(std::unique_ptr<DocxFile> file);
+        void load();
 
-    private:
-        friend class IteratorHelper;
-        std::string m_sDirectory;
-        Paragraph m_paragraph;
-        Table m_table;
-        pugi::xml_document m_xmlDocument;
-        bool m_bFlag_is_open = false;
+        std::unique_ptr<DocxFile> m_file;
+        pugi::xml_document m_document_xml;
+        Body m_body;
     };
-} // namespace duckx
+}

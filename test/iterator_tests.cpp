@@ -1,59 +1,55 @@
 #include <sstream>
-#include <duckx.hpp>
-#include <duckxiterator.hpp>
+#include <iostream>
+#include "Document.hpp"
+#include "duckxiterator.hpp"
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-TEST_CASE("checks contents of my_test.docx with iterator")
+TEST_CASE("checks contents of my_test.docx with C++ range-for loop")
 {
-    duckx::Document doc("my_test.docx");
-    doc.open();
+    // 1. 使用新的静态工厂方法打开文档
+    auto doc = duckx::Document::open("my_test.docx");
 
     std::ostringstream ss;
 
-    for (duckx::Paragraph p : doc.paragraphs())
+    // 2. 使用优雅的 for-each 循环！
+    for (duckx::Paragraph& p : doc.body().paragraphs())
     {
-        for (duckx::Run r : p.runs())
+        for (const duckx::Run& r : p.runs())
         {
             ss << r.get_text() << std::endl;
-            //std::puts(r.get_text().c_str());
         }
     }
+
     std::puts(ss.str().c_str());
-    CHECK_EQ("This is a test\nokay?\n", ss.str());
+    CHECK_EQ("This is a test\n okay?\n", ss.str());
 }
 
-namespace duckx {
-struct MyTestObject final {
-    int current = 42;
-    int parent = 1;
-    int j = 86;
-    MyTestObject(const int parent, const int current) : parent(parent), current(current){}
-    MyTestObject() = default;
-    MyTestObject& next() { ++current; return *this;}
-    bool has_next() const { return current!=j;}
-    bool operator== (MyTestObject const& other) const {return other.current==current && other.j==j;}
-};
-// Entry point
-auto begin(MyTestObject const& obj) -> Iterator<MyTestObject, int> {
-  return Iterator<MyTestObject, int, int>(obj.parent, obj.current);
-}
-
-auto end(MyTestObject const& obj) -> Iterator<MyTestObject, int> {
-  return Iterator<MyTestObject, int, int>(obj.parent, static_cast<decltype(obj.current)>(0));
-}
-}  // namespace duckx
-
-TEST_CASE("Check equality in")
+TEST_CASE("Check iterator equality")
 {
-    auto const testObject = duckx::MyTestObject{};
-	auto p1 = begin(testObject);
-    auto p2 = begin(testObject);
-    CHECK_EQ(p1, p2);
-    duckx::Document doc("my_test.docx");
-    doc.open();
+    auto doc = duckx::Document::open("my_test.docx");
 
-    CHECK_EQ(begin(doc.paragraphs()), begin(doc.paragraphs()));
-    
+    // 获取段落的范围对象
+    auto paragraphs_range = doc.body().paragraphs();
+
+    // 1. begin() 迭代器应该等于它自己
+    CHECK(paragraphs_range.begin() == paragraphs_range.begin());
+
+    // 2. 对于非空文档，begin() 不应等于 end()
+    CHECK(paragraphs_range.begin() != paragraphs_range.end());
+
+    // 3. 我们可以手动迭代并比较
+    auto it1 = paragraphs_range.begin();
+    auto it2 = paragraphs_range.begin();
+
+    // 移动一个迭代器
+    ++it1;
+    // 现在它们应该不相等
+    CHECK(it1 != it2);
+
+    // 再次移动第二个迭代器
+    ++it2;
+    // 现在它们应该再次相等
+    CHECK(it1 == it2);
 }
