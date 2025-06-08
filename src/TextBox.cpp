@@ -15,6 +15,12 @@ namespace duckx
         m_internal_doc.append_child("w:txbxContent");
     }
 
+    TextBox::TextBox(const BorderStyle border)
+        : TextBox()
+    {
+        m_border_style = border;
+    }
+
     void TextBox::set_border(const BorderStyle border)
     {
         m_border_style = border;
@@ -167,22 +173,30 @@ namespace duckx
         }
     }
 
-    void TextBox::add_paragraph(const std::string& text, formatting_flag f) const
+    Paragraph TextBox::add_paragraph(const std::string& text, formatting_flag f) const
     {
         pugi::xml_node content_node = m_internal_doc.child("w:txbxContent");
 
-        if (m_is_empty && content_node.first_child() && content_node.first_child().first_child() == nullptr)
-        {
+        if (m_is_empty && content_node.first_child() && content_node.first_child().first_child() == nullptr) {
             content_node.remove_child(content_node.first_child());
         }
         m_is_empty = false;
 
         const pugi::xml_node p_node = content_node.append_child("w:p");
+
         Paragraph new_para(content_node, p_node);
+
         if (!text.empty())
         {
-            new_para.add_run(text, f);
+            new_para.add_run(text);
         }
+
+        return new_para;
+    }
+
+    void TextBox::add_new_paragraph(const std::string& text, formatting_flag f) const
+    {
+        (void)add_paragraph(text);
     }
 
     Paragraph TextBox::last_paragraph() const

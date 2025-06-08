@@ -15,8 +15,7 @@
 namespace duckx
 {
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
-        : m_parentNode(parentNode), m_currentNode(currentNode)
-    {}
+        : m_parentNode(parentNode), m_currentNode(currentNode) {}
 
     void Run::set_parent(const pugi::xml_node node)
     {
@@ -40,8 +39,8 @@ namespace duckx
         return sibling;
     }
 
-    Run::Run(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {}
+    Run::Run(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
 
     std::string Run::get_text() const
     {
@@ -69,8 +68,8 @@ namespace duckx
         return m_currentNode != nullptr;
     }
 
-    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {}
+    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
 
     void TableCell::set_parent(const pugi::xml_node node)
     {
@@ -112,8 +111,8 @@ namespace duckx
         return ElementRange<Paragraph>(m_paragraph);
     }
 
-    TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {}
+    TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
 
     void TableRow::set_parent(const pugi::xml_node node)
     {
@@ -155,8 +154,8 @@ namespace duckx
         return m_currentNode != nullptr;
     }
 
-    Table::Table(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {}
+    Table::Table(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
 
     void Table::set_parent(const pugi::xml_node node)
     {
@@ -199,8 +198,8 @@ namespace duckx
         return ElementRange<TableRow>(m_tableRow);
     }
 
-    Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {}
+    Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
 
     void Paragraph::set_parent(const pugi::xml_node node)
     {
@@ -220,6 +219,16 @@ namespace duckx
         m_currentNode = m_currentNode.next_sibling();
         m_run.set_parent(m_currentNode);
         return *this;
+    }
+
+    pugi::xml_node Paragraph::get_or_create_pPr()
+    {
+        pugi::xml_node pPr_node = m_currentNode.child("w:pPr");
+        if (!pPr_node)
+        {
+            pPr_node = m_currentNode.insert_child_before("w:pPr", m_currentNode.first_child());
+        }
+        return pPr_node;
     }
 
     bool Paragraph::has_next() const
@@ -285,6 +294,44 @@ namespace duckx
         new_run_text.text().set(text);
 
         return *new Run(m_currentNode, new_run);
+    }
+
+    Paragraph& Paragraph::set_alignment(const Alignment align)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+
+        // 2. 查找或创建 <w:jc> (justification) 节点
+        pugi::xml_node jc_node = pPr_node.child("w:jc");
+        if (!jc_node)
+        {
+            jc_node = pPr_node.append_child("w:jc");
+        }
+
+        auto align_str = "left";
+        switch (align)
+        {
+            case Alignment::LEFT:
+                align_str = "left";
+                break;
+            case Alignment::CENTER:
+                align_str = "center";
+                break;
+            case Alignment::RIGHT:
+                align_str = "right";
+                break;
+            case Alignment::BOTH:
+                align_str = "both";
+                break;
+        }
+
+        pugi::xml_attribute val_attr = jc_node.attribute("w:val");
+        if (!val_attr)
+        {
+            val_attr = jc_node.append_attribute("w:val");
+        }
+        val_attr.set_value(align_str);
+
+        return *this;
     }
 
     Paragraph& Paragraph::insert_paragraph_after(const std::string& text, formatting_flag f)

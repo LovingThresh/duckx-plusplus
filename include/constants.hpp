@@ -14,4 +14,11 @@ namespace duckx
     constexpr formatting_flag subscript = 1 << 5;
     constexpr formatting_flag smallcaps = 1 << 6;
     constexpr formatting_flag shadow = 1 << 7;
+
+    enum class Alignment {
+        LEFT,
+        CENTER,
+        RIGHT,
+        BOTH
+    };
 } // namespace duckx

@@ -14,7 +14,7 @@ int main()
 {
     try
     {
-        duckx::Document doc = duckx::Document::create("test_with_image.docx");
+        duckx::Document doc = duckx::Document::create("sample3_test_with_image.docx");
         const auto p = doc.body().add_paragraph("Company Logo:");
         const duckx::Image logo("logo.png");
         doc.media().add_image(p, logo);

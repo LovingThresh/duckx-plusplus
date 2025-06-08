@@ -24,10 +24,13 @@ namespace duckx
     public:
         TextBox();
 
+        explicit TextBox(BorderStyle border);
+
         void set_border(BorderStyle border);
         void generate_drawing_xml(pugi::xml_node parent_run_node, const std::string& relationship_id,
                                   unsigned int drawing_id) const override;
-        void add_paragraph(const std::string& text = "", formatting_flag f = none) const;
+        Paragraph add_paragraph(const std::string& text = "", formatting_flag f = none) const;
+        void add_new_paragraph(const std::string& text = "", formatting_flag f = none) const;
         Paragraph last_paragraph() const;
         ElementRange<Paragraph> paragraphs() const;
 

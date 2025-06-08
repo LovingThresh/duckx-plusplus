@@ -65,10 +65,13 @@ namespace duckx
         ElementRange<Run> runs();
         Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
         Run& add_run(const char*, duckx::formatting_flag = duckx::none);
+        Paragraph& set_alignment(Alignment align);
         Paragraph& insert_paragraph_after(const std::string&, duckx::formatting_flag = duckx::none);
         Paragraph& next();
 
     private:
+        pugi::xml_node get_or_create_pPr();
+
         Run m_run;
     };
 

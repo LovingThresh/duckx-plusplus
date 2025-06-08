@@ -30,8 +30,7 @@ int main()
         duckx::TextBox textbox1;
         textbox1.set_size(200, 50); // 设置尺寸
 
-        textbox1.add_paragraph("I am box #1.");
-        textbox1.last_paragraph().add_run(" With bold text.", duckx::bold);
+        textbox1.add_paragraph("I am box #1.").add_run(" With bold text.", duckx::bold);
 
         doc.media().add_textbox(p1, textbox1);
 
@@ -42,9 +41,8 @@ int main()
         textbox2.set_size(150, 75); // 不同尺寸
 
         // 在第二个文本框中添加多段内容
-        textbox2.add_paragraph("Box #2, line 1.");
-        textbox2.add_paragraph("Line 2 is ");
-        textbox2.last_paragraph().add_run("italic.", duckx::italic);
+        textbox2.add_new_paragraph("Box #2, line 1.");
+        textbox2.add_paragraph("Line 2 is ").add_run("italic.", duckx::italic);
 
         doc.media().add_textbox(p1, textbox2);
 
@@ -62,8 +60,7 @@ int main()
         duckx::TextBox summary_box;
         summary_box.set_size(300, 40);
         summary_box.set_border(duckx::BorderStyle::SOLID);
-        summary_box.add_paragraph("This is a summary.");
-        summary_box.last_paragraph().add_run(" All rights reserved.", duckx::smallcaps);
+        summary_box.add_paragraph("This is a summary.").add_run(" All rights reserved.", duckx::smallcaps);
 
         doc.media().add_textbox(p3, summary_box);
 

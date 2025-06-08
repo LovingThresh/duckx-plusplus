@@ -7,7 +7,7 @@ int main()
     {
         std::cout << "Step 1: Creating new document..." << std::endl;
 
-        auto doc = duckx::Document::create("test.docx");
+        auto doc = duckx::Document::create("sample2_test.docx");
         std::cout << "Document object created successfully." << std::endl;
 
         doc.save();
@@ -15,7 +15,7 @@ int main()
 
         std::cout << "\nStep 2: Re-opening the document to add content..." << std::endl;
 
-        auto doc2 = duckx::Document::open("test.docx");
+        auto doc2 = duckx::Document::open("sample2_test.docx");
         std::cout << "Document 'test.docx' opened successfully." << std::endl;
 
         auto p = doc2.body().add_paragraph("You can insert text in ");
@@ -36,7 +36,7 @@ int main()
 
         std::cout << "\nStep 3: Testing immediate modification after creation..." << std::endl;
 
-        auto doc3 = duckx::Document::create("test2.docx");
+        auto doc3 = duckx::Document::create("sample2_test2.docx");
         std::cout << "Document 'test2.docx' created." << std::endl;
 
         doc3.body().add_paragraph("This content was added immediately after creation.", duckx::bold);
