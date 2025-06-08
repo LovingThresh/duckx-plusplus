@@ -21,6 +21,8 @@ set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/DocxFile.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/Body.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/MediaManager.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/DrawingElement.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/TextBox.hpp"
 
 )
 
@@ -33,6 +35,8 @@ set(DUCKX_PROJECT_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/DocxFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/Body.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/MediaManager.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/DrawingElement.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/TextBox.cpp"
 )
 
 # Third-party header files
@@ -103,7 +107,7 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR) # Keep thi
 
 # Sample executables
 if (BUILD_SAMPLES)
-	set(DUCKX_SAMPLES sample1 sample2 sample3)
+	set(DUCKX_SAMPLES sample1 sample2 sample3 sample4)
 
 	foreach(SAMPLE_NAME IN LISTS DUCKX_SAMPLES)
 		add_executable(

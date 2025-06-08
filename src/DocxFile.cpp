@@ -9,8 +9,8 @@
 #include "DocxFile.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 #include "zip.h"
 
@@ -54,7 +54,8 @@ namespace duckx
 
     bool DocxFile::has_entry(const std::string& entry_name) const
     {
-        if (m_dirty_entries.count(entry_name)) {
+        if (m_dirty_entries.count(entry_name))
+        {
             return true;
         }
 
@@ -64,7 +65,8 @@ namespace duckx
 
         const bool found = (zip_entry_open(zip, entry_name.c_str()) == 0);
 
-        if(found) zip_entry_close(zip);
+        if (found)
+            zip_entry_close(zip);
         zip_close(zip);
 
         return found;
@@ -73,20 +75,25 @@ namespace duckx
     std::string DocxFile::read_entry(const std::string& entry_name)
     {
         // 优先从已修改的缓存中读取
-        if (m_dirty_entries.count(entry_name)) {
+        if (m_dirty_entries.count(entry_name))
+        {
             return m_dirty_entries[entry_name];
         }
 
         zip_t* zip = zip_open(m_path.c_str(), 0, 'r');
-        if (!zip) {
+        if (!zip)
+        {
             // 如果文件不存在但我们想读取一个空文档，就返回空文档XML
-            if(entry_name == "word/document.xml") return get_empty_document_xml();
+            if (entry_name == "word/document.xml")
+                return get_empty_document_xml();
             throw std::runtime_error("Failed to open zip file: " + m_path);
         }
 
-        if (zip_entry_open(zip, entry_name.c_str()) != 0) {
+        if (zip_entry_open(zip, entry_name.c_str()) != 0)
+        {
             zip_close(zip);
-            if(entry_name == "word/document.xml") return get_empty_document_xml();
+            if (entry_name == "word/document.xml")
+                return get_empty_document_xml();
             throw std::runtime_error("Failed to open zip entry: " + entry_name);
         }
 
@@ -124,7 +131,7 @@ namespace duckx
         }
 
         // 写入所有被修改或新添加的文件
-        for (const auto& pair : m_dirty_entries)
+        for (const auto& pair: m_dirty_entries)
         {
             zip_entry_open(new_zip, pair.first.c_str());
             zip_entry_write(new_zip, pair.second.c_str(), pair.second.length());
@@ -234,12 +241,18 @@ namespace duckx
                "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/>"
                "<Default Extension=\"jpeg\" ContentType=\"image/jpeg\"/>"
                // --- 以下是针对 Word 核心文件的 Override ---
-               "<Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
-               "<Override PartName=\"/word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
-               "<Override PartName=\"/word/settings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
-               "<Override PartName=\"/word/fontTable.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml\"/>"
-               "<Override PartName=\"/docProps/core.xml\" ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
-               "<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
+               "<Override PartName=\"/word/document.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
+               "<Override PartName=\"/word/styles.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
+               "<Override PartName=\"/word/settings.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
+               "<Override PartName=\"/word/fontTable.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml\"/>"
+               "<Override PartName=\"/docProps/core.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
+               "<Override PartName=\"/docProps/app.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
                "</Types>";
     }
 
@@ -281,7 +294,8 @@ namespace duckx
         // 作为备选方案，使用非线程安全的 gmtime，这在单线程环境中是安全的。
         // 在多线程环境中，这可能会有问题，但比无法编译要好。
         tm* temp_tm = std::gmtime(&now);
-        if (temp_tm != nullptr) {
+        if (temp_tm != nullptr)
+        {
             tm_utc = *temp_tm;
         }
 #endif
@@ -304,24 +318,31 @@ namespace duckx
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
-               "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
-               "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" Target=\"settings.xml\"/>"
-               "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" Target=\"fontTable.xml\"/>"
+               "<Relationship Id=\"rId3\" "
+               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" "
+               "Target=\"styles.xml\"/>"
+               "<Relationship Id=\"rId2\" "
+               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" "
+               "Target=\"settings.xml\"/>"
+               "<Relationship Id=\"rId1\" "
+               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" "
+               "Target=\"fontTable.xml\"/>"
                "</Relationships>";
     }
 
     std::string DocxFile::get_empty_document_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-           "<w:document "
-           "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
-           "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" "
-           "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
-           "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
-           "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">"
-           "  <w:body>"
-           "  </w:body>"
-           "</w:document>";
+               "<w:document "
+               "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
+               "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" "
+               "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
+               "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
+               "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" "
+               "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+               "  <w:body>"
+               "  </w:body>"
+               "</w:document>";
     }
 
     std::string DocxFile::get_styles_xml()

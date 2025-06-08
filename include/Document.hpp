@@ -43,4 +43,4 @@ namespace duckx
         Body m_body;
         std::unique_ptr<MediaManager> m_media_manager;
     };
-}
+} // namespace duckx

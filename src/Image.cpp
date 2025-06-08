@@ -16,18 +16,7 @@
 
 namespace duckx
 {
-
-    // 1 inch = 914400 EMUs. Common screen DPI is 96.
-    long long pixels_to_emu(const int pixels)
-    {
-        if (pixels <= 0)
-            return 0;
-        constexpr int dpi = 96;
-        return static_cast<long long>(pixels) * 914400 / dpi;
-    }
-
-    Image::Image(std::string path, const int max_width_px)
-        : m_path(std::move(path))
+    Image::Image(std::string path, const int max_width_px) : m_path(std::move(path))
     {
         if (m_path.empty())
         {
@@ -66,15 +55,8 @@ namespace duckx
         }
     }
 
-    void Image::set_size(const int width_px, const int height_px)
-    {
-        m_width_emu = pixels_to_emu(width_px);
-        m_height_emu = pixels_to_emu(height_px);
-    }
-
     // This is where the complex XML generation is now cleanly encapsulated.
-    void Image::generate_drawing_xml(pugi::xml_node parent_run_node,
-                                     const std::string& relationship_id,
+    void Image::generate_drawing_xml(pugi::xml_node parent_run_node, const std::string& relationship_id,
                                      const unsigned int drawing_id) const
     {
         if (!parent_run_node)
@@ -171,5 +153,10 @@ namespace duckx
         prstGeom_node.append_attribute("prst").set_value("rect");
         // <a:avLst/>
         prstGeom_node.append_child("a:avLst");
+    }
+
+    const std::string& Image::get_path() const
+    {
+        return m_path;
     }
 } // namespace duckx

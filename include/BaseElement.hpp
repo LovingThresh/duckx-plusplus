@@ -1,7 +1,7 @@
 /*
  * @file: BaseElement.hpp
  * @brief:
- * 
+ *
  * @author: liuye
  * @date: 2025.06.07
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
@@ -18,21 +18,21 @@ namespace duckx
 {
     class DocxElement
     {
-        public:
-            DocxElement() = default;
-            DocxElement(pugi::xml_node parentNode, pugi::xml_node currentNode);
+    public:
+        DocxElement() = default;
+        DocxElement(pugi::xml_node parentNode, pugi::xml_node currentNode);
 
-            virtual ~DocxElement() = default;
-            virtual bool has_next() const = 0;
-            virtual void set_parent(pugi::xml_node) = 0;
-            virtual void set_current(pugi::xml_node) = 0;
-            pugi::xml_node getNode() const { return m_currentNode; }
+        virtual ~DocxElement() = default;
+        virtual bool has_next() const = 0;
+        virtual void set_parent(pugi::xml_node) = 0;
+        virtual void set_current(pugi::xml_node) = 0;
+        pugi::xml_node getNode() const;
 
-        protected:
-            pugi::xml_node findNextSibling(const std::string& name) const;
+    protected:
+        pugi::xml_node findNextSibling(const std::string& name) const;
 
-            pugi::xml_node m_parentNode; // Parent node in the XML tree
-            pugi::xml_node m_currentNode; // Current node in the XML tree
+        pugi::xml_node m_parentNode; // Parent node in the XML tree
+        pugi::xml_node m_currentNode; // Current node in the XML tree
     };
 
     // Run contains runs in a paragraph
@@ -49,7 +49,6 @@ namespace duckx
         bool set_text(const char*) const;
         std::string get_text() const;
         Run& next();
-
     };
 
     // Paragraph contains a paragraph

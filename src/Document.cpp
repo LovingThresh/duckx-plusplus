@@ -7,9 +7,9 @@
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
  */
 #include "Document.hpp"
-#include "DocxFile.hpp"
 #include <stdexcept>
 #include <utility>
+#include "DocxFile.hpp"
 
 namespace duckx
 {
@@ -43,8 +43,7 @@ namespace duckx
         return Document(std::move(file));
     }
 
-    Document::Document(std::unique_ptr<DocxFile> file)
-        : m_file(std::move(file))
+    Document::Document(std::unique_ptr<DocxFile> file) : m_file(std::move(file))
     {
         load();
     }
@@ -62,14 +61,16 @@ namespace duckx
         const std::string xml_content = m_file->read_entry("word/document.xml");
         if (!m_document_xml.load_string(xml_content.c_str()))
         {
-             throw std::runtime_error("Failed to parse word/document.xml");
+            throw std::runtime_error("Failed to parse word/document.xml");
         }
 
         pugi::xml_node bodyNode = m_document_xml.child("w:document").child("w:body");
-        if (!bodyNode) {
+        if (!bodyNode)
+        {
             // 如果 body 节点不存在，创建一个
             pugi::xml_node docNode = m_document_xml.child("w:document");
-            if (!docNode) {
+            if (!docNode)
+            {
                 docNode = m_document_xml.append_child("w:document");
             }
             bodyNode = docNode.append_child("w:body");
@@ -95,12 +96,14 @@ namespace duckx
             throw std::runtime_error("[Content_Types].xml is missing.");
         }
 
-        m_media_manager = std::make_unique<MediaManager>(m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
+        m_media_manager =
+                std::make_unique<MediaManager>(m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
     }
 
     void Document::save() const
     {
-        if (!m_file) return;
+        if (!m_file)
+            return;
 
         xml_string_writer writer;
         m_document_xml.print(writer, "  ", pugi::format_default);

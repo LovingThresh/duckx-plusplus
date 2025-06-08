@@ -1,7 +1,7 @@
 /*
  * @file: DocxFile.hpp
  * @brief:
- * 
+ *
  * @author: liuye
  * @date: 2025.06.07
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
@@ -50,4 +50,4 @@ namespace duckx
         zip_t* m_zip_handle = nullptr;
         std::map<std::string, std::string> m_dirty_entries;
     };
-}
+} // namespace duckx

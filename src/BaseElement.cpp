@@ -16,8 +16,7 @@ namespace duckx
 {
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
         : m_parentNode(parentNode), m_currentNode(currentNode)
-    {
-    }
+    {}
 
     void Run::set_parent(const pugi::xml_node node)
     {
@@ -30,6 +29,11 @@ namespace duckx
         m_currentNode = node;
     }
 
+    pugi::xml_node DocxElement::getNode() const
+    {
+        return m_currentNode;
+    }
+
     pugi::xml_node DocxElement::findNextSibling(const std::string& name) const
     {
         const pugi::xml_node sibling = m_currentNode.next_sibling(name.c_str());
@@ -37,8 +41,7 @@ namespace duckx
     }
 
     Run::Run(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {
-    }
+    {}
 
     std::string Run::get_text() const
     {
@@ -66,10 +69,8 @@ namespace duckx
         return m_currentNode != nullptr;
     }
 
-    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current)
-    {
-    }
+    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
+    {}
 
     void TableCell::set_parent(const pugi::xml_node node)
     {
@@ -112,8 +113,7 @@ namespace duckx
     }
 
     TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {
-    }
+    {}
 
     void TableRow::set_parent(const pugi::xml_node node)
     {
@@ -156,8 +156,7 @@ namespace duckx
     }
 
     Table::Table(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
-    {
-    }
+    {}
 
     void Table::set_parent(const pugi::xml_node node)
     {
@@ -200,10 +199,8 @@ namespace duckx
         return ElementRange<TableRow>(m_tableRow);
     }
 
-    Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current)
-    {
-    }
+    Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current) : DocxElement(parent, current)
+    {}
 
     void Paragraph::set_parent(const pugi::xml_node node)
     {

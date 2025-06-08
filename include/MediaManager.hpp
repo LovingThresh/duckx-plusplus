@@ -21,18 +21,18 @@ namespace duckx
 {
     class DocxFile;
     class Image;
+    class TextBox;
     class Paragraph;
     class Run;
 
     class MediaManager
     {
     public:
-        MediaManager(DocxFile* file,
-            pugi::xml_document* rels_xml,
-            const pugi::xml_document* doc_xml,
-            pugi::xml_document* content_types_xml);
+        MediaManager(DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
+                     pugi::xml_document* content_types_xml);
 
         Run add_image(const Paragraph& p, const Image& image);
+        Run add_textbox(const Paragraph& p, TextBox& textbox);
 
     private:
         std::string add_media_to_zip(const std::string& file_path);
@@ -42,6 +42,7 @@ namespace duckx
 
         DocxFile* m_file;
         pugi::xml_document* m_rels_xml;
+        pugi::xml_document* m_doc_xml;
         pugi::xml_document* m_content_types_xml;
 
         int m_media_id_counter = 1;

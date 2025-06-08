@@ -13,7 +13,7 @@ namespace pugi
 
 namespace duckx
 {
-    template <class T>
+    template<class T>
     class ElementIterator
     {
     public:
@@ -33,8 +33,7 @@ namespace duckx
         }
 
         ElementIterator() : m_is_end(true)
-        {
-        }
+        {}
 
         reference operator*()
         {
@@ -80,13 +79,12 @@ namespace duckx
         bool m_is_end;
     };
 
-    template <class T>
+    template<class T>
     class ElementRange
     {
     public:
         explicit ElementRange(T element_state) : m_element_state(element_state)
-        {
-        }
+        {}
 
         ElementIterator<T> begin()
         {

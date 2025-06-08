@@ -15,6 +15,7 @@
 #include "Image.hpp"
 
 #include "BaseElement.hpp"
+#include "TextBox.hpp"
 
 namespace duckx
 {
@@ -32,13 +33,11 @@ namespace duckx
         }
     }
 
-    MediaManager::MediaManager(DocxFile* file,
-        pugi::xml_document* rels_xml,
-        const pugi::xml_document* doc_xml,
-        pugi::xml_document* content_types_xml)
-        : m_file(file), m_rels_xml(rels_xml), m_content_types_xml(content_types_xml)
+    MediaManager::MediaManager(DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
+                               pugi::xml_document* content_types_xml)
+        : m_file(file), m_rels_xml(rels_xml), m_doc_xml(doc_xml), m_content_types_xml(content_types_xml)
     {
-        if (!m_file || !m_rels_xml || !doc_xml)
+        if (!m_file || !m_rels_xml || !m_doc_xml)
         {
             throw std::logic_error("MediaManager requires valid DocxFile, rels XML, and document XML.");
         }
@@ -47,7 +46,7 @@ namespace duckx
         int max_rid = 0;
         if (m_rels_xml->child("Relationships"))
         {
-            for (pugi::xml_node rel : m_rels_xml->child("Relationships").children("Relationship"))
+            for (pugi::xml_node rel: m_rels_xml->child("Relationships").children("Relationship"))
             {
                 const char* id_str = rel.attribute("Id").value();
                 // Assuming rId format is "rId" + number, e.g., "rId3"
@@ -63,12 +62,11 @@ namespace duckx
         }
         m_rid_counter = max_rid + 1;
 
-
         unsigned int max_docpr_id = 0;
         const pugi::xpath_query docpr_query("//wp:docPr[@id] | //wps:docPr[@id]");
-        const pugi::xpath_node_set results = doc_xml->select_nodes(docpr_query);
+        const pugi::xpath_node_set results = m_doc_xml->select_nodes(docpr_query);
 
-        for (pugi::xpath_node xpath_n : results)
+        for (pugi::xpath_node xpath_n: results)
         {
             pugi::xml_node docpr_node = xpath_n.node();
             const unsigned int current_id = safe_stoui(docpr_node.attribute("id").value());
@@ -102,6 +100,20 @@ namespace duckx
         return {p_node, new_run_node};
     }
 
+    Run MediaManager::add_textbox(const Paragraph& p, TextBox& textbox)
+    {
+        pugi::xml_node paragraph_node = p.getNode();
+        if (!paragraph_node)
+        {
+            return {};
+        }
+
+        pugi::xml_node run_node = paragraph_node.append_child("w:r");
+        const unsigned int drawing_id = get_unique_docpr_id();
+        textbox.generate_drawing_xml(run_node, "", drawing_id);
+        return {paragraph_node, run_node};
+    }
+
     // Private helper implementations
     std::string MediaManager::add_media_to_zip(const std::string& file_path)
     {
@@ -122,13 +134,13 @@ namespace duckx
         const std::string ext_with_dot = file_path.substr(dot_pos);
         std::string ext_lower = ext_with_dot.substr(1);
         std::transform(ext_lower.begin(), ext_lower.end(), ext_lower.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+                       [](const unsigned char c) { return std::tolower(c); });
 
         // 3. 检查并按需更新 [Content_Types].xml
         // 静态映射表，用于查找扩展名对应的标准内容类型
         static const std::map<std::string, std::string> content_type_map = {
-            {"png", "image/png"}, {"jpg", "image/jpeg"}, {"jpeg", "image/jpeg"},
-            {"gif", "image/gif"}, {"bmp", "image/bmp"},  {"tiff", "image/tiff"}};
+                {"png", "image/png"}, {"jpg", "image/jpeg"}, {"jpeg", "image/jpeg"},
+                {"gif", "image/gif"}, {"bmp", "image/bmp"},  {"tiff", "image/tiff"}};
 
         auto it = content_type_map.find(ext_lower);
         if (it == content_type_map.end())

@@ -1,7 +1,7 @@
 /*
  * @file: Body.hpp
  * @brief:
- * 
+ *
  * @author: liuye
  * @date: 2025.06.07
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
@@ -28,7 +28,4 @@ namespace duckx
         Paragraph m_paragraph;
         Table m_table;
     };
-}
-
-
-
+} // namespace duckx
