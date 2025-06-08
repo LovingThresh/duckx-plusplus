@@ -174,25 +174,25 @@ namespace duckx
 
     void DocxFile::create_basic_structure(zip_t* zip)
     {
-        // 1. [Content_Types].xml
+        // 步骤 1. [Content_Types].xml
         zip_entry_open(zip, "[Content_Types].xml");
         const std::string content_types = get_content_types_xml();
         zip_entry_write(zip, content_types.c_str(), content_types.length());
         zip_entry_close(zip);
 
-        // 2. _rels/.rels
+        // 步骤 2. _rels/.rels
         zip_entry_open(zip, "_rels/.rels");
         const std::string rels = get_rels_xml();
         zip_entry_write(zip, rels.c_str(), rels.length());
         zip_entry_close(zip);
 
-        // 3. docProps/app.xml
+        // 步骤 3. docProps/app.xml
         zip_entry_open(zip, "docProps/app.xml");
         const std::string app = get_app_xml();
         zip_entry_write(zip, app.c_str(), app.length());
         zip_entry_close(zip);
 
-        // 4. docProps/core.xml
+        // 步骤 4. docProps/core.xml
         zip_entry_open(zip, "docProps/core.xml");
         const std::string core = get_core_xml();
         zip_entry_write(zip, core.c_str(), core.length());
@@ -222,8 +222,13 @@ namespace duckx
         zip_entry_write(zip, font_table.c_str(), font_table.length());
         zip_entry_close(zip);
 
-        // 步骤 9 (原步骤5): word/_rels/document.xml.rels
-        // 现在它可以安全地引用上面创建的文件了
+        // 步骤 9: word/numbering.xml
+        zip_entry_open(zip, "word/numbering.xml");
+        const std::string numbering = get_default_numbering_xml();
+        zip_entry_write(zip, numbering.c_str(), numbering.length());
+        zip_entry_close(zip);
+
+        // 步骤 10 : word/_rels/document.xml.rels
         zip_entry_open(zip, "word/_rels/document.xml.rels");
         const std::string doc_rels = get_document_rels_xml(); // 确保这个函数现在是完整的
         zip_entry_write(zip, doc_rels.c_str(), doc_rels.length());
@@ -253,6 +258,8 @@ namespace duckx
                "ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
                "<Override PartName=\"/docProps/app.xml\" "
                "ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
+               "<Override PartName=\"/word/numbering.xml\" "
+               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml\"/>"
                "</Types>";
     }
 
@@ -327,6 +334,9 @@ namespace duckx
                "<Relationship Id=\"rId1\" "
                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" "
                "Target=\"fontTable.xml\"/>"
+               "<Relationship Id=\"rId4\" "
+               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering\" "
+               "Target=\"numbering.xml\"/>"
                "</Relationships>";
     }
 
@@ -376,5 +386,37 @@ namespace duckx
                "    <w:panose1 w:val=\"02020603050405020304\"/>"
                "  </w:font>"
                "</w:fonts>";
+    }
+
+    std::string DocxFile::get_default_numbering_xml()
+    {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+               "<w:numbering xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+               "  <w:abstractNum w:abstractNumId=\"0\">"
+               "    <w:lvl w:ilvl=\"0\">"
+               "      <w:start w:val=\"1\"/>"
+               "      <w:numFmt w:val=\"bullet\"/>"
+               "      <w:lvlText w:val=\"\xE2\x80\xA2\"/>" // UTF-8编码的实心圆点 (•)
+               "      <w:lvlJc w:val=\"left\"/>"
+               "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
+               "      <w:rPr><w:rFonts w:hint=\"default\"/></w:rPr>" // 简化rFonts
+               "    </w:lvl>"
+               "  </w:abstractNum>"
+               "  <w:abstractNum w:abstractNumId=\"1\">"
+               "    <w:lvl w:ilvl=\"0\">"
+               "      <w:start w:val=\"1\"/>"
+               "      <w:numFmt w:val=\"decimal\"/>"
+               "      <w:lvlText w:val=\"%1.\"/>"
+               "      <w:lvlJc w:val=\"left\"/>"
+               "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
+               "    </w:lvl>"
+               "  </w:abstractNum>"
+               "  <w:num w:numId=\"1\">"
+               "    <w:abstractNumId w:val=\"0\"/>"
+               "  </w:num>"
+               "  <w:num w:numId=\"2\">"
+               "    <w:abstractNumId w:val=\"1\"/>"
+               "  </w:num>"
+               "</w:numbering>";
     }
 } // namespace duckx

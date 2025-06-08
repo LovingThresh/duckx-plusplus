@@ -107,18 +107,19 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR) # Keep thi
 
 # Sample executables
 if (BUILD_SAMPLES)
-	set(DUCKX_SAMPLES sample1 sample2 sample3 sample4 sample5
-		sample6 sample7)
+	file(GLOB DUCKX_SAMPLE_FILES "samples/*.cpp")
 
-	foreach(SAMPLE_NAME IN LISTS DUCKX_SAMPLES)
+	foreach(SAMPLE_FILE_PATH IN LISTS DUCKX_SAMPLE_FILES)
+		get_filename_component(SAMPLE_NAME ${SAMPLE_FILE_PATH} NAME_WE)
+
 		add_executable(
 				duckx_${SAMPLE_NAME}
-				"samples/${SAMPLE_NAME}.cpp"
+				${SAMPLE_FILE_PATH}
 		)
+
 		target_link_libraries(duckx_${SAMPLE_NAME} PRIVATE duckx::duckx)
 	endforeach()
 
-	# 复制文件的命令与循环无关，只需执行一次
 	file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/samples/my_test.docx"
 			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"

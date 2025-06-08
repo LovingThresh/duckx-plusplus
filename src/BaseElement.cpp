@@ -496,6 +496,49 @@ namespace duckx
         return *this;
     }
 
+    Paragraph& Paragraph::set_list_style(const ListType type, const int level)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node numPr_node = pPr_node.child("w:numPr");
+
+        if (type == ListType::NONE)
+        {
+            // 如果要移除列表样式，则删除整个 <w:numPr> 节点
+            if (numPr_node)
+            {
+                pPr_node.remove_child(numPr_node);
+            }
+            return *this;
+        }
+
+        // 如果 <w:numPr> 不存在，则创建一个
+        if (!numPr_node)
+        {
+            numPr_node = pPr_node.append_child("w:numPr");
+        }
+
+        // --- 设置层级 <w:ilvl> ---
+        pugi::xml_node ilvl_node = numPr_node.child("w:ilvl");
+        if (!ilvl_node)
+        {
+            ilvl_node = numPr_node.append_child("w:ilvl");
+        }
+        ilvl_node.append_attribute("w:val").set_value(level);
+
+        // --- 设置列表ID <w:numId> ---
+        pugi::xml_node numId_node = numPr_node.child("w:numId");
+        if (!numId_node)
+        {
+            numId_node = numPr_node.append_child("w:numId");
+        }
+
+        // 根据类型，引用我们在 numbering.xml 中预定义的 ID
+        const int list_id = (type == ListType::BULLET) ? 1 : 2;
+        numId_node.append_attribute("w:val").set_value(list_id);
+
+        return *this;
+    }
+
     Paragraph& Paragraph::insert_paragraph_after(const std::string& text, formatting_flag f)
     {
         const pugi::xml_node new_para = m_parentNode.insert_child_after("w:p", m_currentNode);

@@ -21,4 +21,10 @@ namespace duckx
         RIGHT,
         BOTH
     };
+
+    enum class ListType {
+        NONE,      // 不是列表项
+        BULLET,    // 项目符号列表
+        NUMBER     // 编号列表
+    };
 } // namespace duckx

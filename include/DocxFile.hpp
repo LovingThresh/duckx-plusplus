@@ -45,6 +45,7 @@ namespace duckx
         static std::string get_styles_xml();
         static std::string get_settings_xml();
         static std::string get_font_table_xml();
+        static std::string get_default_numbering_xml();
 
         std::string m_path;
         zip_t* m_zip_handle = nullptr;

@@ -76,6 +76,7 @@ namespace duckx
         Paragraph& set_line_spacing(double line_spacing);
         Paragraph& set_indentation(double left_pts = -1, double right_pts = -1);
         Paragraph& set_first_line_indent(double first_line_pts);
+        Paragraph& set_list_style(ListType type, int level = 0);
         Paragraph& insert_paragraph_after(const std::string& = "", duckx::formatting_flag = duckx::none);
         Paragraph& next();
 
