@@ -47,8 +47,14 @@ namespace duckx
 
         bool set_text(const std::string&) const;
         bool set_text(const char*) const;
+        Run& set_font(const std::string& font_name);
+        Run& set_font_size(double size);
+        Run& set_color(const std::string& color);
         std::string get_text() const;
         Run& next();
+
+    private:
+        pugi::xml_node get_or_create_rPr();
     };
 
     // Paragraph contains a paragraph

@@ -57,10 +57,76 @@ namespace duckx
         return m_currentNode.child("w:t").text().set(text);
     }
 
+    Run& Run::set_font(const std::string& font_name)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node rFonts_node = rPr_node.child("w:rFonts");
+        if (!rFonts_node)
+        {
+            rFonts_node = rPr_node.append_child("w:rFonts");
+        }
+
+        // 设置所有字体类型，以确保在各种情况下都能正确显示
+        rFonts_node.append_attribute("w:ascii").set_value(font_name.c_str());
+        rFonts_node.append_attribute("w:hAnsi").set_value(font_name.c_str());
+        rFonts_node.append_attribute("w:eastAsia").set_value(font_name.c_str());
+        rFonts_node.append_attribute("w:cs").set_value(font_name.c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_font_size(double size)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node sz_node = rPr_node.child("w:sz");
+        if (!sz_node)
+        {
+            sz_node = rPr_node.append_child("w:sz");
+        }
+
+        // 字号单位是 "half-points"，所以需要乘以2
+        const int half_points = static_cast<int>(std::round(size * 2.0));
+        sz_node.append_attribute("w:val").set_value(std::to_string(half_points).c_str());
+
+        // 还有一个 <w:szCs> 节点用于复杂字符（如亚洲语言），最好也设置一下
+        pugi::xml_node szCs_node = rPr_node.child("w:szCs");
+        if (!szCs_node)
+        {
+            szCs_node = rPr_node.append_child("w:szCs");
+        }
+        szCs_node.append_attribute("w:val").set_value(std::to_string(half_points).c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_color(const std::string& color)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node color_node = rPr_node.child("w:color");
+        if (!color_node)
+        {
+            color_node = rPr_node.append_child("w:color");
+        }
+
+        color_node.append_attribute("w:val").set_value(color.c_str());
+
+        return *this;
+    }
+
     Run& Run::next()
     {
         m_currentNode = m_currentNode.next_sibling();
         return *this;
+    }
+
+    pugi::xml_node Run::get_or_create_rPr()
+    {
+        pugi::xml_node rPr_node = m_currentNode.child("w:rPr");
+        if (!rPr_node)
+        {
+            rPr_node = m_currentNode.insert_child_before("w:rPr", m_currentNode.first_child());
+        }
+        return rPr_node;
     }
 
     bool Run::has_next() const
