@@ -72,7 +72,11 @@ namespace duckx
         Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
         Run& add_run(const char*, duckx::formatting_flag = duckx::none);
         Paragraph& set_alignment(Alignment align);
-        Paragraph& insert_paragraph_after(const std::string&, duckx::formatting_flag = duckx::none);
+        Paragraph& set_spacing(double before_pts = -1, double after_pts = -1);
+        Paragraph& set_line_spacing(double line_spacing);
+        Paragraph& set_indentation(double left_pts = -1, double right_pts = -1);
+        Paragraph& set_first_line_indent(double first_line_pts);
+        Paragraph& insert_paragraph_after(const std::string& = "", duckx::formatting_flag = duckx::none);
         Paragraph& next();
 
     private:

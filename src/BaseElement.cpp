@@ -14,6 +14,16 @@
 
 namespace duckx
 {
+    long long points_to_twips(const double pts)
+    {
+        return static_cast<long long>(pts * 20.0);
+    }
+
+    long long line_spacing_to_ooxml(const double spacing)
+    {
+        return static_cast<long long>(spacing * 240.0);
+    }
+
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
         : m_parentNode(parentNode), m_currentNode(currentNode) {}
 
@@ -75,7 +85,7 @@ namespace duckx
         return *this;
     }
 
-    Run& Run::set_font_size(double size)
+    Run& Run::set_font_size(const double size)
     {
         pugi::xml_node rPr_node = get_or_create_rPr();
         pugi::xml_node sz_node = rPr_node.child("w:sz");
@@ -396,6 +406,92 @@ namespace duckx
             val_attr = jc_node.append_attribute("w:val");
         }
         val_attr.set_value(align_str);
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_spacing(const double before_pts, const double after_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node spacing_node = pPr_node.child("w:spacing");
+        if (!spacing_node)
+        {
+            spacing_node = pPr_node.append_child("w:spacing");
+        }
+
+        if (before_pts >= 0)
+        {
+            spacing_node.append_attribute("w:before").set_value(points_to_twips(before_pts));
+        }
+        if (after_pts >= 0)
+        {
+            spacing_node.append_attribute("w:after").set_value(points_to_twips(after_pts));
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_line_spacing(const double line_spacing)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node spacing_node = pPr_node.child("w:spacing");
+        if (!spacing_node)
+        {
+            spacing_node = pPr_node.append_child("w:spacing");
+        }
+        spacing_node.append_attribute("w:line").set_value(line_spacing_to_ooxml(line_spacing));
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_indentation(const double left_pts, const double right_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node ind_node = pPr_node.child("w:ind");
+        if (!ind_node)
+        {
+            ind_node = pPr_node.append_child("w:ind");
+        }
+
+        if (left_pts >= 0)
+        {
+            ind_node.append_attribute("w:left").set_value(points_to_twips(left_pts));
+        }
+        if (right_pts >= 0)
+        {
+            ind_node.append_attribute("w:right").set_value(points_to_twips(right_pts));
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_first_line_indent(const double first_line_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node ind_node = pPr_node.child("w:ind");
+        if (!ind_node)
+        {
+            ind_node = pPr_node.append_child("w:ind");
+        }
+
+        if (first_line_pts > 0)
+        {
+            // 首行缩进
+            ind_node.append_attribute("w:firstLine").set_value(points_to_twips(first_line_pts));
+            ind_node.remove_attribute("w:hanging"); // 确保与悬挂缩进互斥
+        }
+        else if (first_line_pts < 0)
+        {
+            // 悬挂缩进
+            ind_node.append_attribute("w:hanging").set_value(points_to_twips(-first_line_pts));
+            ind_node.remove_attribute("w:firstLine"); // 确保与首行缩进互斥
+        }
+        else
+        {
+            // == 0
+            // 移除缩进
+            ind_node.remove_attribute("w:firstLine");
+            ind_node.remove_attribute("w:hanging");
+        }
 
         return *this;
     }

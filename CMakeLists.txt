@@ -108,7 +108,7 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR) # Keep thi
 # Sample executables
 if (BUILD_SAMPLES)
 	set(DUCKX_SAMPLES sample1 sample2 sample3 sample4 sample5
-		sample6)
+		sample6 sample7)
 
 	foreach(SAMPLE_NAME IN LISTS DUCKX_SAMPLES)
 		add_executable(
