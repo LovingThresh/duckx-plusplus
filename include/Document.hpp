@@ -12,6 +12,7 @@
 #include "Body.hpp"
 
 #include "MediaManager.hpp"
+#include "HeaderFooterManager.hpp"
 
 namespace duckx
 {
@@ -31,6 +32,9 @@ namespace duckx
         Body& body();
         MediaManager& media() const;
 
+        Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
+        Footer& get_footer(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
+
     private:
         explicit Document(std::unique_ptr<DocxFile> file);
         void load();
@@ -42,5 +46,6 @@ namespace duckx
 
         Body m_body;
         std::unique_ptr<MediaManager> m_media_manager;
+        std::unique_ptr<HeaderFooterManager> m_hf_manager;
     };
 } // namespace duckx

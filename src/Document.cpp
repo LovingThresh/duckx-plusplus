@@ -99,6 +99,9 @@ namespace duckx
 
         m_media_manager =
                 std::make_unique<MediaManager>(m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
+
+        m_hf_manager =
+            std::make_unique<HeaderFooterManager>(m_file.get(), &m_document_xml, &m_rels_xml, &m_content_types_xml);
     }
 
     void Document::save() const
@@ -106,6 +109,8 @@ namespace duckx
         if (!m_file)
             return;
 
+        m_hf_manager->save_all();
+        
         xml_string_writer writer;
         m_document_xml.print(writer, "  ", pugi::format_default);
 
@@ -130,5 +135,15 @@ namespace duckx
     MediaManager& Document::media() const
     {
         return *m_media_manager;
+    }
+
+    Header& Document::get_header(const HeaderFooterType type) const
+    {
+        return m_hf_manager->get_header(type);
+    }
+
+    Footer& Document::get_footer(const HeaderFooterType type) const
+    {
+        return m_hf_manager->get_footer(type);
     }
 } // namespace duckx

@@ -15,20 +15,23 @@ namespace duckx
     constexpr formatting_flag smallcaps = 1 << 6;
     constexpr formatting_flag shadow = 1 << 7;
 
-    enum class Alignment {
+    enum class Alignment
+    {
         LEFT,
         CENTER,
         RIGHT,
         BOTH
     };
 
-    enum class ListType {
-        NONE,      // 不是列表项
-        BULLET,    // 项目符号列表
-        NUMBER     // 编号列表
+    enum class ListType
+    {
+        NONE, // 不是列表项
+        BULLET, // 项目符号列表
+        NUMBER // 编号列表
     };
 
-    enum class HighlightColor {
+    enum class HighlightColor
+    {
         NONE, // No highlight
         BLACK,
         BLUE,
@@ -46,5 +49,13 @@ namespace duckx
         DARK_YELLOW,
         LIGHT_GRAY,
         // MS Word supports 16 standard highlight colors
+    };
+
+    enum class HeaderFooterType
+    {
+        DEFAULT,
+        FIRST,
+        EVEN,
+        ODD
     };
 } // namespace duckx
