@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @file: MediaManager.cpp
  * @brief:
  *
@@ -10,6 +10,7 @@
 #include "MediaManager.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include "DocxFile.hpp"
 #include "Image.hpp"
@@ -100,7 +101,7 @@ namespace duckx
         return {p_node, new_run_node};
     }
 
-    Run MediaManager::add_textbox(const Paragraph& p, TextBox& textbox)
+    Run MediaManager::add_textbox(const Paragraph& p, const TextBox& textbox)
     {
         pugi::xml_node paragraph_node = p.getNode();
         if (!paragraph_node)

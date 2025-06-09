@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
+
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/execution-charset:gbk>")
+
 # Project header files
 set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/duckx.hpp"

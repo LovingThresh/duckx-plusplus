@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Under MIT license
  * Author: Cihan SARI (@CihanSari)
  * DuckX is a free library to work wirh docx files.

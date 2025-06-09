@@ -51,12 +51,12 @@ int main()
         // ==========================================================
         auto p2 = body.add_paragraph();
 
-        p2.add_run("这是一段中文文本，")
-          .set_font("微软雅黑") // Microsoft YaHei
+        p2.add_run(u8"这是一段中文文本，")
+          .set_font(u8"微软雅黑") // Microsoft YaHei
           .set_font_size(12);
 
-        p2.add_run("其中这段是加粗的、紫色的、14号字。")
-          .set_font("黑体")   // SimHei
+        p2.add_run(u8"其中这段是加粗的、紫色的、14号字。")
+          .set_font(u8"黑体")   // SimHei
           .set_font_size(14)
           .set_color("800080"); // Purple
 

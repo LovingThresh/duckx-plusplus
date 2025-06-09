@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @file: DocFile.cpp
  * @brief:
  *
@@ -8,9 +8,14 @@
  */
 #include "DocxFile.hpp"
 
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
+
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
+#include <ctime>
 
 #include "zip.h"
 
@@ -288,25 +293,48 @@ namespace duckx
 
     std::string DocxFile::get_core_xml()
     {
-        const auto now = std::time(nullptr);
         tm tm_utc{};
 
-#if defined(_MSC_VER)
-        // Microsoft Visual C++ 使用线程安全的 gmtime_s
-        gmtime_s(&tm_utc, &now);
-#elif defined(__unix__) || defined(__APPLE__) || defined(__linux__)
-        // GCC/Clang on Unix-like systems (Linux, macOS) 使用线程安全的 gmtime_r
+#if defined(_WIN32)
+        // 在Windows平台，使用Win32 API GetSystemTime() 以获得最佳兼容性。
+        // 此API在所有现代和旧版Windows中都可用，且无C运行时库依赖问题。
+        SYSTEMTIME st;
+        GetSystemTime(&st);
+
+        tm_utc.tm_year = st.wYear - 1900;
+        tm_utc.tm_mon  = st.wMonth - 1;
+        tm_utc.tm_mday = st.wDay;
+        tm_utc.tm_hour = st.wHour;
+        tm_utc.tm_min  = st.wMinute;
+        tm_utc.tm_sec  = st.wSecond;
+        tm_utc.tm_wday = st.wDayOfWeek;
+        tm_utc.tm_isdst = 0; // UTC没有夏令时
+
+        // 计算一年中的第几天 (tm_yday)
+        constexpr int daysBeforeMonth[13] = {
+            0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
+        };
+        tm_utc.tm_yday = daysBeforeMonth[tm_utc.tm_mon] + tm_utc.tm_mday - 1;
+        auto isLeapYear = [](int year){ return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0); };
+        if (tm_utc.tm_mon > 1 && isLeapYear(st.wYear))
+        {
+            tm_utc.tm_yday++;
+        }
+
+#else
+        // 在类UNIX系统（Linux, macOS等），使用线程安全的 gmtime_r
+        const auto now = std::time(nullptr);
+#if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
         gmtime_r(&now, &tm_utc);
 #else
-        // 作为备选方案，使用非线程安全的 gmtime，这在单线程环境中是安全的。
-        // 在多线程环境中，这可能会有问题，但比无法编译要好。
+        // 为其他平台提供一个非线程安全的备选方案，保证可编译性。
         tm* temp_tm = std::gmtime(&now);
         if (temp_tm != nullptr)
         {
             tm_utc = *temp_tm;
         }
-#endif
-
+#endif // __unix__ || __APPLE__ || __linux__
+#endif // _WIN32
         char datetime[32];
         std::strftime(datetime, sizeof(datetime), "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
 

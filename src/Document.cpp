@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @file: Document.cpp
  * @brief:
  *
@@ -17,7 +17,8 @@ namespace duckx
     struct xml_string_writer : pugi::xml_writer
     {
         std::string result;
-        void write(const void* data, const size_t size) override
+        // ReSharper disable once CppParameterMayBeConst
+        void write(const void* data, size_t size) override
         {
             result.append(static_cast<const char*>(data), size);
         }

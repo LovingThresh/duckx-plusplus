@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @file: MediaManager.hpp
  * @brief:
  *
@@ -32,7 +32,7 @@ namespace duckx
                      pugi::xml_document* content_types_xml);
 
         Run add_image(const Paragraph& p, const Image& image);
-        Run add_textbox(const Paragraph& p, TextBox& textbox);
+        Run add_textbox(const Paragraph& p, const TextBox& textbox);
 
     private:
         std::string add_media_to_zip(const std::string& file_path);
