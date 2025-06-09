@@ -23,10 +23,13 @@ namespace pugi
 
 namespace duckx
 {
+    class Document;
+
     class HeaderFooterManager
     {
     public:
-        HeaderFooterManager(DocxFile* file, pugi::xml_document* doc_xml, pugi::xml_document* rels_xml, pugi::xml_document* content_types_xml);
+        HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,
+            pugi::xml_document* rels_xml, pugi::xml_document* content_types_xml);
 
         void save_all() const;
         Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT);
@@ -38,7 +41,7 @@ namespace duckx
         std::string get_part_name_for_type(HeaderFooterType type, const std::string& hf_keyword) const;
 
         // Helper functions for XML manipulations
-        std::string add_hf_relationship(const std::string& target_file, const std::string& hf_keyword_str);
+        std::string add_hf_relationship(const std::string& target_file, const std::string& hf_keyword_str) const;
         void add_content_type(const std::string& part_name, const std::string& content_type) const;
 
         void add_hf_reference_to_sect_pr(const std::string& rId, const std::string& hf_keyword, HeaderFooterType type) const;
@@ -59,8 +62,9 @@ namespace duckx
         std::map<HeaderFooterType, std::string> m_header_filenames;
         std::map<HeaderFooterType, std::string> m_footer_filenames;
 
+        Document* m_doc = nullptr;
+
         int m_header_id_counter = 1;
         int m_footer_id_counter = 1;
-        int m_rid_counter = 7; // Start from a safe number
     };
 }

@@ -32,6 +32,9 @@ namespace duckx
         Body& body();
         MediaManager& media() const;
 
+        std::string get_next_relationship_id();
+        unsigned int get_unique_docpr_id();
+
         Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
         Footer& get_footer(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
 
@@ -47,5 +50,6 @@ namespace duckx
         Body m_body;
         std::unique_ptr<MediaManager> m_media_manager;
         std::unique_ptr<HeaderFooterManager> m_hf_manager;
+        int m_rid_counter = 1;
     };
 } // namespace duckx

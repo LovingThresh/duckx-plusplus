@@ -12,56 +12,47 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <sstream>
+
 #include "DocxFile.hpp"
 #include "Image.hpp"
 
 #include "BaseElement.hpp"
+#include "Document.hpp"
 #include "TextBox.hpp"
 
 namespace duckx
 {
-    unsigned int safe_stoui(const char* s)
+    unsigned int safe_stoui(const char* str)
     {
-        if (!s)
-            return 0;
-        try
+        if (!str) return 0;
+
+        const std::string s(str);
+        if (s.empty() || s.find_first_not_of("0123456789") != std::string::npos)
         {
-            return std::stoul(s);
+            return 0; // Not a valid positive number
         }
-        catch (const std::exception&)
+
+        unsigned int val;
+        std::stringstream ss(s);
+        ss >> val;
+
+        if (ss.fail() || !ss.eof())
         {
-            return 0;
+            return 0; // Conversion failed or had extra character
         }
+
+        return val;
     }
 
-    MediaManager::MediaManager(DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
+    MediaManager::MediaManager(Document* owner_doc, DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
                                pugi::xml_document* content_types_xml)
-        : m_file(file), m_rels_xml(rels_xml), m_doc_xml(doc_xml), m_content_types_xml(content_types_xml)
+        : m_doc(owner_doc), m_file(file), m_rels_xml(rels_xml), m_doc_xml(doc_xml), m_content_types_xml(content_types_xml)
     {
-        if (!m_file || !m_rels_xml || !m_doc_xml)
+        if (!m_doc || !m_file || !m_rels_xml || !m_doc_xml)
         {
             throw std::logic_error("MediaManager requires valid DocxFile, rels XML, and document XML.");
         }
-
-        // --- Initialize rId counter by scanning document.xml.rels ---
-        int max_rid = 0;
-        if (m_rels_xml->child("Relationships"))
-        {
-            for (pugi::xml_node rel: m_rels_xml->child("Relationships").children("Relationship"))
-            {
-                const char* id_str = rel.attribute("Id").value();
-                // Assuming rId format is "rId" + number, e.g., "rId3"
-                if (id_str && std::string(id_str).rfind("rId", 0) == 0)
-                {
-                    const int current_id = std::stoi(id_str + 3); // Skip "rId"
-                    if (current_id > max_rid)
-                    {
-                        max_rid = current_id;
-                    }
-                }
-            }
-        }
-        m_rid_counter = max_rid + 1;
 
         unsigned int max_docpr_id = 0;
         const pugi::xpath_query docpr_query("//wp:docPr[@id] | //wps:docPr[@id]");
@@ -84,7 +75,7 @@ namespace duckx
         // 1. Add the physical file to the zip and create the relationship
         const std::string media_target = add_media_to_zip(image.get_path());
         const std::string rId = add_image_relationship(media_target);
-        const unsigned int drawing_id = get_unique_docpr_id();
+        const unsigned int drawing_id = m_doc->get_unique_docpr_id();
 
         // 2. Get the paragraph's XML node
         pugi::xml_node p_node = p.getNode();
@@ -178,10 +169,10 @@ namespace duckx
         return "media/" + internal_path.substr(internal_path.find_last_of('/') + 1);
     }
 
-    std::string MediaManager::add_image_relationship(const std::string& media_target)
+    std::string MediaManager::add_image_relationship(const std::string& media_target) const
     {
         const auto IMAGE_REL_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image";
-        std::string new_rid = get_unique_rid();
+        std::string new_rid = m_doc->get_next_relationship_id();
 
         pugi::xml_node relationships = m_rels_xml->child("Relationships");
         if (!relationships)
@@ -195,11 +186,6 @@ namespace duckx
         new_rel.append_attribute("Target") = media_target.c_str();
 
         return new_rid;
-    }
-
-    std::string MediaManager::get_unique_rid()
-    {
-        return "rId" + std::to_string(m_rid_counter++);
     }
 
     unsigned int MediaManager::get_unique_docpr_id()

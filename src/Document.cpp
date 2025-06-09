@@ -7,6 +7,9 @@
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
  */
 #include "Document.hpp"
+
+#include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <utility>
 #include "DocxFile.hpp"
@@ -88,6 +91,38 @@ namespace duckx
             m_rels_xml.load_string(DocxFile::get_document_rels_xml().c_str());
         }
 
+        int max_rid = 0;
+        const pugi::xml_node relationships = m_rels_xml.child("Relationships");
+        if (relationships)
+        {
+            for (pugi::xml_node rel = relationships.child("Relationship"); rel; rel = rel.next_sibling("Relationship"))
+            {
+                pugi::xml_attribute id_attr = rel.attribute("Id");
+                if (id_attr)
+                {
+                    std::string id_str = id_attr.as_string();
+                    if (id_str.rfind("rId", 0) == 0)
+                    {
+                        // Check if it starts with "rId"
+                        std::string num_part = id_str.substr(3);
+                        if (!num_part.empty() && std::all_of(num_part.begin(), num_part.end(), ::isdigit))
+                        {
+                            try
+                            {
+                                int current_id = std::stoi(num_part);
+                                max_rid = std::max(max_rid, current_id);
+                            }
+                            catch (const std::out_of_range& e)
+                            {
+                                std::cerr << "Out of range error while parsing rId: " << e.what() << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        m_rid_counter = max_rid + 1;
+
         if (m_file->has_entry("[Content_Types].xml"))
         {
             m_content_types_xml.load_string(m_file->read_entry("[Content_Types].xml").c_str());
@@ -98,10 +133,10 @@ namespace duckx
         }
 
         m_media_manager =
-                std::make_unique<MediaManager>(m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
+                std::make_unique<MediaManager>(this, m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
 
         m_hf_manager =
-            std::make_unique<HeaderFooterManager>(m_file.get(), &m_document_xml, &m_rels_xml, &m_content_types_xml);
+            std::make_unique<HeaderFooterManager>(this, m_file.get(), &m_document_xml, &m_rels_xml, &m_content_types_xml);
     }
 
     void Document::save() const
@@ -135,6 +170,16 @@ namespace duckx
     MediaManager& Document::media() const
     {
         return *m_media_manager;
+    }
+
+    std::string Document::get_next_relationship_id()
+    {
+        return "rId" + std::to_string(m_rid_counter++);
+    }
+
+    unsigned int Document::get_unique_docpr_id()
+    {
+        return m_rid_counter++;
     }
 
     Header& Document::get_header(const HeaderFooterType type) const

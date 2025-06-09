@@ -19,6 +19,7 @@ namespace pugi
 
 namespace duckx
 {
+    class Document;
     class DocxFile;
     class Image;
     class TextBox;
@@ -28,7 +29,7 @@ namespace duckx
     class MediaManager
     {
     public:
-        MediaManager(DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
+        MediaManager(Document* owner_doc, DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
                      pugi::xml_document* content_types_xml);
 
         Run add_image(const Paragraph& p, const Image& image);
@@ -36,8 +37,7 @@ namespace duckx
 
     private:
         std::string add_media_to_zip(const std::string& file_path);
-        std::string add_image_relationship(const std::string& media_target);
-        std::string get_unique_rid();
+        std::string add_image_relationship(const std::string& media_target) const;
         unsigned int get_unique_docpr_id();
 
         DocxFile* m_file;
@@ -45,8 +45,8 @@ namespace duckx
         pugi::xml_document* m_doc_xml;
         pugi::xml_document* m_content_types_xml;
 
+        Document* m_doc = nullptr;
         int m_media_id_counter = 1;
-        int m_rid_counter = 7;
         unsigned int m_docpr_id_counter = 1;
     };
 } // namespace duckx

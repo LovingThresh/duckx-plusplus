@@ -9,6 +9,8 @@
 #include "HeaderFooterManager.hpp"
 #include <stdexcept>
 
+#include "Document.hpp"
+
 namespace duckx
 {
     struct xml_string_writer : pugi::xml_writer
@@ -21,11 +23,12 @@ namespace duckx
         }
     };
 
-    HeaderFooterManager::HeaderFooterManager(DocxFile* file, pugi::xml_document* doc_xml, pugi::xml_document* rels_xml,
+    HeaderFooterManager::HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,
+                                             pugi::xml_document* rels_xml,
                                              pugi::xml_document* content_types_xml)
-        : m_file(file), m_doc_xml(doc_xml), m_rels_xml(rels_xml), m_content_types_xml(content_types_xml)
+        : m_doc(m_owner_doc), m_file(file), m_doc_xml(doc_xml), m_rels_xml(rels_xml),
+        m_content_types_xml(content_types_xml)
     {
-        // We could scan existing headers/footers here, but for now we focus on creation.
     }
 
     void HeaderFooterManager::save_all() const
@@ -142,10 +145,10 @@ namespace duckx
     }
 
     std::string HeaderFooterManager::add_hf_relationship(const std::string& target_file,
-                                                         const std::string& hf_keyword_str)
+                                                         const std::string& hf_keyword_str) const
     {
         pugi::xml_node relationships = m_rels_xml->child("Relationships");
-        std::string rId = "rId" + std::to_string(m_rid_counter++);
+        std::string rId = m_doc->get_next_relationship_id();
 
         pugi::xml_node rel_node = relationships.append_child("Relationship");
         rel_node.append_attribute("Id").set_value(rId.c_str());
