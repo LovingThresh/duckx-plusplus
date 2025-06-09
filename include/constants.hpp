@@ -27,4 +27,24 @@ namespace duckx
         BULLET,    // 项目符号列表
         NUMBER     // 编号列表
     };
+
+    enum class HighlightColor {
+        NONE, // No highlight
+        BLACK,
+        BLUE,
+        CYAN,
+        GREEN,
+        MAGENTA,
+        RED,
+        YELLOW, // Default highlight color
+        WHITE,
+        DARK_BLUE,
+        DARK_CYAN,
+        DARK_GREEN,
+        DARK_MAGENTA,
+        DARK_RED,
+        DARK_YELLOW,
+        LIGHT_GRAY,
+        // MS Word supports 16 standard highlight colors
+    };
 } // namespace duckx

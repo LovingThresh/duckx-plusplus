@@ -9,7 +9,7 @@
 #include "BaseElement.hpp"
 
 #include <cctype>
-#include <iostream>
+#include <map>
 #include <zip.h>
 
 namespace duckx
@@ -22,6 +22,34 @@ namespace duckx
     long long line_spacing_to_ooxml(const double spacing)
     {
         return static_cast<long long>(spacing * 240.0);
+    }
+
+    static std::string highlight_color_to_string(const HighlightColor color)
+    {
+        static const std::map<HighlightColor, std::string> color_map = {
+                {HighlightColor::BLACK, "black"},
+                {HighlightColor::BLUE, "blue"},
+                {HighlightColor::CYAN, "cyan"},
+                {HighlightColor::GREEN, "green"},
+                {HighlightColor::MAGENTA, "magenta"},
+                {HighlightColor::RED, "red"},
+                {HighlightColor::YELLOW, "yellow"},
+                {HighlightColor::WHITE, "white"},
+                {HighlightColor::DARK_BLUE, "darkBlue"},
+                {HighlightColor::DARK_CYAN, "darkCyan"},
+                {HighlightColor::DARK_GREEN, "darkGreen"},
+                {HighlightColor::DARK_MAGENTA, "darkMagenta"},
+                {HighlightColor::DARK_RED, "darkRed"},
+                {HighlightColor::DARK_YELLOW, "darkYellow"},
+                {HighlightColor::LIGHT_GRAY, "lightGray"}
+        };
+
+        auto it = color_map.find(color);
+        if (it != color_map.end())
+        {
+            return it->second;
+        }
+        return ""; // Return an empty string if not found
     }
 
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
@@ -119,6 +147,41 @@ namespace duckx
         }
 
         color_node.append_attribute("w:val").set_value(color.c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_highlight(const HighlightColor color)
+    {
+        pugi::xml_node rPr = get_or_create_rPr();
+
+        pugi::xml_node highlight_node = rPr.child("w:highlight");
+
+        if (color == HighlightColor::NONE)
+        {
+            if (highlight_node)
+            {
+                rPr.remove_child(highlight_node);
+            }
+        }
+        else
+        {
+            const std::string color_str = highlight_color_to_string(color);
+            if (!color_str.empty())
+            {
+                if (!highlight_node)
+                {
+                    highlight_node = rPr.append_child("w:highlight");
+                }
+
+                pugi::xml_attribute val_attr = highlight_node.attribute("w:val");
+                if (!val_attr)
+                {
+                    val_attr = highlight_node.append_attribute("w:val");
+                }
+                val_attr.set_value(color_str.c_str());
+            }
+        }
 
         return *this;
     }

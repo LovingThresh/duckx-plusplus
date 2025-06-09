@@ -50,6 +50,7 @@ namespace duckx
         Run& set_font(const std::string& font_name);
         Run& set_font_size(double size);
         Run& set_color(const std::string& color);
+        Run& set_highlight(HighlightColor color);
         std::string get_text() const;
         Run& next();
 
