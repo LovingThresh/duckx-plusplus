@@ -450,7 +450,14 @@ namespace duckx
         pugi::xml_node run_node = hyperlink_node.append_child("w:r");
 
         pugi::xml_node rpr_node = run_node.append_child("w:rPr");
+
         rpr_node.append_child("w:rStyle").append_attribute("w:val").set_value("Hyperlink");
+
+        pugi::xml_node color_node = rpr_node.append_child("w:color");
+        color_node.append_attribute("w:val").set_value("0563C1");
+
+        pugi::xml_node underline_node = rpr_node.append_child("w:u");
+        underline_node.append_attribute("w:val").set_value("single");
 
         pugi::xml_node text_node = run_node.append_child("w:t");
         text_node.text().set(text.c_str());
