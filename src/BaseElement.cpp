@@ -12,6 +12,9 @@
 #include <map>
 #include <zip.h>
 
+#include "Document.hpp"
+#include "HyperlinkManager.hpp"
+
 namespace duckx
 {
     long long points_to_twips(const double pts)
@@ -44,7 +47,7 @@ namespace duckx
                 {HighlightColor::LIGHT_GRAY, "lightGray"}
         };
 
-        auto it = color_map.find(color);
+        const auto it = color_map.find(color);
         if (it != color_map.end())
         {
             return it->second;
@@ -433,6 +436,30 @@ namespace duckx
         new_run_text.text().set(text);
 
         return *new Run(m_currentNode, new_run);
+    }
+
+    Run Paragraph::add_hyperlink(const Document& doc, const std::string& text, const std::string& url)
+    {
+        const HyperlinkManager& link_manager = doc.links();
+
+        const std::string rId = link_manager.add_relationship(url);
+
+        pugi::xml_node hyperlink_node = m_currentNode.append_child("w:hyperlink");
+        hyperlink_node.append_attribute("r:id").set_value(rId.c_str());
+
+        pugi::xml_node run_node = hyperlink_node.append_child("w:r");
+
+        pugi::xml_node rpr_node = run_node.append_child("w:rPr");
+        rpr_node.append_child("w:rStyle").append_attribute("w:val").set_value("Hyperlink");
+
+        pugi::xml_node text_node = run_node.append_child("w:t");
+        text_node.text().set(text.c_str());
+        if (!text.empty() && (isspace(text.front()) || isspace(text.back())))
+        {
+            text_node.append_attribute("xml:space").set_value("preserve");
+        }
+
+        return {hyperlink_node, run_node};
     }
 
     Paragraph& Paragraph::set_alignment(const Alignment align)

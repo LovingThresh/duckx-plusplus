@@ -47,7 +47,7 @@ namespace duckx
 
     MediaManager::MediaManager(Document* owner_doc, DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
                                pugi::xml_document* content_types_xml)
-        : m_doc(owner_doc), m_file(file), m_rels_xml(rels_xml), m_doc_xml(doc_xml), m_content_types_xml(content_types_xml)
+        : m_file(file), m_rels_xml(rels_xml), m_doc_xml(doc_xml), m_content_types_xml(content_types_xml), m_doc(owner_doc)
     {
         if (!m_doc || !m_file || !m_rels_xml || !m_doc_xml)
         {
@@ -75,7 +75,7 @@ namespace duckx
         // 1. Add the physical file to the zip and create the relationship
         const std::string media_target = add_media_to_zip(image.get_path());
         const std::string rId = add_image_relationship(media_target);
-        const unsigned int drawing_id = m_doc->get_unique_docpr_id();
+        const unsigned int drawing_id = m_doc->get_unique_rid();
 
         // 2. Get the paragraph's XML node
         pugi::xml_node p_node = p.getNode();

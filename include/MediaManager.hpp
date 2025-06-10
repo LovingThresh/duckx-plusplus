@@ -40,10 +40,10 @@ namespace duckx
         std::string add_image_relationship(const std::string& media_target) const;
         unsigned int get_unique_docpr_id();
 
-        DocxFile* m_file;
-        pugi::xml_document* m_rels_xml;
-        pugi::xml_document* m_doc_xml;
-        pugi::xml_document* m_content_types_xml;
+        DocxFile* m_file = nullptr;
+        pugi::xml_document* m_rels_xml = nullptr;
+        pugi::xml_document* m_doc_xml = nullptr;
+        pugi::xml_document* m_content_types_xml = nullptr;
 
         Document* m_doc = nullptr;
         int m_media_id_counter = 1;

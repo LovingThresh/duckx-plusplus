@@ -12,7 +12,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
-#include "DocxFile.hpp"
 
 namespace duckx
 {
@@ -51,11 +50,6 @@ namespace duckx
     {
         load();
     }
-
-    // 移动构造函数和赋值的实现
-    Document::Document(Document&& other) noexcept = default;
-    Document& Document::operator=(Document&& other) noexcept = default;
-    Document::~Document() = default;
 
     void Document::load()
     {
@@ -137,6 +131,8 @@ namespace duckx
 
         m_hf_manager =
             std::make_unique<HeaderFooterManager>(this, m_file.get(), &m_document_xml, &m_rels_xml, &m_content_types_xml);
+
+        m_link_manager = std::make_unique<HyperlinkManager>(this, &m_rels_xml);
     }
 
     void Document::save() const
@@ -172,12 +168,17 @@ namespace duckx
         return *m_media_manager;
     }
 
+    HyperlinkManager& Document::links() const
+    {
+        return *m_link_manager;
+    }
+
     std::string Document::get_next_relationship_id()
     {
         return "rId" + std::to_string(m_rid_counter++);
     }
 
-    unsigned int Document::get_unique_docpr_id()
+    unsigned int Document::get_unique_rid()
     {
         return m_rid_counter++;
     }

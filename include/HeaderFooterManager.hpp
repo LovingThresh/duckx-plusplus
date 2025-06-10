@@ -10,11 +10,11 @@
 #pragma once
 
 #include "constants.hpp"
-#include "DocxFile.hpp"
-#include "HeaderFooterBase.hpp"
 
 #include <map>
 #include <memory>
+
+#include "pugixml.hpp"
 
 namespace pugi
 {
@@ -23,6 +23,9 @@ namespace pugi
 
 namespace duckx
 {
+    class Footer;
+    class Header;
+    class DocxFile;
     class Document;
 
     class HeaderFooterManager
@@ -30,6 +33,7 @@ namespace duckx
     public:
         HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,
             pugi::xml_document* rels_xml, pugi::xml_document* content_types_xml);
+        ~HeaderFooterManager() = default;
 
         void save_all() const;
         Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT);
@@ -50,10 +54,11 @@ namespace duckx
         // Helper to convert enum to string for XML
         static std::string hf_type_to_string(HeaderFooterType type);
 
-        DocxFile* m_file;
-        pugi::xml_document* m_doc_xml;
-        pugi::xml_document* m_rels_xml;
-        pugi::xml_document* m_content_types_xml;
+        DocxFile* m_file = nullptr;
+        Document* m_doc = nullptr;
+        pugi::xml_document* m_doc_xml = nullptr;
+        pugi::xml_document* m_rels_xml = nullptr;
+        pugi::xml_document* m_content_types_xml = nullptr;
 
         std::map<HeaderFooterType, std::unique_ptr<pugi::xml_document>> m_hf_docs;
         std::map<HeaderFooterType, std::unique_ptr<Header>> m_headers;
@@ -61,8 +66,6 @@ namespace duckx
 
         std::map<HeaderFooterType, std::string> m_header_filenames;
         std::map<HeaderFooterType, std::string> m_footer_filenames;
-
-        Document* m_doc = nullptr;
 
         int m_header_id_counter = 1;
         int m_footer_id_counter = 1;

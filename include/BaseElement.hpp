@@ -16,6 +16,8 @@
 
 namespace duckx
 {
+    class Document;
+
     class DocxElement
     {
     public:
@@ -72,6 +74,7 @@ namespace duckx
         ElementRange<Run> runs();
         Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
         Run& add_run(const char*, duckx::formatting_flag = duckx::none);
+        Run add_hyperlink(const Document& doc, const std::string& text, const std::string& url);
         Paragraph& set_alignment(Alignment align);
         Paragraph& set_spacing(double before_pts = -1, double after_pts = -1);
         Paragraph& set_line_spacing(double line_spacing);

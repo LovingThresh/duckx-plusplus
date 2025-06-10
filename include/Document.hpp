@@ -9,14 +9,22 @@
 
 #pragma once
 #include <memory>
-#include "Body.hpp"
 
-#include "MediaManager.hpp"
+#include "Body.hpp"
+#include "DocxFile.hpp"
 #include "HeaderFooterManager.hpp"
+#include "HyperlinkManager.hpp"
+#include "MediaManager.hpp"
+#include "HeaderFooterBase.hpp"
 
 namespace duckx
 {
     class DocxFile;
+    class MediaManager;
+    class HeaderFooterManager;
+    class HyperlinkManager;
+    class Header;
+    class Footer;
 
     class Document
     {
@@ -24,16 +32,17 @@ namespace duckx
         static Document open(const std::string& path);
         static Document create(const std::string& path);
 
-        Document(Document&&) noexcept;
-        Document& operator=(Document&&) noexcept;
-        ~Document();
+        Document::Document(Document&& other) noexcept = default;
+        Document& Document::operator=(Document&& other) noexcept = default;
+        Document::~Document() = default;
 
         void save() const;
         Body& body();
         MediaManager& media() const;
+        HyperlinkManager& links() const;
 
         std::string get_next_relationship_id();
-        unsigned int get_unique_docpr_id();
+        unsigned int get_unique_rid();
 
         Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
         Footer& get_footer(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
@@ -50,6 +59,7 @@ namespace duckx
         Body m_body;
         std::unique_ptr<MediaManager> m_media_manager;
         std::unique_ptr<HeaderFooterManager> m_hf_manager;
+        std::unique_ptr<HyperlinkManager> m_link_manager;
         int m_rid_counter = 1;
     };
 } // namespace duckx

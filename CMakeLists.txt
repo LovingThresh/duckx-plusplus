@@ -29,6 +29,7 @@ set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/TextBox.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/HeaderFooterBase.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/HeaderFooterManager.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/HyperlinkManager.hpp"
 )
 
 # Project source files
@@ -44,6 +45,7 @@ set(DUCKX_PROJECT_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/TextBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/HeaderFooterBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/HeaderFooterManager.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/HyperlinkManager.cpp"
 )
 
 # Third-party header files

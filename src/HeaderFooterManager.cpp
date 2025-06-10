@@ -10,6 +10,8 @@
 #include <stdexcept>
 
 #include "Document.hpp"
+#include "DocxFile.hpp"
+#include "HeaderFooterBase.hpp"
 
 namespace duckx
 {
@@ -26,8 +28,8 @@ namespace duckx
     HeaderFooterManager::HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,
                                              pugi::xml_document* rels_xml,
                                              pugi::xml_document* content_types_xml)
-        : m_doc(m_owner_doc), m_file(file), m_doc_xml(doc_xml), m_rels_xml(rels_xml),
-        m_content_types_xml(content_types_xml)
+        : m_file(file), m_doc_xml(doc_xml), m_rels_xml(rels_xml), m_content_types_xml(content_types_xml),
+        m_doc(m_owner_doc)
     {
     }
 
