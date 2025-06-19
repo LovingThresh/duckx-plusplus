@@ -54,6 +54,16 @@ namespace duckx
         Run& set_color(const std::string& color);
         Run& set_highlight(HighlightColor color);
         std::string get_text() const;
+
+        formatting_flag get_formatting() const;
+        bool is_bold() const;
+        bool is_italic() const;
+        bool is_underline() const;
+        bool get_font(std::string& font_name) const;
+        bool get_font_size(double& size) const;
+        bool get_color(std::string& color) const;
+        bool get_highlight(HighlightColor& color) const;
+
         Run& next();
 
     private:
@@ -83,6 +93,14 @@ namespace duckx
         Paragraph& set_list_style(ListType type, int level = 0);
         Paragraph& insert_paragraph_after(const std::string& = "", duckx::formatting_flag = duckx::none);
         Paragraph& next();
+
+        Alignment get_alignment() const;
+        bool get_line_spacing(double& line_spacing) const;
+        bool get_spacing(double& before_pts, double& after_pts) const;
+        bool get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const;
+        bool get_list_style(ListType& type, int& level, int& numId) const;
+
+
 
     private:
         pugi::xml_node get_or_create_pPr();

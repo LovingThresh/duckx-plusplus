@@ -30,21 +30,21 @@ namespace duckx
     static std::string highlight_color_to_string(const HighlightColor color)
     {
         static const std::map<HighlightColor, std::string> color_map = {
-                {HighlightColor::BLACK, "black"},
-                {HighlightColor::BLUE, "blue"},
-                {HighlightColor::CYAN, "cyan"},
-                {HighlightColor::GREEN, "green"},
-                {HighlightColor::MAGENTA, "magenta"},
-                {HighlightColor::RED, "red"},
-                {HighlightColor::YELLOW, "yellow"},
-                {HighlightColor::WHITE, "white"},
-                {HighlightColor::DARK_BLUE, "darkBlue"},
-                {HighlightColor::DARK_CYAN, "darkCyan"},
-                {HighlightColor::DARK_GREEN, "darkGreen"},
-                {HighlightColor::DARK_MAGENTA, "darkMagenta"},
-                {HighlightColor::DARK_RED, "darkRed"},
-                {HighlightColor::DARK_YELLOW, "darkYellow"},
-                {HighlightColor::LIGHT_GRAY, "lightGray"}
+            {HighlightColor::BLACK, "black"},
+            {HighlightColor::BLUE, "blue"},
+            {HighlightColor::CYAN, "cyan"},
+            {HighlightColor::GREEN, "green"},
+            {HighlightColor::MAGENTA, "magenta"},
+            {HighlightColor::RED, "red"},
+            {HighlightColor::YELLOW, "yellow"},
+            {HighlightColor::WHITE, "white"},
+            {HighlightColor::DARK_BLUE, "darkBlue"},
+            {HighlightColor::DARK_CYAN, "darkCyan"},
+            {HighlightColor::DARK_GREEN, "darkGreen"},
+            {HighlightColor::DARK_MAGENTA, "darkMagenta"},
+            {HighlightColor::DARK_RED, "darkRed"},
+            {HighlightColor::DARK_YELLOW, "darkYellow"},
+            {HighlightColor::LIGHT_GRAY, "lightGray"}
         };
 
         const auto it = color_map.find(color);
@@ -53,6 +53,23 @@ namespace duckx
             return it->second;
         }
         return ""; // Return an empty string if not found
+    }
+
+    static bool check_boolean_property(const pugi::xml_node& rPr, const char* tag_name)
+    {
+        if (!rPr) return false;
+
+        const auto tag = rPr.child(tag_name);
+        if (!tag) return false;
+
+        // The property is present. Now check if it's explicitly set to false.
+        const auto val_attr = tag.attribute("w:val");
+        if (val_attr && (std::string(val_attr.as_string()) == "false" || std::string(val_attr.as_string()) == "0"))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
@@ -86,6 +103,153 @@ namespace duckx
     std::string Run::get_text() const
     {
         return m_currentNode.child("w:t").text().get();
+    }
+
+    bool Run::is_bold() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        return check_boolean_property(rPr, "w:b");
+    }
+
+    bool Run::is_italic() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        return check_boolean_property(rPr, "w:i");
+    }
+
+    bool Run::is_underline() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto tag = rPr.child("w:u");
+        if (!tag) return false;
+
+        // Underline can be turned off with w:val="none"
+        const auto val_attr = tag.attribute("w:val");
+        if (val_attr && std::string(val_attr.as_string()) == "none")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Run::get_font(std::string& font_name) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto rFonts = rPr.child("w:rFonts");
+        if (!rFonts) return false;
+
+        // The "ascii" attribute is typically the one to use for standard characters.
+        const auto font_attr = rFonts.attribute("w:ascii");
+        if (font_attr)
+        {
+            font_name = font_attr.as_string();
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_font_size(double& size) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto sz = rPr.child("w:sz");
+        if (!sz) return false;
+
+        const auto val_attr = sz.attribute("w:val");
+        if (val_attr)
+        {
+            // Font size in docx is stored in "half-points"
+            size = val_attr.as_double() / 2.0;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_color(std::string& color) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto color_node = rPr.child("w:color");
+        if (!color_node) return false;
+
+        const auto val_attr = color_node.attribute("w:val");
+        if (val_attr)
+        {
+            color = val_attr.as_string();
+            // Don't return "auto" colors as they are not explicit RGB values
+            if (color == "auto") return false;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_highlight(HighlightColor& color) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto highlight_node = rPr.child("w:highlight");
+        if (!highlight_node) return false;
+
+        const auto val_attr = highlight_node.attribute("w:val");
+        if (!val_attr) return false;
+
+        const std::string val_str = val_attr.as_string();
+
+        static const std::map<std::string, HighlightColor> color_map = {
+            {"black", HighlightColor::BLACK}, {"blue", HighlightColor::BLUE},
+            {"cyan", HighlightColor::CYAN}, {"green", HighlightColor::GREEN},
+            {"magenta", HighlightColor::MAGENTA}, {"red", HighlightColor::RED},
+            {"yellow", HighlightColor::YELLOW}, {"white", HighlightColor::WHITE},
+            {"darkBlue", HighlightColor::DARK_BLUE}, {"darkCyan", HighlightColor::DARK_CYAN},
+            {"darkGreen", HighlightColor::DARK_GREEN}, {"darkMagenta", HighlightColor::DARK_MAGENTA},
+            {"darkRed", HighlightColor::DARK_RED}, {"darkYellow", HighlightColor::DARK_YELLOW},
+            {"lightGray", HighlightColor::LIGHT_GRAY}
+        };
+
+        const auto it = color_map.find(val_str);
+        if (it != color_map.end())
+        {
+            color = it->second;
+            return true;
+        }
+
+        return false;
+    }
+
+    formatting_flag Run::get_formatting() const
+    {
+        formatting_flag flag = none;
+        if (is_bold()) flag |= bold;
+        if (is_italic()) flag |= italic;
+        if (is_underline()) flag |= underline;
+
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (rPr)
+        {
+            if (check_boolean_property(rPr, "w:strike")) flag |= strikethrough;
+            if (check_boolean_property(rPr, "w:smallCaps")) flag |= smallcaps;
+            if (check_boolean_property(rPr, "w:shadow")) flag |= shadow;
+
+            if (const auto vertAlign = rPr.child("w:vertAlign"))
+            {
+                const std::string val = vertAlign.attribute("w:val").as_string();
+                if (val == "superscript") flag |= superscript;
+                else if (val == "subscript") flag |= subscript;
+            }
+        }
+
+        return flag;
     }
 
     bool Run::set_text(const std::string& text) const
@@ -361,6 +525,128 @@ namespace duckx
         m_currentNode = m_currentNode.next_sibling();
         m_run.set_parent(m_currentNode);
         return *this;
+    }
+
+    Alignment Paragraph::get_alignment() const
+    {
+        if (const auto pPr = m_currentNode.child("w:pPr"))
+        {
+            if (const auto jc = pPr.child("w:jc"))
+            {
+                const std::string val = jc.attribute("w:val").as_string();
+                if (val == "center") return Alignment::CENTER;
+                if (val == "right") return Alignment::RIGHT;
+                if (val == "both") return Alignment::BOTH;
+            }
+        }
+        return Alignment::LEFT;
+    }
+
+    bool Paragraph::get_line_spacing(double& line_spacing) const
+    {
+        if (const auto pPr = m_currentNode.child("w:pPr"))
+        {
+            if (const auto spacingNode = pPr.child("w:spacing"))
+            {
+                if (const auto line = spacingNode.attribute("w:line"))
+                {
+                    line_spacing = line.as_double() / 240.0;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_spacing(double& before_pts, double& after_pts) const
+    {
+        if (const auto pPr = m_currentNode.child("w:pPr"))
+        {
+            if (const auto spacingNode = pPr.child("w:spacing"))
+            {
+                bool found = false;
+                if (const auto before = spacingNode.attribute("w:before"))
+                {
+                    before_pts = before.as_double() / 20.0;
+                    found = true;
+                }
+                if (const auto after = spacingNode.attribute("w:after"))
+                {
+                    after_pts = after.as_double() / 20.0;
+                    found = true;
+                }
+                return found;
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const
+    {
+        if (const auto pPr = m_currentNode.child("w:pPr"))
+        {
+            if (const auto indNode = pPr.child("w:ind"))
+            {
+                bool found = false;
+                if (const auto left = indNode.attribute("w:left"))
+                {
+                    left_pts = left.as_double() / 20.0;
+                    found = true;
+                }
+                if (const auto right = indNode.attribute("w:right"))
+                {
+                    right_pts = right.as_double() / 20.0;
+                    found = true;
+                }
+                if (const auto firstLine = indNode.attribute("w:firstLine"))
+                {
+                    first_line_pts = firstLine.as_double() / 20.0;
+                    found = true;
+                }
+                if (const auto hanging = indNode.attribute("w:hanging"))
+                {
+                    // A hanging indent is a negative first line indent
+                    first_line_pts = -hanging.as_double() / 20.0;
+                    found = true;
+                }
+                return found;
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_list_style(ListType& type, int& level, int& numId) const
+    {
+        if (const auto pPr = m_currentNode.child("w:pPr"))
+        {
+            if (const auto numPr = pPr.child("w:numPr"))
+            {
+                if (const auto ilvl = numPr.child("w:ilvl"))
+                {
+                    level = ilvl.attribute("w:val").as_int(-1);
+                }
+                else
+                {
+                    level = -1;
+                }
+
+                if (const auto id = numPr.child("w:numId"))
+                {
+                    numId = id.attribute("w:val").as_int(-1);
+                }
+                else
+                {
+                    numId = -1;
+                }
+
+                // As before, we can't easily determine the type (BULLET/NUMBER)
+                // from this XML alone. We'll default to BULLET as a placeholder.
+                type = ListType::BULLET;
+
+                return numId > 0;
+            }
+        }
+        return false;
     }
 
     pugi::xml_node Paragraph::get_or_create_pPr()

@@ -2,7 +2,7 @@
 
 namespace duckx
 {
-    typedef unsigned const int formatting_flag;
+    typedef unsigned int formatting_flag;
 
     // text-formatting flags
     constexpr formatting_flag none = 0;
