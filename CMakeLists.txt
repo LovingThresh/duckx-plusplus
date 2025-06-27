@@ -1,3 +1,4 @@
+# ====== Project Configuration ======
 cmake_minimum_required(VERSION 3.10)
 project(duckx VERSION 0.2 LANGUAGES CXX C) # Explicitly state C for zip.c
 
@@ -10,10 +11,13 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
+# ====== Compiler Settings ======
+if(MSVC)
+	add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/execution-charset:gbk>")
-
+# ====== Source Files Definition ======
 # Project header files
 set(DUCKX_PROJECT_HEADERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/include/duckx.hpp"
@@ -62,6 +66,7 @@ set(DUCKX_THIRD_PARTY_SOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp"
 )
 
+# ====== Library Target ======
 # Add the library
 # Including headers here helps IDEs like Visual Studio associate them with the target.
 if(BUILD_SHARED_LIBS)
@@ -84,6 +89,7 @@ set_target_properties(duckx PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
 # Create an alias for modern CMake usage (duckx::duckx)
 add_library(duckx::duckx ALIAS duckx)
 
+# ====== Include Directories ======
 # Include directories needed to compile the library itself (PRIVATE)
 target_include_directories(duckx PRIVATE
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zip"     # For zip.h
@@ -97,6 +103,7 @@ target_include_directories(duckx PUBLIC
 		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+# ====== IDE Organization ======
 # Organize files into filters for Visual Studio
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Header Files\\Project" FILES ${DUCKX_PROJECT_HEADERS})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX "Source Files\\Project" FILES ${DUCKX_PROJECT_SOURCES})
@@ -114,7 +121,7 @@ source_group("Source Files\\ThirdParty\\Zip" FILES
 
 mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR) # Keep this if it's your preference
 
-# Sample executables
+# ====== Sample Executables ======
 if (BUILD_SAMPLES)
 	file(GLOB DUCKX_SAMPLE_FILES "samples/*.cpp")
 
@@ -135,6 +142,30 @@ if (BUILD_SAMPLES)
 			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
+# ====== Testing Configuration ======
+option(BUILD_TESTING "Build the testing tree" ON)
+include(CTest)
+
+if(BUILD_TESTING)
+	message(STATUS "Tests are enabled. Configuring googletest...")
+
+	# Check if googletest source exists
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/googletest/CMakeLists.txt")
+		# Force GoogleTest to use the same runtime library as main project
+		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+		# Add googletest as subdirectory
+		# EXCLUDE_FROM_ALL prevents gtest targets from being built by default
+		add_subdirectory(thirdparty/googletest EXCLUDE_FROM_ALL)
+
+		# Add test directory which defines tests and links with gtest
+		add_subdirectory(test)
+	else()
+		message(WARNING "Googletest source not found in 'thirdparty/googletest'. Tests will NOT be built.")
+	endif()
+endif()
+
+# ====== Installation Setup ======
 # Standard installation setup
 include(GNUInstallDirs)
 
@@ -165,19 +196,3 @@ install(
 		FILES ${DUCKX_PROJECT_HEADERS} ${DUCKX_THIRD_PARTY_HEADERS} # Bundling third-party headers with project headers
 		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duckx
 )
-
-# Testing setup (conditionally enable testing)
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) # Only for the main project
-	# Allow user to enable/disable tests, defaulting to ON if CTest is available
-	if(NOT DEFINED BUILD_TESTING AND CTEST_FOUND)
-		set(BUILD_TESTING ON CACHE BOOL "Build the tests")
-	elseif(NOT DEFINED BUILD_TESTING)
-		set(BUILD_TESTING OFF CACHE BOOL "Build the tests")
-	endif()
-
-	if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt") # Check if test subdir exists
-		include(CTest) # Includes CTest module, which defines enable_testing() and add_test()
-		enable_testing()
-		add_subdirectory(test)
-	endif()
-endif()

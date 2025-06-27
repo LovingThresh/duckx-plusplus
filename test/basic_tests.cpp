@@ -1,21 +1,20 @@
-#include <sstream>
-#include "Document.hpp"
-#include "doctest.h"
+#include <sstream>      // 用于字符串流
+#include "Document.hpp" // 引入你的 duckx 文档处理类
+#include "gtest/gtest.h"  // 1. 引入 GTest 的核心头文件
 
-TEST_CASE("checks contents of my_test.docx")
+TEST(DocxContentTest, ChecksContentsOfMyTestFile)
 {
-    // 1. 使用新的静态工厂方法打开文档
     auto doc = duckx::Document::open("my_test.docx");
 
-    std::ostringstream ss;
-
-    for (auto p : doc.body().paragraphs())
+    std::ostringstream actual_content_stream;
+    for (auto& p: doc.body().paragraphs())
     {
-        for (const auto& r : p.runs())
+        for (const auto& r: p.runs())
         {
-            ss << r.get_text() << std::endl;
+            actual_content_stream << r.get_text() << std::endl;
         }
     }
 
-    CHECK_EQ("This is a test\nokay?\n", ss.str());
+    const std::string expected_content = "This is a test\nokay?\n";
+    EXPECT_EQ(expected_content, actual_content_stream.str());
 }
