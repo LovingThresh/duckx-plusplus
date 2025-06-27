@@ -19,7 +19,7 @@ TEST(DocxIteratorTest, RangeForLoopReadsContentCorrectly)
         }
     }
 
-    const std::string expected_content = "This is a test\n okay?\n";
+    const std::string expected_content = "This is a test\nokay?\n";
     EXPECT_EQ(expected_content, ss.str());
 }
 

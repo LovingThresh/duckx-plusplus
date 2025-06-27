@@ -6,6 +6,7 @@ add_executable(
         run_gtests
         basic_tests.cpp
         iterator_tests.cpp
+        test_base_element.cpp
 )
 
 target_link_libraries(

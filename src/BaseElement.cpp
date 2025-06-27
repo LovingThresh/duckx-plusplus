@@ -371,7 +371,8 @@ namespace duckx
 
     bool Run::has_next() const
     {
-        return m_currentNode != nullptr;
+        if (!m_currentNode) return false;
+        return findNextSibling("w:r") != nullptr;
     }
 
     TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
@@ -392,7 +393,8 @@ namespace duckx
 
     bool TableCell::has_next() const
     {
-        return m_currentNode != nullptr;
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tc") != nullptr;
     }
 
     TableCell& TableCell::next()
@@ -457,7 +459,8 @@ namespace duckx
 
     bool TableRow::has_next() const
     {
-        return m_currentNode != nullptr;
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tr") != nullptr;
     }
 
     Table::Table(const pugi::xml_node parent, const pugi::xml_node current)
@@ -473,7 +476,8 @@ namespace duckx
 
     bool Table::has_next() const
     {
-        return m_currentNode != nullptr;
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tbl") != nullptr;
     }
 
     Table& Table::next()
@@ -661,7 +665,8 @@ namespace duckx
 
     bool Paragraph::has_next() const
     {
-        return m_currentNode != nullptr;
+        if (!m_currentNode) return false;
+        return findNextSibling("w:pPr") != nullptr;
     }
 
     ElementRange<Run> Paragraph::runs()
