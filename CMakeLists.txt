@@ -12,7 +12,7 @@ option(DUCKX_ENABLE_ABSL "Enable Abseil integration" ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # C++ Standard settings
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -227,7 +227,7 @@ if(BUILD_TESTING)
 	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/googletest/CMakeLists.txt")
 		# Configure GoogleTest options to minimize noise
 		set(gtest_force_shared_crt ON CACHE BOOL "Force shared CRT" FORCE)
-		set(BUILD_GMOCK OFF CACHE BOOL "Disable GMock" FORCE)
+		set(BUILD_GMOCK ON CACHE BOOL "Enable GMock" FORCE)
 		set(INSTALL_GTEST OFF CACHE BOOL "Disable GTest installation" FORCE)
 		set(gtest_build_samples OFF CACHE BOOL "Disable GTest samples" FORCE)
 		set(gtest_build_tests OFF CACHE BOOL "Disable GTest's own tests" FORCE)

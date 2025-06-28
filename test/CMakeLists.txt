@@ -2,11 +2,11 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
+file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/test_*.cpp")
+
 add_executable(
         run_gtests
-        basic_tests.cpp
-        iterator_tests.cpp
-        test_base_element.cpp
+        ${TEST_SOURCES}
 )
 
 target_link_libraries(
@@ -14,6 +14,7 @@ target_link_libraries(
         PRIVATE
         duckx
         gtest_main
+        gmock_main
 )
 
 include(GoogleTest)
