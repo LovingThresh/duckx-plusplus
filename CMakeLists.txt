@@ -72,38 +72,8 @@ endif ()
 
 # ====== Source Files Definition ======
 # Project header files
-set(DUCKX_PROJECT_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/duckx.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/constants.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/duckxiterator.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/Image.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/Document.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/BaseElement.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/DocxFile.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/Body.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/MediaManager.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/DrawingElement.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/TextBox.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/HeaderFooterBase.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/HeaderFooterManager.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/HyperlinkManager.hpp"
-)
-
-# Project source files
-set(DUCKX_PROJECT_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/duckx.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/Image.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/Document.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/BaseElement.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/DocxFile.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/Body.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/MediaManager.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/DrawingElement.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/TextBox.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/HeaderFooterBase.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/HeaderFooterManager.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/HyperlinkManager.cpp"
-)
+file(GLOB DUCKX_PROJECT_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
+file(GLOB DUCKX_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Third-party header files (excluding Abseil, handled separately)
 set(DUCKX_THIRD_PARTY_HEADERS
