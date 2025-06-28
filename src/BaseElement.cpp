@@ -10,6 +10,7 @@
 
 #include <cctype>
 #include <map>
+#include <unordered_map>
 #include <zip.h>
 
 #include "Document.hpp"
@@ -17,6 +18,14 @@
 
 namespace duckx
 {
+    std::unordered_map<std::string, int> node_map = {
+        {"w:p", 0},
+        {"w:tbl", 1},
+        {"w:r", 2},
+        {"w:tr", 3},
+        {"w:tc", 4}
+    };
+
     long long points_to_twips(const double pts)
     {
         return static_cast<long long>(pts * 20.0);
@@ -75,6 +84,97 @@ namespace duckx
     DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
         : m_parentNode(parentNode), m_currentNode(currentNode) {}
 
+    pugi::xml_node DocxElement::getNode() const
+    {
+        return m_currentNode;
+    }
+
+    bool DocxElement::has_next_sibling() const
+    {
+        return !findNextAnySibling().empty();
+    }
+
+    DocxElement::SiblingInfo DocxElement::peek_next_sibling() const
+    {
+        const pugi::xml_node next = findNextAnySibling();
+        if (!next)
+        {
+            return {};
+        }
+
+        const ElementType type = determineElementType(next);
+        const std::string tag_name = next.name();
+
+        return {type, tag_name};
+    }
+
+    pugi::xml_node DocxElement::findNextSibling(const std::string& name) const
+    {
+        const pugi::xml_node sibling = m_currentNode.next_sibling(name.c_str());
+        return sibling;
+    }
+
+    pugi::xml_node DocxElement::findNextAnySibling() const
+    {
+        if (!m_currentNode)
+            return {};
+
+        return m_currentNode.next_sibling();
+    }
+
+    DocxElement::ElementType DocxElement::mapStringToElementType(const std::string& node_name)
+    {
+        const auto it = node_map.find(node_name);
+        const int type = (it != node_map.end()) ? it->second : -1;
+        switch (type)
+        {
+            case 0: return ElementType::PARAGRAPH;
+            case 1: return ElementType::TABLE;
+            case 2: return ElementType::RUN;
+            case 3: return ElementType::TABLE_ROW;
+            case 4: return ElementType::TABLE_CELL;
+            default: return ElementType::UNKNOWN;
+        }
+    }
+
+    DocxElement::ElementType DocxElement::determineElementType(const pugi::xml_node node)
+    {
+        if (!node)
+            return ElementType::UNKNOWN;
+
+        const std::string node_name = node.name();
+
+        if (node_name == "w:p")
+            return ElementType::PARAGRAPH;
+        else if (node_name == "w:tbl")
+            return ElementType::TABLE;
+        else if (node_name == "w:r")
+            return ElementType::RUN;
+        else if (node_name == "w:tr")
+            return ElementType::TABLE_ROW;
+        else if (node_name == "w:tc")
+            return ElementType::TABLE_CELL;
+        else
+            return ElementType::UNKNOWN;
+    }
+
+    Run::Run(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    bool Run::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return findNextSibling("w:r") != nullptr;
+    }
+
+    bool Run::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !findNextSibling("w:r").empty();
+    }
+
     void Run::set_parent(const pugi::xml_node node)
     {
         m_parentNode = node;
@@ -85,20 +185,6 @@ namespace duckx
     {
         m_currentNode = node;
     }
-
-    pugi::xml_node DocxElement::getNode() const
-    {
-        return m_currentNode;
-    }
-
-    pugi::xml_node DocxElement::findNextSibling(const std::string& name) const
-    {
-        const pugi::xml_node sibling = m_currentNode.next_sibling(name.c_str());
-        return sibling;
-    }
-
-    Run::Run(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
 
     std::string Run::get_text() const
     {
@@ -353,10 +439,36 @@ namespace duckx
         return *this;
     }
 
-    Run& Run::next()
+    Run& Run::advance()
     {
-        m_currentNode = m_currentNode.next_sibling();
+        m_currentNode = m_currentNode.next_sibling("w:r");
         return *this;
+    }
+
+    bool Run::try_advance()
+    {
+        const pugi::xml_node next_run = findNextSibling("w:r");
+        if (!next_run.empty())
+        {
+            m_currentNode = next_run;
+            return true;
+        }
+        return false;
+    }
+
+    bool Run::can_advance() const
+    {
+        return !findNextSibling("w:r").empty();
+    }
+
+    bool Run::move_to_next_run()
+    {
+        const pugi::xml_node next_run = findNextSibling("w:r");
+        if (!next_run)
+            return false;
+
+        m_currentNode = next_run;
+        return true;
     }
 
     pugi::xml_node Run::get_or_create_rPr()
@@ -367,145 +479,6 @@ namespace duckx
             rPr_node = m_currentNode.insert_child_before("w:rPr", m_currentNode.first_child());
         }
         return rPr_node;
-    }
-
-    bool Run::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return findNextSibling("w:r") != nullptr;
-    }
-
-    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
-
-    void TableCell::set_parent(const pugi::xml_node node)
-    {
-        m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:tc");
-
-        m_paragraph.set_parent(m_currentNode);
-    }
-
-    void TableCell::set_current(const pugi::xml_node node)
-    {
-        m_currentNode = node;
-    }
-
-    bool TableCell::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return findNextSibling("w:tc") != nullptr;
-    }
-
-    TableCell& TableCell::next()
-    {
-        m_currentNode = m_currentNode.next_sibling();
-        return *this;
-    }
-
-    ElementRange<Paragraph> TableCell::paragraphs()
-    {
-        if (m_currentNode)
-        {
-            m_paragraph.set_current(m_currentNode.child("w:p"));
-        }
-        else
-        {
-            m_paragraph.set_current(pugi::xml_node());
-        }
-
-        m_paragraph.set_parent(m_currentNode);
-
-        return ElementRange<Paragraph>(m_paragraph);
-    }
-
-    TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
-
-    void TableRow::set_parent(const pugi::xml_node node)
-    {
-        m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:tr");
-
-        m_tableCell.set_parent(m_currentNode);
-    }
-
-    void TableRow::set_current(const pugi::xml_node node)
-    {
-        m_currentNode = node;
-    }
-
-    TableRow& TableRow::next()
-    {
-        m_currentNode = m_currentNode.next_sibling();
-        return *this;
-    }
-
-    ElementRange<TableCell> TableRow::cells()
-    {
-        if (m_currentNode)
-        {
-            m_tableCell.set_current(m_currentNode.child("w:tc"));
-        }
-        else
-        {
-            m_tableCell.set_current(pugi::xml_node());
-        }
-
-        m_tableCell.set_parent(m_currentNode);
-
-        return ElementRange<TableCell>(m_tableCell);
-    }
-
-    bool TableRow::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return findNextSibling("w:tr") != nullptr;
-    }
-
-    Table::Table(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
-
-    void Table::set_parent(const pugi::xml_node node)
-    {
-        m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:tbl");
-
-        m_tableRow.set_parent(m_currentNode);
-    }
-
-    bool Table::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return findNextSibling("w:tbl") != nullptr;
-    }
-
-    Table& Table::next()
-    {
-        m_currentNode = m_currentNode.next_sibling();
-        m_tableRow.set_parent(m_currentNode);
-        return *this;
-    }
-
-    void Table::set_current(const pugi::xml_node node)
-    {
-        m_currentNode = node;
-    }
-
-    ElementRange<TableRow> Table::rows()
-    {
-        if (m_currentNode)
-        {
-            m_tableRow.set_current(m_currentNode.child("w:tr"));
-        }
-        else
-        {
-            m_tableRow.set_current(pugi::xml_node());
-        }
-
-        m_tableRow.set_parent(m_currentNode);
-
-        return ElementRange<TableRow>(m_tableRow);
     }
 
     Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current)
@@ -524,11 +497,52 @@ namespace duckx
         m_currentNode = node;
     }
 
-    Paragraph& Paragraph::next()
+    bool Paragraph::has_next() const
     {
-        m_currentNode = m_currentNode.next_sibling();
+        if (!m_currentNode) return false;
+        return findNextSibling("w:p") != nullptr;
+    }
+
+    bool Paragraph::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !findNextSibling("w:p").empty();
+    }
+
+    Paragraph& Paragraph::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:p");
         m_run.set_parent(m_currentNode);
         return *this;
+    }
+
+    bool Paragraph::try_advance()
+    {
+        const pugi::xml_node next_run = findNextSibling("w:p");
+        if (!next_run.empty())
+        {
+            m_currentNode = next_run;
+            return true;
+        }
+        return false;
+    }
+
+    bool Paragraph::can_advance() const
+    {
+        return !findNextSibling("w:p").empty();
+    }
+
+    bool Paragraph::move_to_next_paragraph()
+    {
+        const pugi::xml_node next_para = findNextSibling("w:p");
+        if (!next_para)
+            return false;
+
+        m_currentNode = next_para;
+        m_run.set_parent(m_currentNode);
+        return true;
     }
 
     Alignment Paragraph::get_alignment() const
@@ -653,23 +667,7 @@ namespace duckx
         return false;
     }
 
-    pugi::xml_node Paragraph::get_or_create_pPr()
-    {
-        pugi::xml_node pPr_node = m_currentNode.child("w:pPr");
-        if (!pPr_node)
-        {
-            pPr_node = m_currentNode.insert_child_before("w:pPr", m_currentNode.first_child());
-        }
-        return pPr_node;
-    }
-
-    bool Paragraph::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return findNextSibling("w:pPr") != nullptr;
-    }
-
-    ElementRange<Run> Paragraph::runs()
+    absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs()
     {
         if (m_currentNode)
         {
@@ -682,7 +680,25 @@ namespace duckx
 
         m_run.set_parent(m_currentNode);
 
-        return ElementRange<Run>(m_run);
+        return make_element_range(m_run);
+    }
+
+    absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs() const
+    {
+        Run temp_run;
+
+        if (m_currentNode)
+        {
+            temp_run.set_current(m_currentNode.child("w:r"));
+        }
+        else
+        {
+            temp_run.set_current(pugi::xml_node());
+        }
+
+        temp_run.set_parent(m_currentNode);
+
+        return make_element_range(temp_run);
     }
 
     Run& Paragraph::add_run(const std::string& text, formatting_flag f)
@@ -936,5 +952,256 @@ namespace duckx
         p->add_run(text, f);
 
         return *p;
+    }
+
+    pugi::xml_node Paragraph::get_or_create_pPr()
+    {
+        pugi::xml_node pPr_node = m_currentNode.child("w:pPr");
+        if (!pPr_node)
+        {
+            pPr_node = m_currentNode.insert_child_before("w:pPr", m_currentNode.first_child());
+        }
+        return pPr_node;
+    }
+
+    TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    void TableCell::set_parent(const pugi::xml_node node)
+    {
+        m_parentNode = node;
+        m_currentNode = m_parentNode.child("w:tc");
+
+        m_paragraph.set_parent(m_currentNode);
+    }
+
+    void TableCell::set_current(const pugi::xml_node node)
+    {
+        m_currentNode = node;
+    }
+
+    bool TableCell::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tc") != nullptr;
+    }
+
+    bool TableCell::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !findNextSibling("w:tc").empty();
+    }
+
+    absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> TableCell::paragraphs()
+    {
+        if (m_currentNode)
+        {
+            m_paragraph.set_current(m_currentNode.child("w:p"));
+        }
+        else
+        {
+            m_paragraph.set_current(pugi::xml_node());
+        }
+
+        m_paragraph.set_parent(m_currentNode);
+
+        return make_element_range(m_paragraph);
+    }
+
+    TableCell& TableCell::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tc");
+        return *this;
+    }
+
+    bool TableCell::try_advance()
+    {
+        const pugi::xml_node next_cell = findNextSibling("w:tc");
+        if (!next_cell.empty())
+        {
+            m_currentNode = next_cell;
+            m_paragraph.set_parent(m_currentNode);
+            return true;
+        }
+        return false;
+    }
+
+    bool TableCell::can_advance() const
+    {
+        return !findNextSibling("w:tc").empty();
+    }
+
+    bool TableCell::move_to_next_cell()
+    {
+        const pugi::xml_node next_cell = findNextSibling("w:tc");
+        if (!next_cell)
+            return false;
+
+        m_currentNode = next_cell;
+        m_paragraph.set_parent(m_currentNode);
+        return true;
+    }
+
+    TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    void TableRow::set_parent(const pugi::xml_node node)
+    {
+        m_parentNode = node;
+        m_currentNode = m_parentNode.child("w:tr");
+
+        m_tableCell.set_parent(m_currentNode);
+    }
+
+    void TableRow::set_current(const pugi::xml_node node)
+    {
+        m_currentNode = node;
+    }
+
+    bool TableRow::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tr") != nullptr;
+    }
+
+    bool TableRow::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !findNextSibling("w:tr").empty();
+    }
+
+    absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> TableRow::cells()
+    {
+        if (m_currentNode)
+        {
+            m_tableCell.set_current(m_currentNode.child("w:tc"));
+        }
+        else
+        {
+            m_tableCell.set_current(pugi::xml_node());
+        }
+
+        m_tableCell.set_parent(m_currentNode);
+
+        return make_element_range(m_tableCell);
+    }
+
+    TableRow& TableRow::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tr");
+        return *this;
+    }
+
+    bool TableRow::try_advance()
+    {
+        const pugi::xml_node next_row = findNextSibling("w:tr");
+        if (!next_row.empty())
+        {
+            m_currentNode = next_row;
+            m_tableCell.set_parent(m_currentNode);
+            return true;
+        }
+        return false;
+    }
+
+    bool TableRow::can_advance() const
+    {
+        return !findNextSibling("w:tr").empty();
+    }
+
+    bool TableRow::move_to_next_row()
+    {
+        const pugi::xml_node next_row = findNextSibling("w:tr");
+        if (!next_row)
+            return false;
+
+        m_currentNode = next_row;
+        m_tableCell.set_parent(m_currentNode);
+        return true;
+    }
+
+    Table::Table(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    void Table::set_parent(const pugi::xml_node node)
+    {
+        m_parentNode = node;
+        m_currentNode = m_parentNode.child("w:tbl");
+
+        m_tableRow.set_parent(m_currentNode);
+    }
+
+    void Table::set_current(const pugi::xml_node node)
+    {
+        m_currentNode = node;
+    }
+
+    bool Table::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return findNextSibling("w:tbl") != nullptr;
+    }
+
+    bool Table::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !findNextSibling("w:tbl").empty();
+    }
+
+    absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> Table::rows()
+    {
+        if (m_currentNode)
+        {
+            m_tableRow.set_current(m_currentNode.child("w:tr"));
+        }
+        else
+        {
+            m_tableRow.set_current(pugi::xml_node());
+        }
+
+        m_tableRow.set_parent(m_currentNode);
+
+        return make_element_range(m_tableRow);
+    }
+
+    Table& Table::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tbl");
+        m_tableRow.set_parent(m_currentNode);
+        return *this;
+    }
+
+    bool Table::try_advance()
+    {
+        const pugi::xml_node next_table = findNextSibling("w:tbl");
+        if (!next_table.empty())
+        {
+            m_currentNode = next_table;
+            m_tableRow.set_parent(m_currentNode);
+            return true;
+        }
+        return false;
+    }
+
+    bool Table::can_advance() const
+    {
+        return !findNextSibling("w:tbl").empty();
+    }
+
+    bool Table::move_to_next_table()
+    {
+        const pugi::xml_node next_table = findNextSibling("w:tbl");
+        if (!next_table)
+            return false;
+
+        m_currentNode = next_table;
+        m_tableRow.set_parent(m_currentNode);
+        return true;
     }
 } // namespace duckx

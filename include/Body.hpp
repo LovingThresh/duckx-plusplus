@@ -17,8 +17,9 @@ namespace duckx
         Body() = default;
         explicit Body(pugi::xml_node bodyNode);
 
-        ElementRange<Paragraph> paragraphs();
-        ElementRange<Table> tables();
+        absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> paragraphs();
+        absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> paragraphs() const;
+        absl::enable_if_t<is_docx_element<Table>::value, ElementRange<Table>> tables();
 
         Paragraph add_paragraph(const std::string& text = "", formatting_flag f = none);
         Table add_table(int rows, int cols);

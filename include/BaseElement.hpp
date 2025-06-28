@@ -11,6 +11,7 @@
 #include <constants.hpp>
 #include <pugixml.hpp>
 #include <string>
+#include <utility>
 
 #include "duckxiterator.hpp"
 
@@ -26,12 +27,44 @@ namespace duckx
 
         virtual ~DocxElement() = default;
         virtual bool has_next() const = 0;
+        virtual bool has_next_same_type() const = 0;
         virtual void set_parent(pugi::xml_node) = 0;
         virtual void set_current(pugi::xml_node) = 0;
+
         pugi::xml_node getNode() const;
+        bool has_next_sibling() const;
+
+        enum class ElementType
+        {
+            PARAGRAPH,
+            TABLE,
+            RUN,
+            TABLE_ROW,
+            TABLE_CELL,
+            UNKNOWN
+        };
+
+        struct SiblingInfo
+        {
+            ElementType type;
+            std::string tag_name;
+            bool exists;
+
+            SiblingInfo()
+                : type(ElementType::UNKNOWN), exists(false) {}
+
+            SiblingInfo(const ElementType t, std::string tag)
+                : type(t), tag_name(std::move(tag)), exists(true) {}
+        };
+
+        SiblingInfo peek_next_sibling() const;
 
     protected:
         pugi::xml_node findNextSibling(const std::string& name) const;
+
+        pugi::xml_node findNextAnySibling() const;
+        static ElementType mapStringToElementType(const std::string& node_name);
+        static ElementType determineElementType(pugi::xml_node node);
 
         pugi::xml_node m_parentNode; // Parent node in the XML tree
         pugi::xml_node m_currentNode; // Current node in the XML tree
@@ -43,9 +76,10 @@ namespace duckx
     public:
         Run() = default;
         Run(pugi::xml_node, pugi::xml_node);
+        bool has_next() const override;
+        bool has_next_same_type() const override;
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
-        bool has_next() const override;
 
         bool set_text(const std::string&) const;
         bool set_text(const char*) const;
@@ -64,14 +98,15 @@ namespace duckx
         bool get_color(std::string& color) const;
         bool get_highlight(HighlightColor& color) const;
 
-        Run& next();
+        Run& advance();
+        bool try_advance();
+        bool can_advance() const;
+        bool move_to_next_run();
 
     private:
         pugi::xml_node get_or_create_rPr();
     };
 
-    // Paragraph contains a paragraph
-    // and stores runs
     class Paragraph : public DocxElement
     {
     public:
@@ -80,8 +115,10 @@ namespace duckx
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
+        bool has_next_same_type() const override;
 
-        ElementRange<Run> runs();
+        absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> runs();
+        absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> runs() const;
         Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
         Run& add_run(const char*, duckx::formatting_flag = duckx::none);
         Run add_hyperlink(const Document& doc, const std::string& text, const std::string& url);
@@ -92,15 +129,16 @@ namespace duckx
         Paragraph& set_first_line_indent(double first_line_pts);
         Paragraph& set_list_style(ListType type, int level = 0);
         Paragraph& insert_paragraph_after(const std::string& = "", duckx::formatting_flag = duckx::none);
-        Paragraph& next();
+        Paragraph& advance();
+        bool try_advance();
+        bool can_advance() const;
+        bool move_to_next_paragraph();
 
         Alignment get_alignment() const;
         bool get_line_spacing(double& line_spacing) const;
         bool get_spacing(double& before_pts, double& after_pts) const;
         bool get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const;
         bool get_list_style(ListType& type, int& level, int& numId) const;
-
-
 
     private:
         pugi::xml_node get_or_create_pPr();
@@ -117,9 +155,13 @@ namespace duckx
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
+        bool has_next_same_type() const override;
 
-        ElementRange<Paragraph> paragraphs();
-        TableCell& next();
+        absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> paragraphs();
+        TableCell& advance();
+        bool try_advance();
+        bool can_advance() const;
+        bool move_to_next_cell();
 
     private:
         Paragraph m_paragraph;
@@ -134,9 +176,13 @@ namespace duckx
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
+        bool has_next_same_type() const override;
 
-        ElementRange<TableCell> cells();
-        TableRow& next();
+        absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> cells();
+        TableRow& advance();
+        bool try_advance();
+        bool can_advance() const;
+        bool move_to_next_row();
 
     private:
         TableCell m_tableCell;
@@ -151,9 +197,13 @@ namespace duckx
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
+        bool has_next_same_type() const override;
 
-        Table& next();
-        ElementRange<TableRow> rows();
+        absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> rows();
+        Table& advance();
+        bool try_advance();
+        bool can_advance() const;
+        bool move_to_next_table();
 
     private:
         TableRow m_tableRow;

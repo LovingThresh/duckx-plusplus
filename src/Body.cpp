@@ -7,9 +7,11 @@
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
  */
 #include "../include/Body.hpp"
+
 namespace duckx
 {
-    Body::Body(const pugi::xml_node bodyNode) : m_bodyNode(bodyNode)
+    Body::Body(const pugi::xml_node bodyNode)
+        : m_bodyNode(bodyNode)
     {
         if (m_bodyNode)
         {
@@ -20,7 +22,7 @@ namespace duckx
         }
     }
 
-    ElementRange<Paragraph> Body::paragraphs()
+    absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> Body::paragraphs()
     {
         if (m_bodyNode)
         {
@@ -33,10 +35,27 @@ namespace duckx
 
         m_paragraph.set_parent(m_bodyNode);
 
-        return ElementRange<Paragraph>(m_paragraph);
+        return make_element_range(m_paragraph);
     }
 
-    ElementRange<Table> Body::tables()
+    absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> Body::paragraphs() const
+    {
+        Paragraph temp_para;
+
+        if (m_bodyNode)
+        {
+            temp_para.set_current(m_bodyNode.child("w:p"));
+        }
+        else
+        {
+            temp_para.set_current(pugi::xml_node());
+        }
+        temp_para.set_parent(m_bodyNode);
+
+        return make_element_range(temp_para);
+    }
+
+    absl::enable_if_t<is_docx_element<Table>::value, ElementRange<Table>> Body::tables()
     {
         if (m_bodyNode)
         {
@@ -49,7 +68,7 @@ namespace duckx
 
         m_table.set_parent(m_bodyNode);
 
-        return ElementRange<Table>(m_table);
+        return make_element_range(m_table);
     }
 
     Paragraph Body::add_paragraph(const std::string& text, const formatting_flag f)
@@ -80,15 +99,18 @@ namespace duckx
 
         // 3. 定义表格网格 <w:tblGrid>
         pugi::xml_node tbl_grid_node = new_tbl_node.append_child("w:tblGrid");
-        for (int i = 0; i < cols; ++i) {
+        for (int i = 0; i < cols; ++i)
+        {
             // 为每一列定义一个 gridCol，并设置默认宽度
             tbl_grid_node.append_child("w:gridCol").append_attribute("w:w").set_value("2390");
         }
 
         // 4. 创建行 <w:tr> 和单元格 <w:tc>
-        for (int r = 0; r < rows; ++r) {
+        for (int r = 0; r < rows; ++r)
+        {
             pugi::xml_node tr_node = new_tbl_node.append_child("w:tr");
-            for (int c = 0; c < cols; ++c) {
+            for (int c = 0; c < cols; ++c)
+            {
                 pugi::xml_node tc_node = tr_node.append_child("w:tc");
                 // 关键：每个单元格必须包含一个空段落 <w:p>
                 tc_node.append_child("w:p");

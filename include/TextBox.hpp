@@ -14,9 +14,10 @@
 
 namespace duckx
 {
-    enum class BorderStyle {
-        NONE,      // 无边框
-        SOLID      // 实线边框
+    enum class BorderStyle
+    {
+        NONE, // 无边框
+        SOLID // 实线边框
     };
 
     class TextBox : public DrawingElement
@@ -32,7 +33,7 @@ namespace duckx
         Paragraph add_paragraph(const std::string& text = "", formatting_flag f = none) const;
         void add_new_paragraph(const std::string& text = "", formatting_flag f = none) const;
         Paragraph last_paragraph() const;
-        ElementRange<Paragraph> paragraphs() const;
+        absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> paragraphs() const;
 
     private:
         mutable pugi::xml_document m_internal_doc;

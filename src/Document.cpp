@@ -22,7 +22,7 @@ namespace duckx
         // ReSharper disable once CppParameterMayBeConst
         void write(const void* data, size_t size) override
         {
-            result.append(static_cast<const char*>(data), size);
+            result.append(static_cast<const char *>(data), size);
         }
     };
 
@@ -46,7 +46,8 @@ namespace duckx
         return Document(std::move(file));
     }
 
-    Document::Document(std::unique_ptr<DocxFile> file) : m_file(std::move(file))
+    Document::Document(std::unique_ptr<DocxFile> file)
+        : m_file(std::move(file))
     {
         load();
     }
@@ -130,7 +131,8 @@ namespace duckx
                 std::make_unique<MediaManager>(this, m_file.get(), &m_rels_xml, &m_document_xml, &m_content_types_xml);
 
         m_hf_manager =
-            std::make_unique<HeaderFooterManager>(this, m_file.get(), &m_document_xml, &m_rels_xml, &m_content_types_xml);
+                std::make_unique<HeaderFooterManager>(this, m_file.get(), &m_document_xml, &m_rels_xml,
+                                                      &m_content_types_xml);
 
         m_link_manager = std::make_unique<HyperlinkManager>(this, &m_rels_xml);
     }
@@ -141,7 +143,7 @@ namespace duckx
             return;
 
         m_hf_manager->save_all();
-        
+
         xml_string_writer writer;
         m_document_xml.print(writer, "  ", pugi::format_default);
 
@@ -159,6 +161,11 @@ namespace duckx
     }
 
     Body& Document::body()
+    {
+        return m_body;
+    }
+
+    const Body& Document::body() const
     {
         return m_body;
     }

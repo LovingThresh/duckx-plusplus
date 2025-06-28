@@ -38,6 +38,7 @@ namespace duckx
 
         void save() const;
         Body& body();
+        const Body& body() const;
         MediaManager& media() const;
         HyperlinkManager& links() const;
 

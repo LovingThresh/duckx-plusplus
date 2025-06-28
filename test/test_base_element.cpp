@@ -1,6 +1,6 @@
 /*
  * @file: test_base_element.cpp
- * @brief: 测试BaseElement相关类的功能
+ * @brief: Test the functions of BaseElement related classes
  *
  * @author: liuye
  * @date: 2025.06.28
@@ -12,13 +12,13 @@
 #include <Document.hpp>
 #include <string>
 
-// 避免命名冲突，使用别名
 namespace dx = duckx;
 
-class BaseElementTest : public ::testing::Test {
+class BaseElementTest : public ::testing::Test
+{
 protected:
-    void SetUp() override {
-        // 创建一个基本的Word文档XML结构用于测试
+    void SetUp() override
+    {
         const char* xml_content = R"(
             <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
                 <w:body>
@@ -96,10 +96,10 @@ protected:
     pugi::xml_node body;
 };
 
-// ==================== Run类测试 ====================
 class RunTest : public BaseElementTest {};
 
-TEST_F(RunTest, BasicConstruction) {
+TEST_F(RunTest, BasicConstruction)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r");
 
@@ -109,57 +109,52 @@ TEST_F(RunTest, BasicConstruction) {
     EXPECT_EQ(duckx_run.get_text(), "Hello World");
 }
 
-TEST_F(RunTest, TextOperations) {
+TEST_F(RunTest, TextOperations)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r");
 
     const dx::Run duckx_run(para_node, run_node);
 
-    // 测试获取文本
     EXPECT_EQ(duckx_run.get_text(), "Hello World");
 
-    // 测试设置文本
     EXPECT_TRUE(duckx_run.set_text("New Text"));
     EXPECT_EQ(duckx_run.get_text(), "New Text");
 
-    // 测试设置文本（const char*版本）
     EXPECT_TRUE(duckx_run.set_text("Another Text"));
     EXPECT_EQ(duckx_run.get_text(), "Another Text");
 }
 
-TEST_F(RunTest, FormattingOperations) {
+TEST_F(RunTest, FormattingOperations)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r");
 
     const dx::Run duckx_run(para_node, run_node);
 
-    // 测试格式化标志
     EXPECT_TRUE(duckx_run.is_bold());
     EXPECT_FALSE(duckx_run.is_italic());
     EXPECT_FALSE(duckx_run.is_underline());
 
-    // 测试字体
     std::string font_name;
     EXPECT_TRUE(duckx_run.get_font(font_name));
     EXPECT_EQ(font_name, "Arial");
 
-    // 测试字体大小
     double font_size;
     EXPECT_TRUE(duckx_run.get_font_size(font_size));
     EXPECT_EQ(font_size, 12.0); // 24 half-points = 12 points
 
-    // 测试颜色
     std::string color;
     EXPECT_TRUE(duckx_run.get_color(color));
     EXPECT_EQ(color, "FF0000");
 
-    // 测试高亮
     dx::HighlightColor highlight;
     EXPECT_TRUE(duckx_run.get_highlight(highlight));
     EXPECT_EQ(highlight, dx::HighlightColor::YELLOW);
 }
 
-TEST_F(RunTest, SetFormatting) {
+TEST_F(RunTest, SetFormatting)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r").next_sibling("w:r"); // 第二个run
 
@@ -190,7 +185,8 @@ TEST_F(RunTest, SetFormatting) {
     EXPECT_EQ(highlight, dx::HighlightColor::GREEN);
 }
 
-TEST_F(RunTest, Navigation) {
+TEST_F(RunTest, Navigation)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r");
 
@@ -200,7 +196,7 @@ TEST_F(RunTest, Navigation) {
     EXPECT_TRUE(duckx_run.has_next());
 
     // 移动到下一个
-    const dx::Run& next_run = duckx_run.next();
+    const dx::Run& next_run = duckx_run.advance();
     EXPECT_EQ(next_run.get_text(), "Second run");
 
     // 应该没有更多的run了
@@ -210,7 +206,8 @@ TEST_F(RunTest, Navigation) {
 // ==================== Paragraph类测试 ====================
 class ParagraphTest : public BaseElementTest {};
 
-TEST_F(ParagraphTest, BasicConstruction) {
+TEST_F(ParagraphTest, BasicConstruction)
+{
     const auto para_node = body.child("w:p");
 
     const dx::Paragraph para(body, para_node);
@@ -219,7 +216,8 @@ TEST_F(ParagraphTest, BasicConstruction) {
     EXPECT_TRUE(para.has_next()); // 应该有第二个段落
 }
 
-TEST_F(ParagraphTest, RunOperations) {
+TEST_F(ParagraphTest, RunOperations)
+{
     const auto para_node = body.child("w:p");
 
     dx::Paragraph para(body, para_node);
@@ -239,7 +237,8 @@ TEST_F(ParagraphTest, RunOperations) {
     EXPECT_EQ(it, runs_range.end());
 }
 
-TEST_F(ParagraphTest, AddRun) {
+TEST_F(ParagraphTest, AddRun)
+{
     const auto para_node = body.child("w:p");
 
     dx::Paragraph para(body, para_node);
@@ -255,7 +254,8 @@ TEST_F(ParagraphTest, AddRun) {
     EXPECT_EQ(another_run.get_text(), "Another run");
 }
 
-TEST_F(ParagraphTest, ParagraphFormatting) {
+TEST_F(ParagraphTest, ParagraphFormatting)
+{
     const auto para_node = body.child("w:p").next_sibling("w:p"); // 第二个段落
 
     const dx::Paragraph para(body, para_node);
@@ -267,17 +267,18 @@ TEST_F(ParagraphTest, ParagraphFormatting) {
     double before, after;
     EXPECT_TRUE(para.get_spacing(before, after));
     EXPECT_EQ(before, 12.0); // 240 twips = 12 points
-    EXPECT_EQ(after, 6.0);   // 120 twips = 6 points
+    EXPECT_EQ(after, 6.0); // 120 twips = 6 points
 
     // 测试缩进
     double left, right, first_line;
     EXPECT_TRUE(para.get_indentation(left, right, first_line));
-    EXPECT_EQ(left, 36.0);      // 720 twips = 36 points
-    EXPECT_EQ(right, 18.0);     // 360 twips = 18 points
+    EXPECT_EQ(left, 36.0); // 720 twips = 36 points
+    EXPECT_EQ(right, 18.0); // 360 twips = 18 points
     EXPECT_EQ(first_line, 18.0); // 360 twips = 18 points
 }
 
-TEST_F(ParagraphTest, SetFormatting) {
+TEST_F(ParagraphTest, SetFormatting)
+{
     const auto para_node = body.child("w:p");
 
     dx::Paragraph para(body, para_node);
@@ -309,7 +310,8 @@ TEST_F(ParagraphTest, SetFormatting) {
     EXPECT_EQ(first_line, 18.0);
 }
 
-TEST_F(ParagraphTest, Navigation) {
+TEST_F(ParagraphTest, Navigation)
+{
     const auto para_node = body.child("w:p");
 
     dx::Paragraph para(body, para_node);
@@ -318,7 +320,7 @@ TEST_F(ParagraphTest, Navigation) {
     EXPECT_TRUE(para.has_next());
 
     // 移动到下一个段落
-    const dx::Paragraph& next_para = para.next();
+    const dx::Paragraph& next_para = para.advance();
     EXPECT_TRUE(next_para.getNode());
 
     // 应该还有表格，所以has_next可能返回false（取决于实现）
@@ -327,7 +329,8 @@ TEST_F(ParagraphTest, Navigation) {
 // ==================== Table相关测试 ====================
 class TableTest : public BaseElementTest {};
 
-TEST_F(TableTest, TableStructure) {
+TEST_F(TableTest, TableStructure)
+{
     const auto table_node = body.child("w:tbl");
 
     const dx::Table table(body, table_node);
@@ -336,7 +339,8 @@ TEST_F(TableTest, TableStructure) {
     EXPECT_FALSE(table.has_next()); // 应该没有更多表格
 }
 
-TEST_F(TableTest, TableRows) {
+TEST_F(TableTest, TableRows)
+{
     auto table_node = body.child("w:tbl");
 
     dx::Table table(body, table_node);
@@ -395,7 +399,8 @@ TEST_F(TableTest, TableRows) {
 // ==================== 边界条件和错误处理测试 ====================
 class EdgeCaseTest : public BaseElementTest {};
 
-TEST_F(EdgeCaseTest, EmptyNodes) {
+TEST_F(EdgeCaseTest, EmptyNodes)
+{
     const pugi::xml_node empty_node;
     const pugi::xml_node valid_node = body.child("w:p");
 
@@ -406,7 +411,8 @@ TEST_F(EdgeCaseTest, EmptyNodes) {
     EXPECT_FALSE(duckx_run.has_next());
 }
 
-TEST_F(EdgeCaseTest, InvalidOperations) {
+TEST_F(EdgeCaseTest, InvalidOperations)
+{
     const auto para_node = body.child("w:p");
     const auto run_node = para_node.child("w:r");
 
@@ -424,9 +430,11 @@ TEST_F(EdgeCaseTest, InvalidOperations) {
 // ==================== 性能测试 ====================
 class PerformanceTest : public BaseElementTest {};
 
-TEST_F(PerformanceTest, LargeDocumentIteration) {
+TEST_F(PerformanceTest, LargeDocumentIteration)
+{
     // 创建大量段落用于性能测试
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i)
+    {
         auto new_para = body.append_child("w:p");
         auto new_run = new_para.append_child("w:r");
         auto new_text = new_run.append_child("w:t");
@@ -439,8 +447,9 @@ TEST_F(PerformanceTest, LargeDocumentIteration) {
     int count = 0;
     const auto start = std::chrono::high_resolution_clock::now();
 
-    while (para.has_next()) {
-        para.next();
+    while (para.has_next())
+    {
+        para.advance();
         count++;
         if (count > 1000) break; // 防止无限循环
     }

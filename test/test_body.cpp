@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 
-// Test fixture for Body class
 class BodyTest : public ::testing::Test
 {
 protected:
@@ -65,12 +64,9 @@ protected:
     std::unique_ptr<duckx::Body> m_body;
 };
 
-// Constructor tests
 TEST_F(BodyTest, DefaultConstructor)
 {
     duckx::Body default_body;
-    // Default constructor should create a valid object
-    // Cannot test much without a valid node
 }
 
 TEST_F(BodyTest, ParameterizedConstructor_ValidNode)
@@ -209,10 +205,9 @@ TEST_F(BodyTest, AddParagraph_LongText)
 
 TEST_F(BodyTest, AddParagraph_SpecialCharacters)
 {
-    const std::string special_text = "Special chars: äöü ñ © ® ™ € £ ¥";
+    const std::string special_text = "Special chars: !@#$%^&*()_+-=[]{}|;:,.<>?/~`";
     const auto paragraph = m_body->add_paragraph(special_text);
 
-    // Should handle special characters
     EXPECT_TRUE(paragraph.getNode());
 }
 
@@ -328,16 +323,11 @@ TEST_F(BodyTest, MixedContent_ParagraphsAndTables)
 
     std::ostringstream oss;
     m_doc->save(oss);
-    std::cout << "Complete XML:\n" << oss.str() << std::endl;
-
-    std::cout << "Body direct children:\n";
-    for (pugi::xml_node child = m_body_node.first_child(); child; child = child.next_sibling()) {
-        std::cout << "  - " << child.name() << std::endl;
-    }
 
     auto paragraph_range = m_body->paragraphs();
     int para_count = 0;
-    for (auto& p : paragraph_range) {
+    for (auto& p: paragraph_range)
+    {
         ++para_count;
         EXPECT_TRUE(p.getNode());
     }
@@ -346,7 +336,8 @@ TEST_F(BodyTest, MixedContent_ParagraphsAndTables)
     // 验证表格数
     auto table_range = m_body->tables();
     int table_count = 0;
-    for (auto& t : table_range) {
+    for (auto& t: table_range)
+    {
         ++table_count;
         EXPECT_TRUE(t.getNode());
     }

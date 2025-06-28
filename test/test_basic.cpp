@@ -1,6 +1,6 @@
-#include <sstream>      // 用于字符串流
-#include "Document.hpp" // 引入你的 duckx 文档处理类
-#include "gtest/gtest.h"  // 1. 引入 GTest 的核心头文件
+#include <sstream>
+#include "Document.hpp"
+#include "gtest/gtest.h"
 
 TEST(DocxContentTest, ChecksContentsOfMyTestFile)
 {

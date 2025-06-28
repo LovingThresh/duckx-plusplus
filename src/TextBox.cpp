@@ -113,7 +113,7 @@ namespace duckx
 
         auto graphicData = graphic.append_child("a:graphicData");
         graphicData.append_attribute("uri").set_value(
-                "http://schemas.microsoft.com/office/word/2010/wordprocessingShape");
+            "http://schemas.microsoft.com/office/word/2010/wordprocessingShape");
 
         auto wsp = graphicData.append_child("wps:wsp");
 
@@ -177,7 +177,8 @@ namespace duckx
     {
         pugi::xml_node content_node = m_internal_doc.child("w:txbxContent");
 
-        if (m_is_empty && content_node.first_child() && content_node.first_child().first_child() == nullptr) {
+        if (m_is_empty && content_node.first_child() && content_node.first_child().first_child() == nullptr)
+        {
             content_node.remove_child(content_node.first_child());
         }
         m_is_empty = false;
@@ -210,13 +211,13 @@ namespace duckx
         return {};
     }
 
-    ElementRange<Paragraph> TextBox::paragraphs() const
+    absl::enable_if_t<is_docx_element<Paragraph>::value, ElementRange<Paragraph>> TextBox::paragraphs() const
     {
         const pugi::xml_node content_node = m_internal_doc.child("w:txbxContent");
 
         Paragraph p_state;
         p_state.set_parent(content_node);
         p_state.set_current(content_node.child("w:p"));
-        return ElementRange<Paragraph>(p_state);
+        return make_element_range(p_state);
     }
 } // namespace duckx
