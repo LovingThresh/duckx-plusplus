@@ -3,6 +3,7 @@
 namespace duckx
 {
     typedef unsigned int formatting_flag;
+    constexpr int preset_id = 4;
 
     // text-formatting flags
     constexpr formatting_flag none = 0;

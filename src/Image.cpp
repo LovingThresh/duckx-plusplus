@@ -16,6 +16,19 @@
 
 namespace duckx
 {
+    std::string relative_from_to_string(RelativeFrom rel)
+    {
+        switch (rel)
+        {
+            case RelativeFrom::PAGE:
+                return "page";
+            case RelativeFrom::MARGIN:
+                return "margin";
+            default:
+                return "page";
+        }
+    }
+
     Image::Image(std::string path, const int max_width_px) : m_path(std::move(path))
     {
         if (m_path.empty())
@@ -71,9 +84,23 @@ namespace duckx
         const std::string cx_str = std::to_string(m_width_emu);
         const std::string cy_str = std::to_string(m_height_emu);
 
-        // --- Start building the complex structure, one node at a time ---
-        // The structure remains the same, but local namespace declarations are removed.
+        // Choose between inline and anchor based on whether absolute position is set
+        if (m_has_position)
+        {
+            // Generate anchor (absolute positioning) XML
+            generate_anchor_xml(drawing_node, relationship_id, drawing_id, cx_str, cy_str, docpr_id_str);
+        }
+        else
+        {
+            // Generate inline (default) XML
+            generate_inline_xml(drawing_node, relationship_id, drawing_id, cx_str, cy_str, docpr_id_str);
+        }
+    }
 
+    void Image::generate_inline_xml(pugi::xml_node drawing_node, const std::string& relationship_id,
+                                   const unsigned int drawing_id, const std::string& cx_str,
+                                   const std::string& cy_str, const std::string& docpr_id_str) const
+    {
         // <wp:inline distT="0" distB="0" distL="0" distR="0">
         pugi::xml_node inline_node = drawing_node.append_child("wp:inline");
         inline_node.append_attribute("distT").set_value("0");
@@ -81,32 +108,77 @@ namespace duckx
         inline_node.append_attribute("distL").set_value("0");
         inline_node.append_attribute("distR").set_value("0");
 
+        // Add common content (extent, docPr, graphic, etc.)
+        add_common_drawing_content(inline_node, relationship_id, drawing_id, cx_str, cy_str, docpr_id_str);
+    }
+
+    void Image::generate_anchor_xml(pugi::xml_node drawing_node, const std::string& relationship_id,
+                                   const unsigned int drawing_id, const std::string& cx_str,
+                                   const std::string& cy_str, const std::string& docpr_id_str) const
+    {
+        // <wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240"
+        //           behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">
+        pugi::xml_node anchor_node = drawing_node.append_child("wp:anchor");
+        anchor_node.append_attribute("distT").set_value("0");
+        anchor_node.append_attribute("distB").set_value("0");
+        anchor_node.append_attribute("distL").set_value("0");
+        anchor_node.append_attribute("distR").set_value("0");
+        anchor_node.append_attribute("simplePos").set_value("0");
+        anchor_node.append_attribute("relativeHeight").set_value("251658240");
+        anchor_node.append_attribute("behindDoc").set_value("0");
+        anchor_node.append_attribute("locked").set_value("0");
+        anchor_node.append_attribute("layoutInCell").set_value("1");
+        anchor_node.append_attribute("allowOverlap").set_value("1");
+
+        // <wp:simplePos x="0" y="0"/>
+        pugi::xml_node simple_pos_node = anchor_node.append_child("wp:simplePos");
+        simple_pos_node.append_attribute("x").set_value("0");
+        simple_pos_node.append_attribute("y").set_value("0");
+
+        // <wp:positionH relativeFrom="...">
+        pugi::xml_node pos_h_node = anchor_node.append_child("wp:positionH");
+        pos_h_node.append_attribute("relativeFrom").set_value(relative_from_to_string(m_h_relative_from).c_str());
+        pugi::xml_node pos_h_offset = pos_h_node.append_child("wp:posOffset");
+        pos_h_offset.text().set(std::to_string(m_pos_x_emu).c_str());
+
+        // <wp:positionV relativeFrom="...">
+        pugi::xml_node pos_v_node = anchor_node.append_child("wp:positionV");
+        pos_v_node.append_attribute("relativeFrom").set_value(relative_from_to_string(m_v_relative_from).c_str());
+        pugi::xml_node pos_v_offset = pos_v_node.append_child("wp:posOffset");
+        pos_v_offset.text().set(std::to_string(m_pos_y_emu).c_str());
+
+        // Add common content (extent, docPr, graphic, etc.)
+        add_common_drawing_content(anchor_node, relationship_id, drawing_id, cx_str, cy_str, docpr_id_str);
+    }
+
+    void Image::add_common_drawing_content(pugi::xml_node container_node, const std::string& relationship_id,
+                                          const unsigned int drawing_id, const std::string& cx_str,
+                                          const std::string& cy_str, const std::string& docpr_id_str) const
+    {
         // <wp:extent cx="..." cy="...">
-        pugi::xml_node extent_node = inline_node.append_child("wp:extent");
+        pugi::xml_node extent_node = container_node.append_child("wp:extent");
         extent_node.append_attribute("cx").set_value(cx_str.c_str());
         extent_node.append_attribute("cy").set_value(cy_str.c_str());
 
         // <wp:effectExtent l="0" t="0" r="0" b="0"/>
-        pugi::xml_node effect_extent_node = inline_node.append_child("wp:effectExtent");
+        pugi::xml_node effect_extent_node = container_node.append_child("wp:effectExtent");
         effect_extent_node.append_attribute("l").set_value("0");
         effect_extent_node.append_attribute("t").set_value("0");
         effect_extent_node.append_attribute("r").set_value("0");
         effect_extent_node.append_attribute("b").set_value("0");
 
         // <wp:docPr id="..." name="..."/>
-        pugi::xml_node docPr_node = inline_node.append_child("wp:docPr");
+        pugi::xml_node docPr_node = container_node.append_child("wp:docPr");
         docPr_node.append_attribute("id").set_value(docpr_id_str.c_str());
         docPr_node.append_attribute("name").set_value(("Picture " + docpr_id_str).c_str());
 
         // <wp:cNvGraphicFramePr>
-        pugi::xml_node cNvGraphicFramePr_node = inline_node.append_child("wp:cNvGraphicFramePr");
+        pugi::xml_node cNvGraphicFramePr_node = container_node.append_child("wp:cNvGraphicFramePr");
         pugi::xml_node graphicFrameLocks_node = cNvGraphicFramePr_node.append_child("a:graphicFrameLocks");
-        // REMOVED: graphicFrameLocks_node.append_attribute("xmlns:a")...
         graphicFrameLocks_node.append_attribute("noChangeAspect").set_value("1");
 
         // <a:graphic>
-        pugi::xml_node graphic_node = inline_node.append_child("a:graphic");
-        // REMOVED: graphic_node.append_attribute("xmlns:a")...
+        pugi::xml_node graphic_node = container_node.append_child("a:graphic");
 
         // <a:graphicData uri="...">
         pugi::xml_node graphicData_node = graphic_node.append_child("a:graphicData");
@@ -114,7 +186,6 @@ namespace duckx
 
         // <pic:pic>
         pugi::xml_node pic_node = graphicData_node.append_child("pic:pic");
-        // REMOVED: pic_node.append_attribute("xmlns:pic")...
 
         // <pic:nvPicPr>
         pugi::xml_node nvPicPr_node = pic_node.append_child("pic:nvPicPr");

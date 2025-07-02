@@ -26,9 +26,23 @@ namespace duckx
         void generate_drawing_xml(pugi::xml_node parent_run_node, const std::string& relationship_id,
                                   unsigned int drawing_id) const override;
 
+
+
         const std::string& get_path() const;
 
     private:
+        void generate_inline_xml(pugi::xml_node drawing_node, const std::string& relationship_id,
+                                 unsigned int drawing_id,
+                                 const std::string& cx_str, const std::string& cy_str,
+                                 const std::string& docpr_id_str) const;
+        void generate_anchor_xml(pugi::xml_node drawing_node, const std::string& relationship_id,
+                                 unsigned int drawing_id,
+                                 const std::string& cx_str, const std::string& cy_str,
+                                 const std::string& docpr_id_str) const;
+        void add_common_drawing_content(pugi::xml_node container_node, const std::string& relationship_id,
+                                        unsigned int drawing_id, const std::string& cx_str, const std::string& cy_str,
+                                        const std::string& docpr_id_str) const;
+
         std::string m_path;
     };
 

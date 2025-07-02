@@ -16,6 +16,28 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ====== Resource Files Setup ======
+# Define resource files that need to be copied to various locations
+set(DUCKX_RESOURCE_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/samples/my_test.docx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
+)
+
+# Simple function to copy resource files using configure_file only
+function(copy_duckx_resources_simple target_dir)
+    foreach(resource_file ${DUCKX_RESOURCE_FILES})
+        if(EXISTS ${resource_file})
+            get_filename_component(resource_filename ${resource_file} NAME)
+            # Use only configure_file - no custom commands to avoid conflicts
+            configure_file(
+                    ${resource_file}
+                    ${target_dir}/${resource_filename}
+                    COPYONLY
+            )
+        endif()
+    endforeach()
+endfunction()
+
 # ====== Compiler Settings ======
 if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
@@ -173,6 +195,9 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 if (BUILD_SAMPLES)
     file(GLOB DUCKX_SAMPLE_FILES "samples/*.cpp")
 
+    # Copy resources to sample output directory
+    copy_duckx_resources_simple("${CMAKE_CURRENT_BINARY_DIR}")
+
     foreach (SAMPLE_FILE_PATH IN LISTS DUCKX_SAMPLE_FILES)
         get_filename_component(SAMPLE_NAME ${SAMPLE_FILE_PATH} NAME_WE)
 
@@ -184,10 +209,8 @@ if (BUILD_SAMPLES)
         target_link_libraries(duckx_${SAMPLE_NAME} PRIVATE duckx::duckx)
     endforeach ()
 
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/samples/my_test.docx"
-            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
-            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+    # The SAMPLES_RESOURCE_TARGET will be set by copy_duckx_resources function
+    # No need for additional custom target here since it's created in the function
 endif ()
 
 # ====== Testing Configuration ======
@@ -226,8 +249,14 @@ if (BUILD_TESTING)
             set_target_properties(gmock_main PROPERTIES FOLDER "ThirdParty/GoogleTest")
         endif ()
 
+        # Copy resources to main binary directory (for when tests are run from there)
+        copy_duckx_resources_simple("${CMAKE_CURRENT_BINARY_DIR}")
+
         # Add test directory which defines tests and links with gtest
         add_subdirectory(test)
+
+        # The MAIN_BINARY_RESOURCE_TARGET will be set by copy_duckx_resources function
+        # No need for additional custom target here since it's created in the function
     else ()
         message(WARNING "Googletest source not found in 'thirdparty/googletest'. Tests will NOT be built.")
     endif ()

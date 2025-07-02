@@ -71,6 +71,23 @@ namespace duckx
         return make_element_range(m_table);
     }
 
+    absl::enable_if_t<is_docx_element<Table>::value, ElementRange<Table>> Body::tables() const
+    {
+        Table temp_table;
+        if (m_bodyNode)
+        {
+            temp_table.set_current(m_bodyNode.child("w:tbl"));
+        }
+        else
+        {
+            temp_table.set_current(pugi::xml_node());
+        }
+
+        temp_table.set_parent(m_bodyNode);
+
+        return make_element_range(temp_table);
+    }
+
     Paragraph Body::add_paragraph(const std::string& text, const formatting_flag f)
     {
         const pugi::xml_node pNode = m_bodyNode.append_child("w:p");
