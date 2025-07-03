@@ -243,29 +243,29 @@ namespace duckx
     std::string DocxFile::get_content_types_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
-               "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
-               "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
-               // 如果要支持图片，必须有下面这几行
-               "<Default Extension=\"png\" ContentType=\"image/png\"/>"
-               "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/>"
-               "<Default Extension=\"jpeg\" ContentType=\"image/jpeg\"/>"
-               // --- 以下是针对 Word 核心文件的 Override ---
-               "<Override PartName=\"/word/document.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
-               "<Override PartName=\"/word/styles.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
-               "<Override PartName=\"/word/settings.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
-               "<Override PartName=\"/word/fontTable.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml\"/>"
-               "<Override PartName=\"/docProps/core.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
-               "<Override PartName=\"/docProps/app.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
-               "<Override PartName=\"/word/numbering.xml\" "
-               "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml\"/>"
-               "</Types>";
+                "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+                "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+                "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                // 如果要支持图片，必须有下面这几行
+                "<Default Extension=\"png\" ContentType=\"image/png\"/>"
+                "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/>"
+                "<Default Extension=\"jpeg\" ContentType=\"image/jpeg\"/>"
+                // --- 以下是针对 Word 核心文件的 Override ---
+                "<Override PartName=\"/word/document.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>"
+                "<Override PartName=\"/word/styles.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
+                "<Override PartName=\"/word/settings.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml\"/>"
+                "<Override PartName=\"/word/fontTable.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml\"/>"
+                "<Override PartName=\"/docProps/core.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>"
+                "<Override PartName=\"/docProps/app.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>"
+                "<Override PartName=\"/word/numbering.xml\" "
+                "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml\"/>"
+                "</Types>";
     }
 
     std::string DocxFile::get_rels_xml()
@@ -302,20 +302,23 @@ namespace duckx
         GetSystemTime(&st);
 
         tm_utc.tm_year = st.wYear - 1900;
-        tm_utc.tm_mon  = st.wMonth - 1;
+        tm_utc.tm_mon = st.wMonth - 1;
         tm_utc.tm_mday = st.wDay;
         tm_utc.tm_hour = st.wHour;
-        tm_utc.tm_min  = st.wMinute;
-        tm_utc.tm_sec  = st.wSecond;
+        tm_utc.tm_min = st.wMinute;
+        tm_utc.tm_sec = st.wSecond;
         tm_utc.tm_wday = st.wDayOfWeek;
         tm_utc.tm_isdst = 0; // UTC没有夏令时
 
         // 计算一年中的第几天 (tm_yday)
         constexpr int daysBeforeMonth[13] = {
-            0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
+                0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
         };
         tm_utc.tm_yday = daysBeforeMonth[tm_utc.tm_mon] + tm_utc.tm_mday - 1;
-        auto isLeapYear = [](int year){ return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0); };
+        auto isLeapYear = [](int year)
+        {
+            return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        };
         if (tm_utc.tm_mon > 1 && isLeapYear(st.wYear))
         {
             tm_utc.tm_yday++;
@@ -340,11 +343,12 @@ namespace duckx
 
         std::ostringstream oss;
         oss << R"(<?xml version="1.0" encoding="UTF-8" standalone="yes"?>)"
-            << R"(<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">)"
-            << "<dc:creator>DuckX</dc:creator>"
-            << "<dcterms:created xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:created>"
-            << "<dcterms:modified xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:modified>"
-            << "</cp:coreProperties>";
+                <<
+                R"(<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">)"
+                << "<dc:creator>DuckX</dc:creator>"
+                << "<dcterms:created xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:created>"
+                << "<dcterms:modified xsi:type=\"dcterms:W3CDTF\">" << datetime << "</dcterms:modified>"
+                << "</cp:coreProperties>";
 
         return oss.str();
     }
@@ -352,99 +356,100 @@ namespace duckx
     std::string DocxFile::get_document_rels_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
-               "<Relationship Id=\"rId3\" "
-               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" "
-               "Target=\"styles.xml\"/>"
-               "<Relationship Id=\"rId2\" "
-               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" "
-               "Target=\"settings.xml\"/>"
-               "<Relationship Id=\"rId1\" "
-               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" "
-               "Target=\"fontTable.xml\"/>"
-               "<Relationship Id=\"rId4\" "
-               "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering\" "
-               "Target=\"numbering.xml\"/>"
-               "</Relationships>";
+                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                "<Relationship Id=\"rId3\" "
+                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" "
+                "Target=\"styles.xml\"/>"
+                "<Relationship Id=\"rId2\" "
+                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings\" "
+                "Target=\"settings.xml\"/>"
+                "<Relationship Id=\"rId1\" "
+                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable\" "
+                "Target=\"fontTable.xml\"/>"
+                "<Relationship Id=\"rId4\" "
+                "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering\" "
+                "Target=\"numbering.xml\"/>"
+                "</Relationships>";
     }
 
     std::string DocxFile::get_empty_document_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<w:document "
-               "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
-               "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" "
-               "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
-               "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
-               "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" "
-               "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
-               "  <w:body>"
-               "  </w:body>"
-               "</w:document>";
+                "<w:document "
+                "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" "
+                "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" "
+                "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" "
+                "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" "
+                "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" "
+                "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+                "  <w:body>"
+                "  </w:body>"
+                "</w:document>";
     }
 
     std::string DocxFile::get_styles_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
-               "  <w:docDefaults>"
-               "    <w:rPrDefault><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz "
-               "w:val=\"24\"/></w:rPr></w:rPrDefault>"
-               "    <w:pPrDefault><w:pPr><w:spacing w:after=\"200\" w:line=\"276\" "
-               "w:lineRule=\"auto\"/></w:pPr></w:pPrDefault>"
-               "  </w:docDefaults>"
-               "  <w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\">"
-               "    <w:name w:val=\"Normal\"/>"
-               "  </w:style>"
-               "</w:styles>";
+                "<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                "  <w:docDefaults>"
+                "    <w:rPrDefault><w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\"/><w:sz "
+                "w:val=\"24\"/></w:rPr></w:rPrDefault>"
+                "    <w:pPrDefault><w:pPr><w:spacing w:after=\"200\" w:line=\"276\" "
+                "w:lineRule=\"auto\"/></w:pPr></w:pPrDefault>"
+                "  </w:docDefaults>"
+                "  <w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\">"
+                "    <w:name w:val=\"Normal\"/>"
+                "  </w:style>"
+                "</w:styles>";
     }
+
     std::string DocxFile::get_settings_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
-               "  <w:zoom w:percent=\"100\"/>"
-               "</w:settings>";
+                "<w:settings xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                "  <w:zoom w:percent=\"100\"/>"
+                "</w:settings>";
     }
 
     std::string DocxFile::get_font_table_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<w:fonts xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
-               "  <w:font w:name=\"Times New Roman\">"
-               "    <w:panose1 w:val=\"02020603050405020304\"/>"
-               "  </w:font>"
-               "</w:fonts>";
+                "<w:fonts xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                "  <w:font w:name=\"Times New Roman\">"
+                "    <w:panose1 w:val=\"02020603050405020304\"/>"
+                "  </w:font>"
+                "</w:fonts>";
     }
 
     std::string DocxFile::get_default_numbering_xml()
     {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-               "<w:numbering xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
-               "  <w:abstractNum w:abstractNumId=\"0\">"
-               "    <w:lvl w:ilvl=\"0\">"
-               "      <w:start w:val=\"1\"/>"
-               "      <w:numFmt w:val=\"bullet\"/>"
-               "      <w:lvlText w:val=\"\xE2\x80\xA2\"/>" // UTF-8编码的实心圆点 (•)
-               "      <w:lvlJc w:val=\"left\"/>"
-               "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
-               "      <w:rPr><w:rFonts w:hint=\"default\"/></w:rPr>" // 简化rFonts
-               "    </w:lvl>"
-               "  </w:abstractNum>"
-               "  <w:abstractNum w:abstractNumId=\"1\">"
-               "    <w:lvl w:ilvl=\"0\">"
-               "      <w:start w:val=\"1\"/>"
-               "      <w:numFmt w:val=\"decimal\"/>"
-               "      <w:lvlText w:val=\"%1.\"/>"
-               "      <w:lvlJc w:val=\"left\"/>"
-               "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
-               "    </w:lvl>"
-               "  </w:abstractNum>"
-               "  <w:num w:numId=\"1\">"
-               "    <w:abstractNumId w:val=\"0\"/>"
-               "  </w:num>"
-               "  <w:num w:numId=\"2\">"
-               "    <w:abstractNumId w:val=\"1\"/>"
-               "  </w:num>"
-               "</w:numbering>";
+                "<w:numbering xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+                "  <w:abstractNum w:abstractNumId=\"0\">"
+                "    <w:lvl w:ilvl=\"0\">"
+                "      <w:start w:val=\"1\"/>"
+                "      <w:numFmt w:val=\"bullet\"/>"
+                "      <w:lvlText w:val=\"\xE2\x80\xA2\"/>" // UTF-8编码的实心圆点 (•)
+                "      <w:lvlJc w:val=\"left\"/>"
+                "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
+                "      <w:rPr><w:rFonts w:hint=\"default\"/></w:rPr>" // 简化rFonts
+                "    </w:lvl>"
+                "  </w:abstractNum>"
+                "  <w:abstractNum w:abstractNumId=\"1\">"
+                "    <w:lvl w:ilvl=\"0\">"
+                "      <w:start w:val=\"1\"/>"
+                "      <w:numFmt w:val=\"decimal\"/>"
+                "      <w:lvlText w:val=\"%1.\"/>"
+                "      <w:lvlJc w:val=\"left\"/>"
+                "      <w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr>"
+                "    </w:lvl>"
+                "  </w:abstractNum>"
+                "  <w:num w:numId=\"1\">"
+                "    <w:abstractNumId w:val=\"0\"/>"
+                "  </w:num>"
+                "  <w:num w:numId=\"2\">"
+                "    <w:abstractNumId w:val=\"1\"/>"
+                "  </w:num>"
+                "</w:numbering>";
     }
 } // namespace duckx

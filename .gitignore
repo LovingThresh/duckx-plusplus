@@ -36,3 +36,6 @@ build/*
 
 # vim swap files
 **/*.swp
+
+# temporary files
+/test/logo.png

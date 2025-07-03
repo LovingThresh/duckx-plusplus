@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -32,11 +32,18 @@ endfunction()
 
 # ====== Test Sources ======
 file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/test_*.cpp")
-
+set(TEST_THIRD_PARTY_SOURCES
+        "${CMAKE_SOURCE_DIR}/thirdparty/zip/zip.c"
+)
 # ====== Test Executable ======
 add_executable(
         run_gtests
         ${TEST_SOURCES}
+        ${TEST_THIRD_PARTY_SOURCES}
+)
+
+target_include_directories(run_gtests PRIVATE
+        "${CMAKE_SOURCE_DIR}/thirdparty/zip"     # For zip.h
 )
 
 target_link_libraries(
