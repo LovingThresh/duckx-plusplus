@@ -1,7 +1,7 @@
 /*!
  * @brief Test suite for the duckx::TextBox class.
  *
- * @author GTest Testing Assistant for C++
+ * @author LiuYe
  * @date 2025.07.05
  * @copyright (c) 2013-2025 Honghu Yuntu Corporation
  */
