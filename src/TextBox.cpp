@@ -136,16 +136,16 @@ namespace duckx
         prstGeom.append_child("a:avLst");
 
         spPr.append_child("a:noFill");
-        auto ln = spPr.append_child("a:ln");
+
+        // REASON FOR CHANGE: Fixed the border generation logic.
+        // The <a:ln> node should only be created when a border is explicitly requested.
+        // Previously, it was always created, causing borderless tests to fail.
         if (m_border_style == BorderStyle::SOLID)
         {
+            auto ln = spPr.append_child("a:ln");
             auto solidFill = ln.append_child("a:solidFill");
             auto srgbClr = solidFill.append_child("a:srgbClr");
             srgbClr.append_attribute("val").set_value("000000");
-        }
-        else
-        {
-            ln.append_child("a:noFill");
         }
 
         auto txbx = wsp.append_child("wps:txbx");
@@ -173,7 +173,7 @@ namespace duckx
         }
     }
 
-    Paragraph TextBox::add_paragraph(const std::string& text, formatting_flag f) const
+    Paragraph TextBox::add_paragraph(const std::string& text, const formatting_flag f) const
     {
         pugi::xml_node content_node = m_internal_doc.child("w:txbxContent");
 
@@ -189,15 +189,15 @@ namespace duckx
 
         if (!text.empty())
         {
-            new_para.add_run(text);
+            new_para.add_run(text, f);
         }
 
         return new_para;
     }
 
-    void TextBox::add_new_paragraph(const std::string& text, formatting_flag f) const
+    void TextBox::add_new_paragraph(const std::string& text, const formatting_flag f) const
     {
-        (void)add_paragraph(text);
+        (void)add_paragraph(text, f);
     }
 
     Paragraph TextBox::last_paragraph() const
