@@ -161,6 +161,38 @@ namespace duckx
               const ErrorContext& context)
             : m_category(category), m_code(code), m_message(message.data(), message.size()), m_context(context) {}
 
+        // Copy constructor
+        Error(const Error& other)
+            : m_category(other.m_category), m_code(other.m_code), m_message(other.m_message), m_context(other.m_context)
+        {
+            // Deep copy the causes
+            for (const auto& cause : other.m_causes) {
+                m_causes.push_back(std::make_unique<Error>(*cause));
+            }
+        }
+
+        // Copy assignment operator
+        Error& operator=(const Error& other)
+        {
+            if (this != &other) {
+                m_category = other.m_category;
+                m_code = other.m_code;
+                m_message = other.m_message;
+                m_context = other.m_context;
+                
+                // Clear existing causes and deep copy new ones
+                m_causes.clear();
+                for (const auto& cause : other.m_causes) {
+                    m_causes.push_back(std::make_unique<Error>(*cause));
+                }
+            }
+            return *this;
+        }
+
+        // Move constructor and assignment (default should work)
+        Error(Error&&) = default;
+        Error& operator=(Error&&) = default;
+
         // Chain errors for better error tracking
         Error& caused_by(const Error& cause)
         {

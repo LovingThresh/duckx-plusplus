@@ -31,14 +31,14 @@ protected:
 // Table formatting tests
 TEST_F(TableFormattingTest, TableAlignment) {
     // Test setting and getting table alignment
-    table.set_alignment(Alignment::CENTER);
-    EXPECT_EQ(table.get_alignment(), Alignment::CENTER);
+    table.set_alignment("center");
+    EXPECT_EQ(table.get_alignment(), "center");
 
-    table.set_alignment(Alignment::RIGHT);
-    EXPECT_EQ(table.get_alignment(), Alignment::RIGHT);
+    table.set_alignment("right");
+    EXPECT_EQ(table.get_alignment(), "right");
 
-    table.set_alignment(Alignment::LEFT);
-    EXPECT_EQ(table.get_alignment(), Alignment::LEFT);
+    table.set_alignment("left");
+    EXPECT_EQ(table.get_alignment(), "left");
 }
 
 TEST_F(TableFormattingTest, TableWidth) {
@@ -46,8 +46,7 @@ TEST_F(TableFormattingTest, TableWidth) {
     double test_width = 400.0;
     table.set_width(test_width);
     
-    double retrieved_width;
-    EXPECT_TRUE(table.get_width(retrieved_width));
+    double retrieved_width = table.get_width();
     EXPECT_NEAR(retrieved_width, test_width, 0.1);
 }
 
@@ -56,43 +55,43 @@ TEST_F(TableFormattingTest, TableBorders) {
     std::string test_style = "double";
     table.set_border_style(test_style);
     
-    std::string retrieved_style;
-    EXPECT_TRUE(table.get_border_style(retrieved_style));
+    std::string retrieved_style = table.get_border_style();
     EXPECT_EQ(retrieved_style, test_style);
 
     // Test border width
     double test_width = 2.0;
     table.set_border_width(test_width);
     
-    double retrieved_width;
-    EXPECT_TRUE(table.get_border_width(retrieved_width));
+    double retrieved_width = table.get_border_width();
     EXPECT_NEAR(retrieved_width, test_width, 0.1);
 
     // Test border color
     std::string test_color = "FF0000";
     table.set_border_color(test_color);
     
-    std::string retrieved_color;
-    EXPECT_TRUE(table.get_border_color(retrieved_color));
+    std::string retrieved_color = table.get_border_color();
     EXPECT_EQ(retrieved_color, test_color);
 }
 
 TEST_F(TableFormattingTest, TableCellMargins) {
     // Test cell margins
     double top = 5.0, bottom = 6.0, left = 7.0, right = 8.0;
-    table.set_cell_margins(top, bottom, left, right);
+    table.set_cell_margins(top, right, bottom, left);
     
-    double ret_top, ret_bottom, ret_left, ret_right;
-    EXPECT_TRUE(table.get_cell_margins(ret_top, ret_bottom, ret_left, ret_right));
-    EXPECT_NEAR(ret_top, top, 0.1);
-    EXPECT_NEAR(ret_bottom, bottom, 0.1);
-    EXPECT_NEAR(ret_left, left, 0.1);
-    EXPECT_NEAR(ret_right, right, 0.1);
+    // Test getter using Result<T> API
+    auto margins_result = table.get_cell_margins_safe();
+    ASSERT_TRUE(margins_result.ok()) << "get_cell_margins_safe() should succeed";
+    
+    auto margins = margins_result.value();
+    EXPECT_NEAR(margins[0], top, 0.1) << "Top margin should match";
+    EXPECT_NEAR(margins[1], right, 0.1) << "Right margin should match";
+    EXPECT_NEAR(margins[2], bottom, 0.1) << "Bottom margin should match";
+    EXPECT_NEAR(margins[3], left, 0.1) << "Left margin should match";
 }
 
 TEST_F(TableFormattingTest, TableChaining) {
     // Test method chaining
-    auto& result = table.set_alignment(Alignment::CENTER)
+    auto& result = table.set_alignment("center")
                         .set_width(300)
                         .set_border_style("single")
                         .set_border_width(1.0)
@@ -102,10 +101,9 @@ TEST_F(TableFormattingTest, TableChaining) {
     EXPECT_EQ(&result, &table);
     
     // Verify all properties were set
-    EXPECT_EQ(table.get_alignment(), Alignment::CENTER);
+    EXPECT_EQ(table.get_alignment(), "center");
     
-    double width;
-    EXPECT_TRUE(table.get_width(width));
+    double width = table.get_width();
     EXPECT_NEAR(width, 300.0, 0.1);
 }
 
@@ -120,8 +118,7 @@ TEST_F(TableFormattingTest, TableRowHeight) {
         double test_height = 25.0;
         row.set_height(test_height);
         
-        double retrieved_height;
-        EXPECT_TRUE(row.get_height(retrieved_height));
+        double retrieved_height = row.get_height();
         EXPECT_NEAR(retrieved_height, test_height, 0.1);
     }
 }
@@ -136,8 +133,7 @@ TEST_F(TableFormattingTest, TableRowHeightRule) {
         std::string test_rule = "exact";
         row.set_height_rule(test_rule);
         
-        std::string retrieved_rule;
-        EXPECT_TRUE(row.get_height_rule(retrieved_rule));
+        std::string retrieved_rule = row.get_height_rule();
         EXPECT_EQ(retrieved_rule, test_rule);
     }
 }
@@ -178,16 +174,14 @@ TEST_F(TableFormattingTest, TableCellWidth) {
             double test_width = 100.0;
             cell.set_width(test_width);
             
-            double retrieved_width;
-            EXPECT_TRUE(cell.get_width(retrieved_width));
+            double retrieved_width = cell.get_width();
             EXPECT_NEAR(retrieved_width, test_width, 0.1);
             
             // Test width type
             std::string test_type = "pct";
             cell.set_width_type(test_type);
             
-            std::string retrieved_type;
-            EXPECT_TRUE(cell.get_width_type(retrieved_type));
+            std::string retrieved_type = cell.get_width_type();
             EXPECT_EQ(retrieved_type, test_type);
         }
     }
@@ -206,8 +200,7 @@ TEST_F(TableFormattingTest, TableCellAlignment) {
             std::string test_align = "center";
             cell.set_vertical_alignment(test_align);
             
-            std::string retrieved_align;
-            EXPECT_TRUE(cell.get_vertical_alignment(retrieved_align));
+            std::string retrieved_align = cell.get_vertical_alignment();
             EXPECT_EQ(retrieved_align, test_align);
         }
     }
@@ -226,8 +219,7 @@ TEST_F(TableFormattingTest, TableCellBackgroundColor) {
             std::string test_color = "FFFF00";
             cell.set_background_color(test_color);
             
-            std::string retrieved_color;
-            EXPECT_TRUE(cell.get_background_color(retrieved_color));
+            std::string retrieved_color = cell.get_background_color();
             EXPECT_EQ(retrieved_color, test_color);
         }
     }
@@ -246,8 +238,7 @@ TEST_F(TableFormattingTest, TableCellTextDirection) {
             std::string test_direction = "tbRl";
             cell.set_text_direction(test_direction);
             
-            std::string retrieved_direction;
-            EXPECT_TRUE(cell.get_text_direction(retrieved_direction));
+            std::string retrieved_direction = cell.get_text_direction();
             EXPECT_EQ(retrieved_direction, test_direction);
         }
     }
@@ -264,14 +255,17 @@ TEST_F(TableFormattingTest, TableCellIndividualMargins) {
             
             // Test cell margins
             double top = 2.0, bottom = 3.0, left = 4.0, right = 5.0;
-            cell.set_margins(top, bottom, left, right);
+            cell.set_margins(top, right, bottom, left);
             
-            double ret_top, ret_bottom, ret_left, ret_right;
-            EXPECT_TRUE(cell.get_margins(ret_top, ret_bottom, ret_left, ret_right));
-            EXPECT_NEAR(ret_top, top, 0.1);
-            EXPECT_NEAR(ret_bottom, bottom, 0.1);
-            EXPECT_NEAR(ret_left, left, 0.1);
-            EXPECT_NEAR(ret_right, right, 0.1);
+            // Test getter using Result<T> API
+            auto margins_result = cell.get_margins_safe();
+            ASSERT_TRUE(margins_result.ok()) << "get_margins_safe() should succeed";
+            
+            auto margins = margins_result.value();
+            EXPECT_NEAR(margins[0], top, 0.1) << "Top margin should match";
+            EXPECT_NEAR(margins[1], right, 0.1) << "Right margin should match";
+            EXPECT_NEAR(margins[2], bottom, 0.1) << "Bottom margin should match";
+            EXPECT_NEAR(margins[3], left, 0.1) << "Left margin should match";
         }
     }
 }
@@ -289,24 +283,21 @@ TEST_F(TableFormattingTest, TableCellBorders) {
             std::string test_style = "dashed";
             cell.set_border_style(test_style);
             
-            std::string retrieved_style;
-            EXPECT_TRUE(cell.get_border_style(retrieved_style));
+            std::string retrieved_style = cell.get_border_style();
             EXPECT_EQ(retrieved_style, test_style);
             
             // Test border width
             double test_width = 1.5;
             cell.set_border_width(test_width);
             
-            double retrieved_width;
-            EXPECT_TRUE(cell.get_border_width(retrieved_width));
+            double retrieved_width = cell.get_border_width();
             EXPECT_NEAR(retrieved_width, test_width, 0.1);
             
             // Test border color
             std::string test_color = "00FF00";
             cell.set_border_color(test_color);
             
-            std::string retrieved_color;
-            EXPECT_TRUE(cell.get_border_color(retrieved_color));
+            std::string retrieved_color = cell.get_border_color();
             EXPECT_EQ(retrieved_color, test_color);
         }
     }
@@ -332,12 +323,10 @@ TEST_F(TableFormattingTest, TableCellChaining) {
             EXPECT_EQ(&result, &cell);
             
             // Verify properties were set
-            double width;
-            EXPECT_TRUE(cell.get_width(width));
+            double width = cell.get_width();
             EXPECT_NEAR(width, 80.0, 0.1);
             
-            std::string align;
-            EXPECT_TRUE(cell.get_vertical_alignment(align));
+            std::string align = cell.get_vertical_alignment();
             EXPECT_EQ(align, "center");
         }
     }
@@ -346,12 +335,12 @@ TEST_F(TableFormattingTest, TableCellChaining) {
 // Integration test
 TEST_F(TableFormattingTest, CompleteTableFormatting) {
     // Format the entire table comprehensively
-    table.set_alignment(Alignment::CENTER)
+    table.set_alignment("center")
          .set_width(500)
          .set_border_style("single")
          .set_border_width(1.0)
          .set_border_color("000000")
-         .set_cell_margins(5, 5, 10, 10);
+         .set_cell_margins(5, 10, 5, 10);
     
     // Format each row
     int row_index = 0;
@@ -374,7 +363,7 @@ TEST_F(TableFormattingTest, CompleteTableFormatting) {
                     .set_border_style("double");
             } else {
                 cell.set_vertical_alignment("top")
-                    .set_margins(3, 3, 8, 8);
+                    .set_margins(3, 8, 3, 8);
                 
                 if (row_index % 2 == 0) {
                     cell.set_background_color("F8F8F8");
@@ -386,14 +375,12 @@ TEST_F(TableFormattingTest, CompleteTableFormatting) {
     }
     
     // Verify table properties
-    EXPECT_EQ(table.get_alignment(), Alignment::CENTER);
+    EXPECT_EQ(table.get_alignment(), "center");
     
-    double width;
-    EXPECT_TRUE(table.get_width(width));
+    double width = table.get_width();
     EXPECT_NEAR(width, 500.0, 0.1);
     
-    std::string border_style;
-    EXPECT_TRUE(table.get_border_style(border_style));
+    std::string border_style = table.get_border_style();
     EXPECT_EQ(border_style, "single");
 }
 
@@ -401,18 +388,16 @@ TEST_F(TableFormattingTest, CompleteTableFormatting) {
 TEST_F(TableFormattingTest, EdgeCases) {
     // Test with zero/negative values
     table.set_width(0);
-    double width;
-    EXPECT_TRUE(table.get_width(width));
+    double width = table.get_width();
     EXPECT_NEAR(width, 0.0, 0.1);
     
     // Test with very large values
     table.set_width(10000);
-    EXPECT_TRUE(table.get_width(width));
+    width = table.get_width();
     EXPECT_NEAR(width, 10000.0, 0.1);
     
     // Test with empty strings
     table.set_border_style("");
-    std::string style;
-    EXPECT_TRUE(table.get_border_style(style));
+    std::string style = table.get_border_style();
     EXPECT_EQ(style, "");
 }

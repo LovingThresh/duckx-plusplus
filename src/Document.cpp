@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: Document.cpp
  * @brief:
  *
@@ -26,6 +26,61 @@ namespace duckx
         }
     };
 
+    // Modern Result<T> API implementations
+    Result<Document> Document::open_safe(const std::string& path)
+    {
+        if (path.empty()) {
+            return Result<Document>(errors::invalid_argument("path", "Path cannot be empty", 
+                ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+        }
+
+        try {
+            auto file = std::make_unique<DocxFile>();
+            if (!file->open(path)) {
+                return Result<Document>(errors::file_not_found(path, 
+                    ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+            }
+            return Result<Document>(Document(std::move(file)));
+        } catch (const std::exception& e) {
+            return Result<Document>(errors::file_access_denied(path, 
+                ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+        }
+    }
+
+    Result<Document> Document::create_safe(const std::string& path)
+    {
+        if (path.empty()) {
+            return Result<Document>(errors::invalid_argument("path", "Path cannot be empty", 
+                ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+        }
+
+        try {
+            auto file = std::make_unique<DocxFile>();
+            if (!file->create(path)) {
+                return Result<Document>(errors::file_access_denied(path, 
+                    ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+            }
+            return Result<Document>(Document(std::move(file)));
+        } catch (const std::exception& e) {
+            return Result<Document>(errors::file_access_denied(path, 
+                ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+        }
+    }
+
+    Result<void> Document::save_safe() const
+    {
+        try {
+            save();
+            return Result<void>();
+        } catch (const std::exception& e) {
+            ErrorContext errorContext{__FILE__, __FUNCTION__, __LINE__};
+            errorContext.with_info("operation", "save");
+            errorContext.with_info("error", e.what());
+            return Result<void>(errors::file_access_denied("", errorContext));
+        }
+    }
+
+    // Legacy exception-based API (preserved for backward compatibility)
     Document Document::open(const std::string& path)
     {
         auto file = std::make_unique<DocxFile>();

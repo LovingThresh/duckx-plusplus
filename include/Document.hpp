@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: Document.hpp
  * @brief:
  *
@@ -10,6 +10,7 @@
 #pragma once
 #include <memory>
 #include "duckx_export.h"
+#include "Error.hpp"
 
 #include "Body.hpp"
 #include "DocxFile.hpp"
@@ -30,14 +31,20 @@ namespace duckx
     class DUCKX_API Document
     {
     public:
+        // Modern Result<T> API (recommended)
+        static Result<Document> open_safe(const std::string& path);
+        static Result<Document> create_safe(const std::string& path);
+        Result<void> save_safe() const;
+        
+        // Legacy exception-based API (for backward compatibility)
         static Document open(const std::string& path);
         static Document create(const std::string& path);
+        void save() const;
 
         Document::Document(Document&& other) noexcept = default;
         Document& Document::operator=(Document&& other) noexcept = default;
         Document::~Document() = default;
 
-        void save() const;
         Body& body();
         const Body& body() const;
         MediaManager& media() const;

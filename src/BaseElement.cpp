@@ -10,6 +10,7 @@
 
 #include <cctype>
 #include <map>
+#include <tuple>
 #include <unordered_map>
 #include <zip.h>
 
@@ -547,9 +548,11 @@ namespace duckx
 
     Alignment Paragraph::get_alignment() const
     {
-        if (const auto pPr = m_currentNode.child("w:pPr"))
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
         {
-            if (const auto jc = pPr.child("w:jc"))
+            const auto jc = pPr.child("w:jc");
+            if (jc)
             {
                 const std::string val = jc.attribute("w:val").as_string();
                 if (val == "center") return Alignment::CENTER;
@@ -562,11 +565,16 @@ namespace duckx
 
     bool Paragraph::get_line_spacing(double& line_spacing) const
     {
-        if (const auto pPr = m_currentNode.child("w:pPr"))
+        line_spacing = 1.0; // Default line spacing is 1.0 (single spacing)
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
         {
-            if (const auto spacingNode = pPr.child("w:spacing"))
+            const auto spacingNode = pPr.child("w:spacing");
+            if (spacingNode)
             {
-                if (const auto line = spacingNode.attribute("w:line"))
+                const auto line = spacingNode.attribute("w:line");
+                if (line)
                 {
                     line_spacing = line.as_double() / 240.0;
                     return true;
@@ -578,17 +586,24 @@ namespace duckx
 
     bool Paragraph::get_spacing(double& before_pts, double& after_pts) const
     {
-        if (const auto pPr = m_currentNode.child("w:pPr"))
+        before_pts = 0.0;
+        after_pts = 0.0;
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
         {
-            if (const auto spacingNode = pPr.child("w:spacing"))
+            const auto spacingNode = pPr.child("w:spacing");
+            if (spacingNode)
             {
                 bool found = false;
-                if (const auto before = spacingNode.attribute("w:before"))
+                const auto before = spacingNode.attribute("w:before");
+                if (before)
                 {
                     before_pts = before.as_double() / 20.0;
                     found = true;
                 }
-                if (const auto after = spacingNode.attribute("w:after"))
+                const auto after = spacingNode.attribute("w:after");
+                if (after)
                 {
                     after_pts = after.as_double() / 20.0;
                     found = true;
@@ -601,29 +616,38 @@ namespace duckx
 
     bool Paragraph::get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const
     {
-        if (const auto pPr = m_currentNode.child("w:pPr"))
+        left_pts = 0.0;
+        right_pts = 0.0;
+        first_line_pts = 0.0;
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
         {
-            if (const auto indNode = pPr.child("w:ind"))
+            const auto indNode = pPr.child("w:ind");
+            if (indNode)
             {
                 bool found = false;
-                if (const auto left = indNode.attribute("w:left"))
+                const auto left = indNode.attribute("w:left");
+                if (left)
                 {
                     left_pts = left.as_double() / 20.0;
                     found = true;
                 }
-                if (const auto right = indNode.attribute("w:right"))
+                const auto right = indNode.attribute("w:right");
+                if (right)
                 {
                     right_pts = right.as_double() / 20.0;
                     found = true;
                 }
-                if (const auto firstLine = indNode.attribute("w:firstLine"))
+                const auto firstLine = indNode.attribute("w:firstLine");
+                if (firstLine)
                 {
                     first_line_pts = firstLine.as_double() / 20.0;
                     found = true;
                 }
-                if (const auto hanging = indNode.attribute("w:hanging"))
+                const auto hanging = indNode.attribute("w:hanging");
+                if (hanging)
                 {
-                    // A hanging indent is a negative first line indent
                     first_line_pts = -hanging.as_double() / 20.0;
                     found = true;
                 }
@@ -635,11 +659,14 @@ namespace duckx
 
     bool Paragraph::get_list_style(ListType& type, int& level, int& numId) const
     {
-        if (const auto pPr = m_currentNode.child("w:pPr"))
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
         {
-            if (const auto numPr = pPr.child("w:numPr"))
+            const auto numPr = pPr.child("w:numPr");
+            if (numPr)
             {
-                if (const auto ilvl = numPr.child("w:ilvl"))
+                const auto ilvl = numPr.child("w:ilvl");
+                if (ilvl)
                 {
                     level = ilvl.attribute("w:val").as_int(-1);
                 }
@@ -648,7 +675,8 @@ namespace duckx
                     level = -1;
                 }
 
-                if (const auto id = numPr.child("w:numId"))
+                const auto id = numPr.child("w:numId");
+                if (id)
                 {
                     numId = id.attribute("w:val").as_int(-1);
                 }
@@ -658,7 +686,7 @@ namespace duckx
                 }
 
                 // As before, we can't easily determine the type (BULLET/NUMBER)
-                // from this XML alone. We'll default to BULLET as a placeholder.
+                // without parsing the numbering.xml, so we'll default to BULLET
                 type = ListType::BULLET;
 
                 return numId > 0;
@@ -738,9 +766,17 @@ namespace duckx
 
         pugi::xml_node new_run_text = new_run.append_child("w:t");
 
-        if (*text != 0 && (isspace(text[0]) || isspace(text[strlen(text) - 1])))
-            new_run_text.append_attribute("xml:space").set_value("preserve");
-        new_run_text.text().set(text);
+        if (text != nullptr && *text != 0) {
+            // Safe character range check for isspace() - must be in range [0, 255] or EOF (-1)
+            unsigned char first_char = static_cast<unsigned char>(text[0]);
+            size_t text_len = strlen(text);
+            unsigned char last_char = text_len > 0 ? static_cast<unsigned char>(text[text_len - 1]) : 0;
+            
+            if (isspace(first_char) || (text_len > 0 && isspace(last_char))) {
+                new_run_text.append_attribute("xml:space").set_value("preserve");
+            }
+        }
+        new_run_text.text().set(text ? text : "");
 
         return *new Run(m_currentNode, new_run);
     }
@@ -1204,149 +1240,175 @@ namespace duckx
         return *this;
     }
 
-    bool TableCell::get_width(double& width_pts) const
+    double TableCell::get_width() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_w = tc_pr.child("w:tcW")) {
-                if (const auto w_attr = tc_w.attribute("w:w")) {
-                    width_pts = w_attr.as_double() / 20.0;
-                    return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_w = tc_pr.child("w:tcW");
+            if (tc_w) {
+                const auto w_attr = tc_w.attribute("w:w");
+                if (w_attr) {
+                    return w_attr.as_double() / 20.0;
                 }
             }
         }
-        return false;
+        return 0.0;
     }
 
-    bool TableCell::get_width_type(std::string& type) const
+    std::string TableCell::get_width_type() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_w = tc_pr.child("w:tcW")) {
-                if (const auto type_attr = tc_w.attribute("w:type")) {
-                    type = type_attr.as_string();
-                    return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_w = tc_pr.child("w:tcW");
+            if (tc_w) {
+                const auto type_attr = tc_w.attribute("w:type");
+                if (type_attr) {
+                    return type_attr.as_string();
                 }
             }
         }
-        return false;
+        return "auto";
     }
 
-    bool TableCell::get_vertical_alignment(std::string& align) const
+    std::string TableCell::get_vertical_alignment() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto v_align = tc_pr.child("w:vAlign")) {
-                if (const auto val_attr = v_align.attribute("w:val")) {
-                    align = val_attr.as_string();
-                    return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto v_align = tc_pr.child("w:vAlign");
+            if (v_align) {
+                const auto val_attr = v_align.attribute("w:val");
+                if (val_attr) {
+                    return val_attr.as_string();
                 }
             }
         }
-        return false;
+        return "top";
     }
 
-    bool TableCell::get_background_color(std::string& color) const
+    std::string TableCell::get_background_color() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto shd = tc_pr.child("w:shd")) {
-                if (const auto fill_attr = shd.attribute("w:fill")) {
-                    color = fill_attr.as_string();
-                    return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto shd = tc_pr.child("w:shd");
+            if (shd) {
+                const auto fill_attr = shd.attribute("w:fill");
+                if (fill_attr) {
+                    return fill_attr.as_string();
                 }
             }
         }
-        return false;
+        return "";
     }
 
-    bool TableCell::get_text_direction(std::string& direction) const
+    std::string TableCell::get_text_direction() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto text_dir = tc_pr.child("w:textDirection")) {
-                if (const auto val_attr = text_dir.attribute("w:val")) {
-                    direction = val_attr.as_string();
-                    return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto text_dir = tc_pr.child("w:textDirection");
+            if (text_dir) {
+                const auto val_attr = text_dir.attribute("w:val");
+                if (val_attr) {
+                    return val_attr.as_string();
                 }
             }
         }
-        return false;
+        return "lrTb";
     }
 
-    bool TableCell::get_margins(double& top_pts, double& bottom_pts, double& left_pts, double& right_pts) const
+    Result<std::array<double, 4>> TableCell::get_margins_safe() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_mar = tc_pr.child("w:tcMar")) {
-                bool found = false;
-                if (const auto top = tc_mar.child("w:top")) {
-                    if (const auto w_attr = top.attribute("w:w")) {
-                        top_pts = w_attr.as_double() / 20.0;
-                        found = true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_mar = tc_pr.child("w:tcMar");
+            if (tc_mar) {
+                std::array<double, 4> margins = {0.0, 0.0, 0.0, 0.0}; // top, right, bottom, left
+                
+                const auto top = tc_mar.child("w:top");
+                if (top) {
+                    const auto w_attr = top.attribute("w:w");
+                    if (w_attr) {
+                        margins[0] = w_attr.as_double() / 20.0;
                     }
                 }
-                if (const auto bottom = tc_mar.child("w:bottom")) {
-                    if (const auto w_attr = bottom.attribute("w:w")) {
-                        bottom_pts = w_attr.as_double() / 20.0;
-                        found = true;
+                const auto right = tc_mar.child("w:right");
+                if (right) {
+                    const auto w_attr = right.attribute("w:w");
+                    if (w_attr) {
+                        margins[1] = w_attr.as_double() / 20.0;
                     }
                 }
-                if (const auto left = tc_mar.child("w:left")) {
-                    if (const auto w_attr = left.attribute("w:w")) {
-                        left_pts = w_attr.as_double() / 20.0;
-                        found = true;
+                const auto bottom = tc_mar.child("w:bottom");
+                if (bottom) {
+                    const auto w_attr = bottom.attribute("w:w");
+                    if (w_attr) {
+                        margins[2] = w_attr.as_double() / 20.0;
                     }
                 }
-                if (const auto right = tc_mar.child("w:right")) {
-                    if (const auto w_attr = right.attribute("w:w")) {
-                        right_pts = w_attr.as_double() / 20.0;
-                        found = true;
+                const auto left = tc_mar.child("w:left");
+                if (left) {
+                    const auto w_attr = left.attribute("w:w");
+                    if (w_attr) {
+                        margins[3] = w_attr.as_double() / 20.0;
                     }
                 }
-                return found;
+                return Result<std::array<double, 4>>(margins);
             }
         }
-        return false;
+        return Result<std::array<double, 4>>(errors::element_not_found("margins", ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
     }
 
-    bool TableCell::get_border_style(std::string& style) const
+    std::string TableCell::get_border_style() const
     {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_borders = tc_pr.child("w:tcBorders")) {
-                if (const auto top_border = tc_borders.child("w:top")) {
-                    if (const auto val_attr = top_border.attribute("w:val")) {
-                        style = val_attr.as_string();
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    bool TableCell::get_border_width(double& width_pts) const
-    {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_borders = tc_pr.child("w:tcBorders")) {
-                if (const auto top_border = tc_borders.child("w:top")) {
-                    if (const auto sz_attr = top_border.attribute("w:sz")) {
-                        width_pts = sz_attr.as_double() / 8.0;
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    bool TableCell::get_border_color(std::string& color) const
-    {
-        if (const auto tc_pr = m_currentNode.child("w:tcPr")) {
-            if (const auto tc_borders = tc_pr.child("w:tcBorders")) {
-                if (const auto top_border = tc_borders.child("w:top")) {
-                    if (const auto color_attr = top_border.attribute("w:color")) {
-                        color = color_attr.as_string();
-                        return true;
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_borders = tc_pr.child("w:tcBorders");
+            if (tc_borders) {
+                const auto top_border = tc_borders.child("w:top");
+                if (top_border) {
+                    const auto val_attr = top_border.attribute("w:val");
+                    if (val_attr) {
+                        return val_attr.as_string();
                     }
                 }
             }
         }
-        return false;
+        return "";
+    }
+
+    double TableCell::get_border_width() const
+    {
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_borders = tc_pr.child("w:tcBorders");
+            if (tc_borders) {
+                const auto top_border = tc_borders.child("w:top");
+                if (top_border) {
+                    const auto sz_attr = top_border.attribute("w:sz");
+                    if (sz_attr) {
+                        return sz_attr.as_double() / 8.0;
+                    }
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    std::string TableCell::get_border_color() const
+    {
+        const auto tc_pr = m_currentNode.child("w:tcPr");
+        if (tc_pr) {
+            const auto tc_borders = tc_pr.child("w:tcBorders");
+            if (tc_borders) {
+                const auto top_border = tc_borders.child("w:top");
+                if (top_border) {
+                    const auto color_attr = top_border.attribute("w:color");
+                    if (color_attr) {
+                        return color_attr.as_string();
+                    }
+                }
+            }
+        }
+        return "";
     }
 
     pugi::xml_node TableCell::get_or_create_tc_pr()
@@ -1367,113 +1429,648 @@ namespace duckx
         return tc_borders;
     }
 
-    TableRow::TableRow(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
-
-    void TableRow::set_parent(const pugi::xml_node node)
+    Result<TableCell*> TableCell::set_width_safe(double width_pts)
     {
-        m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:tr");
-
-        m_tableCell.set_parent(m_currentNode);
-    }
-
-    void TableRow::set_current(const pugi::xml_node node)
-    {
-        m_currentNode = node;
-    }
-
-    bool TableRow::has_next() const
-    {
-        if (!m_currentNode) return false;
-        return find_next_sibling("w:tr") != nullptr;
-    }
-
-    bool TableRow::has_next_same_type() const
-    {
-        if (!m_currentNode)
-            return false;
-
-        return !find_next_sibling("w:tr").empty();
-    }
-
-    absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> TableRow::cells()
-    {
-        if (m_currentNode)
-        {
-            m_tableCell.set_current(m_currentNode.child("w:tc"));
+        if (width_pts < 0) {
+            return Result<TableCell*>(errors::invalid_argument("width_pts", "Width must be non-negative",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
         }
-        else
-        {
-            m_tableCell.set_current(pugi::xml_node());
+        
+        if (width_pts > 1000.0) { // Reasonable maximum
+            return Result<TableCell*>(errors::validation_failed("width_pts", "Width exceeds maximum allowed value",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "1000.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
         }
-
-        m_tableCell.set_parent(m_currentNode);
-
-        return make_element_range(m_tableCell);
+        
+        set_width(width_pts);
+        return Result<TableCell*>(this);
     }
 
-    TableRow& TableRow::advance()
+    Result<TableCell*> TableCell::set_width_type_safe(const std::string& type)
     {
-        m_currentNode = m_currentNode.next_sibling("w:tr");
+        if (type.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("type", "Width type cannot be empty"));
+        }
+        
+        if (type != "dxa" && type != "pct" && type != "auto") {
+            return Result<TableCell*>(errors::validation_failed("type", "Invalid width type",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_type", type)
+                    .with_info("valid_types", "dxa, pct, auto")));
+        }
+        
+        set_width_type(type);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_vertical_alignment_safe(const std::string& alignment)
+    {
+        if (alignment.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("alignment", "Alignment cannot be empty"));
+        }
+        
+        if (alignment != "top" && alignment != "center" && alignment != "bottom") {
+            return Result<TableCell*>(errors::validation_failed("alignment", "Invalid vertical alignment",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_alignment", alignment)
+                    .with_info("valid_alignments", "top, center, bottom")));
+        }
+        
+        set_vertical_alignment(alignment);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_background_color_safe(const std::string& color)
+    {
+        if (color.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("color", "Color cannot be empty"));
+        }
+        
+        // Basic hex color validation
+        if (color.length() != 6 || !std::all_of(color.begin(), color.end(), [](char c) { return std::isxdigit(c); })) {
+            return Result<TableCell*>(errors::validation_failed("color", "Invalid hex color format",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_color", color)
+                    .with_info("expected_format", "6-digit hex (e.g., FF0000)")));
+        }
+        
+        set_background_color(color);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_text_direction_safe(const std::string& direction)
+    {
+        if (direction.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("direction", "Text direction cannot be empty"));
+        }
+        
+        const std::vector<std::string> valid_directions = {"lrTb", "tbRl", "btLr", "lrTbV", "tbRlV", "tbLrV"};
+        if (std::find(valid_directions.begin(), valid_directions.end(), direction) == valid_directions.end()) {
+            return Result<TableCell*>(errors::validation_failed("direction", "Invalid text direction",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_direction", direction)
+                    .with_info("valid_directions", "lrTb, tbRl, btLr, lrTbV, tbRlV, tbLrV")));
+        }
+        
+        set_text_direction(direction);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_margins_safe(double top_pts, double right_pts, double bottom_pts, double left_pts)
+    {
+        const double margins[] = {top_pts, right_pts, bottom_pts, left_pts};
+        const char* names[] = {"top_pts", "right_pts", "bottom_pts", "left_pts"};
+        
+        for (int i = 0; i < 4; ++i) {
+            if (margins[i] < 0) {
+                return Result<TableCell*>(errors::invalid_argument(names[i], "Margin must be non-negative",
+                    ErrorContext(__FILE__, __func__, __LINE__)
+                        .with_info("provided_value", std::to_string(margins[i]))));
+            }
+        }
+        
+        set_margins(top_pts, right_pts, bottom_pts, left_pts);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_border_style_safe(const std::string& style)
+    {
+        if (style.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("style", "Border style cannot be empty"));
+        }
+        
+        const std::vector<std::string> valid_styles = {"single", "double", "dashed", "dotted", "none"};
+        if (std::find(valid_styles.begin(), valid_styles.end(), style) == valid_styles.end()) {
+            return Result<TableCell*>(errors::validation_failed("style", "Invalid border style",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_style", style)
+                    .with_info("valid_styles", "single, double, dashed, dotted, none")));
+        }
+        
+        set_border_style(style);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_border_width_safe(double width_pts)
+    {
+        if (width_pts < 0) {
+            return Result<TableCell*>(errors::invalid_argument("width_pts", "Border width must be non-negative",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
+        }
+        
+        if (width_pts > 20.0) { // Reasonable maximum
+            return Result<TableCell*>(errors::validation_failed("width_pts", "Border width exceeds maximum",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "20.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
+        }
+        
+        set_border_width(width_pts);
+        return Result<TableCell*>(this);
+    }
+
+    Result<TableCell*> TableCell::set_border_color_safe(const std::string& color)
+    {
+        if (color.empty()) {
+            return Result<TableCell*>(errors::invalid_argument("color", "Border color cannot be empty"));
+        }
+        
+        // Basic hex color validation
+        if (color.length() != 6 || !std::all_of(color.begin(), color.end(), [](char c) { return std::isxdigit(c); })) {
+            return Result<TableCell*>(errors::validation_failed("color", "Invalid hex color format",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_color", color)
+                    .with_info("expected_format", "6-digit hex (e.g., 000000)")));
+        }
+        
+        set_border_color(color);
+        return Result<TableCell*>(this);
+    }
+
+    // ============================================================================
+    // TableRow Result<T> API implementations (Modern, recommended)
+    // ============================================================================
+
+    Result<TableRow*> TableRow::set_height_safe(double height_pts)
+    {
+        if (height_pts < 0) {
+            return Result<TableRow*>(errors::invalid_argument("height_pts", "Height must be non-negative",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(height_pts))));
+        }
+        
+        if (height_pts > 500.0) { // Reasonable maximum for row height
+            return Result<TableRow*>(errors::validation_failed("height_pts", "Height exceeds maximum allowed value",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_height", "500.0")
+                    .with_info("provided_height", std::to_string(height_pts))));
+        }
+        
+        set_height(height_pts);
+        return Result<TableRow*>(this);
+    }
+
+    Result<TableRow*> TableRow::set_height_rule_safe(const std::string& rule)
+    {
+        if (rule.empty()) {
+            return Result<TableRow*>(errors::invalid_argument("rule", "Height rule cannot be empty"));
+        }
+        
+        if (rule != "exact" && rule != "atLeast" && rule != "auto") {
+            return Result<TableRow*>(errors::validation_failed("rule", "Invalid height rule",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_rule", rule)
+                    .with_info("valid_rules", "exact, atLeast, auto")));
+        }
+        
+        set_height_rule(rule);
+        return Result<TableRow*>(this);
+    }
+
+    Result<TableRow*> TableRow::set_header_row_safe(bool is_header)
+    {
+        set_header_row(is_header);
+        return Result<TableRow*>(this);
+    }
+
+    Result<TableRow*> TableRow::set_cant_split_safe(bool cant_split)
+    {
+        set_cant_split(cant_split);
+        return Result<TableRow*>(this);
+    }
+
+    // ============================================================================
+    // Table Result<T> API implementations (Modern, recommended)
+    // ============================================================================
+
+    Result<Table*> Table::set_alignment_safe(const std::string& alignment)
+    {
+        if (alignment.empty()) {
+            return Result<Table*>(errors::invalid_argument("alignment", "Alignment cannot be empty"));
+        }
+        
+        if (alignment != "left" && alignment != "center" && alignment != "right") {
+            return Result<Table*>(errors::validation_failed("alignment", "Invalid table alignment",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_alignment", alignment)
+                    .with_info("valid_alignments", "left, center, right")));
+        }
+        
+        set_alignment(alignment);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_width_safe(double width_pts)
+    {
+        if (width_pts <= 0) {
+            return Result<Table*>(errors::invalid_argument("width_pts", "Width must be positive",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
+        }
+        
+        if (width_pts > 2000.0) { // Reasonable maximum for table width
+            return Result<Table*>(errors::validation_failed("width_pts", "Width exceeds maximum allowed value",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "2000.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
+        }
+        
+        set_width(width_pts);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_border_style_safe(const std::string& style)
+    {
+        if (style.empty()) {
+            return Result<Table*>(errors::invalid_argument("style", "Border style cannot be empty"));
+        }
+        
+        const std::vector<std::string> valid_styles = {"single", "double", "dashed", "dotted", "none"};
+        if (std::find(valid_styles.begin(), valid_styles.end(), style) == valid_styles.end()) {
+            return Result<Table*>(errors::validation_failed("style", "Invalid border style",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_style", style)
+                    .with_info("valid_styles", "single, double, dashed, dotted, none")));
+        }
+        
+        set_border_style(style);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_border_width_safe(double width_pts)
+    {
+        if (width_pts < 0) {
+            return Result<Table*>(errors::invalid_argument("width_pts", "Border width must be non-negative",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
+        }
+        
+        if (width_pts > 20.0) { // Reasonable maximum
+            return Result<Table*>(errors::validation_failed("width_pts", "Border width exceeds maximum",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "20.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
+        }
+        
+        set_border_width(width_pts);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_border_color_safe(const std::string& color)
+    {
+        if (color.empty()) {
+            return Result<Table*>(errors::invalid_argument("color", "Border color cannot be empty"));
+        }
+        
+        // Basic hex color validation
+        if (color.length() != 6 || !std::all_of(color.begin(), color.end(), [](char c) { return std::isxdigit(c); })) {
+            return Result<Table*>(errors::validation_failed("color", "Invalid hex color format",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_color", color)
+                    .with_info("expected_format", "6-digit hex (e.g., 000000)")));
+        }
+        
+        set_border_color(color);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_cell_margins_safe(double top_pts, double right_pts, double bottom_pts, double left_pts)
+    {
+        const double margins[] = {top_pts, right_pts, bottom_pts, left_pts};
+        const char* names[] = {"top_pts", "right_pts", "bottom_pts", "left_pts"};
+        
+        for (int i = 0; i < 4; ++i) {
+            if (margins[i] < 0) {
+                return Result<Table*>(errors::invalid_argument(names[i], "Margin must be non-negative",
+                    ErrorContext(__FILE__, __func__, __LINE__)
+                        .with_info("provided_value", std::to_string(margins[i]))));
+            }
+        }
+        
+        set_cell_margins(top_pts, right_pts, bottom_pts, left_pts);
+        return Result<Table*>(this);
+    }
+
+    // ============================================================================
+    // Table Getter implementations
+    // ============================================================================
+
+    std::string Table::get_alignment() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto jc = tbl_pr.child("w:jc");
+            if (jc) {
+                const auto val_attr = jc.attribute("w:val");
+                if (val_attr) {
+                    return val_attr.as_string();
+                }
+            }
+        }
+        return "left";
+    }
+
+    double Table::get_width() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto tbl_w = tbl_pr.child("w:tblW");
+            if (tbl_w) {
+                const auto w_attr = tbl_w.attribute("w:w");
+                if (w_attr) {
+                    return w_attr.as_double() / 20.0; // Convert from twips to points
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    std::string Table::get_border_style() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto tbl_borders = tbl_pr.child("w:tblBorders");
+            if (tbl_borders) {
+                const auto top_border = tbl_borders.child("w:top");
+                if (top_border) {
+                    const auto val_attr = top_border.attribute("w:val");
+                    if (val_attr) {
+                        return val_attr.as_string();
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    double Table::get_border_width() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto tbl_borders = tbl_pr.child("w:tblBorders");
+            if (tbl_borders) {
+                const auto top_border = tbl_borders.child("w:top");
+                if (top_border) {
+                    const auto sz_attr = top_border.attribute("w:sz");
+                    if (sz_attr) {
+                        return sz_attr.as_double() / 8.0; // Convert from eighths of a point
+                    }
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    std::string Table::get_border_color() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto tbl_borders = tbl_pr.child("w:tblBorders");
+            if (tbl_borders) {
+                const auto top_border = tbl_borders.child("w:top");
+                if (top_border) {
+                    const auto color_attr = top_border.attribute("w:color");
+                    if (color_attr) {
+                        return color_attr.as_string();
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    Result<std::array<double, 4>> Table::get_cell_margins_safe() const
+    {
+        const auto tbl_pr = m_currentNode.child("w:tblPr");
+        if (tbl_pr) {
+            const auto tbl_cell_mar = tbl_pr.child("w:tblCellMar");
+            if (tbl_cell_mar) {
+                std::array<double, 4> margins = {0.0, 0.0, 0.0, 0.0}; // top, right, bottom, left
+                
+                const auto top = tbl_cell_mar.child("w:top");
+                if (top) {
+                    const auto w_attr = top.attribute("w:w");
+                    if (w_attr) {
+                        margins[0] = w_attr.as_double() / 20.0;
+                    }
+                }
+                const auto right = tbl_cell_mar.child("w:right");
+                if (right) {
+                    const auto w_attr = right.attribute("w:w");
+                    if (w_attr) {
+                        margins[1] = w_attr.as_double() / 20.0;
+                    }
+                }
+                const auto bottom = tbl_cell_mar.child("w:bottom");
+                if (bottom) {
+                    const auto w_attr = bottom.attribute("w:w");
+                    if (w_attr) {
+                        margins[2] = w_attr.as_double() / 20.0;
+                    }
+                }
+                const auto left = tbl_cell_mar.child("w:left");
+                if (left) {
+                    const auto w_attr = left.attribute("w:w");
+                    if (w_attr) {
+                        margins[3] = w_attr.as_double() / 20.0;
+                    }
+                }
+                return Result<std::array<double, 4>>(margins);
+            }
+        }
+        return Result<std::array<double, 4>>(errors::element_not_found("cell_margins", ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+    }
+
+    // ============================================================================
+    // Table Setter implementations (Legacy API)
+    // ============================================================================
+
+    Table& Table::set_alignment(const std::string& alignment)
+    {
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        pugi::xml_node jc = tbl_pr.child("w:jc");
+        if (!jc) {
+            jc = tbl_pr.append_child("w:jc");
+        }
+        
+        jc.remove_attribute("w:val");
+        jc.append_attribute("w:val").set_value(alignment.c_str());
         return *this;
     }
 
-    bool TableRow::try_advance()
+    Table& Table::set_width(double width_pts)
     {
-        const pugi::xml_node next_row = find_next_sibling("w:tr");
-        if (!next_row.empty())
-        {
-            m_currentNode = next_row;
-            return true;
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
         }
-        return false;
+        
+        pugi::xml_node tbl_w = tbl_pr.child("w:tblW");
+        if (!tbl_w) {
+            tbl_w = tbl_pr.append_child("w:tblW");
+        }
+        
+        tbl_w.remove_attribute("w:w");
+        tbl_w.remove_attribute("w:type");
+        tbl_w.append_attribute("w:w").set_value(static_cast<int>(width_pts * 20)); // Convert to twips
+        tbl_w.append_attribute("w:type").set_value("dxa");
+        return *this;
     }
 
-    bool TableRow::can_advance() const
+    Table& Table::set_border_style(const std::string& style)
     {
-        return !find_next_sibling("w:tr").empty();
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        pugi::xml_node tbl_borders = tbl_pr.child("w:tblBorders");
+        if (!tbl_borders) {
+            tbl_borders = tbl_pr.append_child("w:tblBorders");
+        }
+        
+        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right"};
+        for (const char* border_name : border_names) {
+            pugi::xml_node border = tbl_borders.child(border_name);
+            if (!border) {
+                border = tbl_borders.append_child(border_name);
+            }
+            border.remove_attribute("w:val");
+            border.append_attribute("w:val").set_value(style.c_str());
+        }
+        return *this;
     }
 
-    bool TableRow::move_to_next_row()
+    Table& Table::set_border_width(double width_pts)
     {
-        m_currentNode = find_next_sibling("w:tr");
-        m_tableCell.set_parent(m_currentNode);
-        return true;
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        pugi::xml_node tbl_borders = tbl_pr.child("w:tblBorders");
+        if (!tbl_borders) {
+            tbl_borders = tbl_pr.append_child("w:tblBorders");
+        }
+        
+        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right"};
+        for (const char* border_name : border_names) {
+            pugi::xml_node border = tbl_borders.child(border_name);
+            if (!border) {
+                border = tbl_borders.append_child(border_name);
+            }
+            border.remove_attribute("w:sz");
+            border.append_attribute("w:sz").set_value(static_cast<int>(width_pts * 8)); // Convert to eighths of a point
+        }
+        return *this;
     }
+
+    Table& Table::set_border_color(const std::string& color)
+    {
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        pugi::xml_node tbl_borders = tbl_pr.child("w:tblBorders");
+        if (!tbl_borders) {
+            tbl_borders = tbl_pr.append_child("w:tblBorders");
+        }
+        
+        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right"};
+        for (const char* border_name : border_names) {
+            pugi::xml_node border = tbl_borders.child(border_name);
+            if (!border) {
+                border = tbl_borders.append_child(border_name);
+            }
+            border.remove_attribute("w:color");
+            border.append_attribute("w:color").set_value(color.c_str());
+        }
+        return *this;
+    }
+
+    Table& Table::set_cell_margins(double top_pts, double right_pts, double bottom_pts, double left_pts)
+    {
+        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
+        if (!tbl_pr) {
+            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        pugi::xml_node tbl_cell_mar = tbl_pr.child("w:tblCellMar");
+        if (!tbl_cell_mar) {
+            tbl_cell_mar = tbl_pr.append_child("w:tblCellMar");
+        }
+        
+        const double margins[] = {top_pts, right_pts, bottom_pts, left_pts};
+        const char* margin_names[] = {"w:top", "w:right", "w:bottom", "w:left"};
+        
+        for (int i = 0; i < 4; ++i) {
+            pugi::xml_node margin = tbl_cell_mar.child(margin_names[i]);
+            if (!margin) {
+                margin = tbl_cell_mar.append_child(margin_names[i]);
+            }
+            const long long margin_twips = static_cast<long long>(margins[i] * 20.0);
+            margin.attribute("w:w") ? margin.attribute("w:w").set_value(std::to_string(margin_twips).c_str())
+                                    : margin.append_attribute("w:w").set_value(std::to_string(margin_twips).c_str());
+            margin.attribute("w:type") ? margin.attribute("w:type").set_value("dxa")
+                                        : margin.append_attribute("w:type").set_value("dxa");
+        }
+        return *this;
+    }
+
+    // ============================================================================
+    // TableRow Setter implementations (Legacy API)
+    // ============================================================================
 
     TableRow& TableRow::set_height(double height_pts)
     {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
+        }
+        
         pugi::xml_node tr_height = tr_pr.child("w:trHeight");
         if (!tr_height) {
             tr_height = tr_pr.append_child("w:trHeight");
         }
         
-        const long long height_twips = static_cast<long long>(height_pts * 20.0);
-        tr_height.attribute("w:val") ? tr_height.attribute("w:val").set_value(std::to_string(height_twips).c_str())
-                                     : tr_height.append_attribute("w:val").set_value(std::to_string(height_twips).c_str());
+        tr_height.remove_attribute("w:val");
+        tr_height.append_attribute("w:val").set_value(static_cast<int>(height_pts * 20)); // Convert to twips
         return *this;
     }
 
     TableRow& TableRow::set_height_rule(const std::string& rule)
     {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
+        }
+        
         pugi::xml_node tr_height = tr_pr.child("w:trHeight");
         if (!tr_height) {
             tr_height = tr_pr.append_child("w:trHeight");
         }
         
-        tr_height.attribute("w:hRule") ? tr_height.attribute("w:hRule").set_value(rule.c_str())
-                                       : tr_height.append_attribute("w:hRule").set_value(rule.c_str());
+        tr_height.remove_attribute("w:hRule");
+        tr_height.append_attribute("w:hRule").set_value(rule.c_str());
         return *this;
     }
 
     TableRow& TableRow::set_header_row(bool is_header)
     {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        pugi::xml_node tbl_header = tr_pr.child("w:tblHeader");
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
+        }
         
+        pugi::xml_node tbl_header = tr_pr.child("w:tblHeader");
         if (is_header) {
             if (!tbl_header) {
                 tbl_header = tr_pr.append_child("w:tblHeader");
@@ -1488,9 +2085,12 @@ namespace duckx
 
     TableRow& TableRow::set_cant_split(bool cant_split)
     {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        pugi::xml_node cant_split_node = tr_pr.child("w:cantSplit");
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
+        }
         
+        pugi::xml_node cant_split_node = tr_pr.child("w:cantSplit");
         if (cant_split) {
             if (!cant_split_node) {
                 cant_split_node = tr_pr.append_child("w:cantSplit");
@@ -1503,117 +2103,107 @@ namespace duckx
         return *this;
     }
 
-    bool TableRow::get_height(double& height_pts) const
+    // ============================================================================
+    // TableRow Getter implementations
+    // ============================================================================
+
+    double TableRow::get_height() const
     {
-        if (const auto tr_pr = m_currentNode.child("w:trPr")) {
-            if (const auto tr_height = tr_pr.child("w:trHeight")) {
-                if (const auto val_attr = tr_height.attribute("w:val")) {
-                    height_pts = val_attr.as_double() / 20.0;
-                    return true;
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tr_height = tr_pr.child("w:trHeight");
+            if (tr_height) {
+                const auto val_attr = tr_height.attribute("w:val");
+                if (val_attr) {
+                    return val_attr.as_double() / 20.0; // Convert from twips to points
                 }
             }
         }
-        return false;
+        return 0.0;
     }
 
-    bool TableRow::get_height_rule(std::string& rule) const
+    std::string TableRow::get_height_rule() const
     {
-        if (const auto tr_pr = m_currentNode.child("w:trPr")) {
-            if (const auto tr_height = tr_pr.child("w:trHeight")) {
-                if (const auto rule_attr = tr_height.attribute("w:hRule")) {
-                    rule = rule_attr.as_string();
-                    return true;
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tr_height = tr_pr.child("w:trHeight");
+            if (tr_height) {
+                const auto rule_attr = tr_height.attribute("w:hRule");
+                if (rule_attr) {
+                    return rule_attr.as_string();
                 }
             }
         }
-        return false;
+        return "auto";
     }
 
     bool TableRow::is_header_row() const
     {
-        if (const auto tr_pr = m_currentNode.child("w:trPr")) {
-            return tr_pr.child("w:tblHeader") != nullptr;
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tbl_header = tr_pr.child("w:tblHeader");
+            return tbl_header != nullptr;
         }
         return false;
     }
 
     bool TableRow::get_cant_split() const
     {
-        if (const auto tr_pr = m_currentNode.child("w:trPr")) {
-            return tr_pr.child("w:cantSplit") != nullptr;
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto cant_split_node = tr_pr.child("w:cantSplit");
+            return cant_split_node != nullptr;
         }
         return false;
     }
 
-    pugi::xml_node TableRow::get_or_create_tr_pr()
+    // ============================================================================
+    // Table Basic implementations (Navigation and Element Management)
+    // ============================================================================
+
+    Table::Table(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
     {
-        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
-        if (!tr_pr) {
-            tr_pr = m_currentNode.prepend_child("w:trPr");
-        }
-        return tr_pr;
+        m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
     }
 
-    Table::Table(const pugi::xml_node parent, const pugi::xml_node current)
-        : DocxElement(parent, current) {}
-
-    void Table::set_parent(const pugi::xml_node node)
+    void Table::set_parent(pugi::xml_node node)
     {
         m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:tbl");
-
-        m_tableRow.set_parent(m_currentNode);
     }
 
-    void Table::set_current(const pugi::xml_node node)
+    void Table::set_current(pugi::xml_node node)
     {
         m_currentNode = node;
+        m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
     }
 
     bool Table::has_next() const
     {
-        if (!m_currentNode) return false;
-        return find_next_sibling("w:tbl") != nullptr;
+        return m_currentNode.next_sibling("w:tbl") != nullptr;
     }
 
     bool Table::has_next_same_type() const
     {
-        if (!m_currentNode)
-            return false;
-
-        return !find_next_sibling("w:tbl").empty();
-    }
-
-    absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> Table::rows()
-    {
-        if (m_currentNode)
-        {
-            m_tableRow.set_current(m_currentNode.child("w:tr"));
-        }
-        else
-        {
-            m_tableRow.set_current(pugi::xml_node());
-        }
-
-        m_tableRow.set_parent(m_currentNode);
-
-        return make_element_range(m_tableRow);
+        return m_currentNode.next_sibling("w:tbl") != nullptr;
     }
 
     Table& Table::advance()
     {
         m_currentNode = m_currentNode.next_sibling("w:tbl");
         m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
         return *this;
     }
 
     bool Table::try_advance()
     {
-        const pugi::xml_node next_table = find_next_sibling("w:tbl");
-        if (!next_table.empty())
-        {
-            m_currentNode = next_table;
+        pugi::xml_node next = m_currentNode.next_sibling("w:tbl");
+        if (next) {
+            m_currentNode = next;
             m_tableRow.set_parent(m_currentNode);
+            m_tableRow.set_current(m_currentNode.child("w:tr"));
             return true;
         }
         return false;
@@ -1621,254 +2211,153 @@ namespace duckx
 
     bool Table::can_advance() const
     {
-        return !find_next_sibling("w:tbl").empty();
+        return has_next();
     }
 
     bool Table::move_to_next_table()
     {
-        m_currentNode = find_next_sibling("w:tbl");
-        m_tableRow.set_parent(m_currentNode);
-        return true;
+        return try_advance();
     }
 
-    Table& Table::set_alignment(Alignment align)
+    absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> Table::rows()
     {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node jc_node = tbl_pr.child("w:jc");
-        if (!jc_node) {
-            jc_node = tbl_pr.append_child("w:jc");
+        TableRow first_row(m_currentNode, m_currentNode.child("w:tr"));
+        return ElementRange<TableRow>(first_row);
+    }
+
+    TableRow& Table::add_row()
+    {
+        pugi::xml_node new_row = m_currentNode.append_child("w:tr");
+        
+        // Add a default cell to the new row
+        pugi::xml_node new_cell = new_row.append_child("w:tc");
+        pugi::xml_node new_p = new_cell.append_child("w:p");
+        
+        // Update the TableRow to point to the new row
+        m_tableRow.set_current(new_row);
+        return m_tableRow;
+    }
+
+    TableRow& Table::get_row(int index)
+    {
+        pugi::xml_node row = m_currentNode.child("w:tr");
+        for (int i = 0; i < index && row; ++i) {
+            row = row.next_sibling("w:tr");
         }
         
-        std::string align_val;
-        switch (align) {
-            case Alignment::LEFT: align_val = "left"; break;
-            case Alignment::CENTER: align_val = "center"; break;
-            case Alignment::RIGHT: align_val = "right"; break;
-            case Alignment::BOTH: align_val = "both"; break;
+        if (row) {
+            m_tableRow.set_current(row);
         }
-        jc_node.attribute("w:val") ? jc_node.attribute("w:val").set_value(align_val.c_str())
-                                   : jc_node.append_attribute("w:val").set_value(align_val.c_str());
+        return m_tableRow;
+    }
+
+    int Table::row_count() const
+    {
+        int count = 0;
+        for (pugi::xml_node row = m_currentNode.child("w:tr"); row; row = row.next_sibling("w:tr")) {
+            ++count;
+        }
+        return count;
+    }
+
+    // ============================================================================
+    // TableRow Basic implementations (Navigation and Element Management)
+    // ============================================================================
+
+    TableRow::TableRow(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
+    {
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
+    }
+
+    void TableRow::set_parent(pugi::xml_node node)
+    {
+        m_parentNode = node;
+    }
+
+    void TableRow::set_current(pugi::xml_node node)
+    {
+        m_currentNode = node;
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
+    }
+
+    bool TableRow::has_next() const
+    {
+        return m_currentNode.next_sibling("w:tr") != nullptr;
+    }
+
+    bool TableRow::has_next_same_type() const
+    {
+        return m_currentNode.next_sibling("w:tr") != nullptr;
+    }
+
+    TableRow& TableRow::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tr");
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
         return *this;
     }
 
-    Table& Table::set_width(double width_pts)
+    bool TableRow::try_advance()
     {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node tbl_w_node = tbl_pr.child("w:tblW");
-        if (!tbl_w_node) {
-            tbl_w_node = tbl_pr.append_child("w:tblW");
-        }
-        
-        const long long width_twips = static_cast<long long>(width_pts * 20.0);
-        tbl_w_node.attribute("w:w") ? tbl_w_node.attribute("w:w").set_value(std::to_string(width_twips).c_str())
-                                    : tbl_w_node.append_attribute("w:w").set_value(std::to_string(width_twips).c_str());
-        tbl_w_node.attribute("w:type") ? tbl_w_node.attribute("w:type").set_value("dxa")
-                                       : tbl_w_node.append_attribute("w:type").set_value("dxa");
-        return *this;
-    }
-
-    Table& Table::set_border_style(const std::string& style)
-    {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node tbl_borders = get_or_create_tbl_borders(tbl_pr);
-        
-        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right", "w:insideH", "w:insideV"};
-        for (const char* border_name : border_names) {
-            pugi::xml_node border = tbl_borders.child(border_name);
-            if (!border) {
-                border = tbl_borders.append_child(border_name);
-            }
-            border.attribute("w:val") ? border.attribute("w:val").set_value(style.c_str())
-                                      : border.append_attribute("w:val").set_value(style.c_str());
-        }
-        return *this;
-    }
-
-    Table& Table::set_border_width(double width_pts)
-    {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node tbl_borders = get_or_create_tbl_borders(tbl_pr);
-        
-        const long long width_eighth_pts = static_cast<long long>(width_pts * 8.0);
-        const std::string width_str = std::to_string(width_eighth_pts);
-        
-        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right", "w:insideH", "w:insideV"};
-        for (const char* border_name : border_names) {
-            pugi::xml_node border = tbl_borders.child(border_name);
-            if (!border) {
-                border = tbl_borders.append_child(border_name);
-            }
-            border.attribute("w:sz") ? border.attribute("w:sz").set_value(width_str.c_str())
-                                     : border.append_attribute("w:sz").set_value(width_str.c_str());
-        }
-        return *this;
-    }
-
-    Table& Table::set_border_color(const std::string& color)
-    {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node tbl_borders = get_or_create_tbl_borders(tbl_pr);
-        
-        const char* border_names[] = {"w:top", "w:left", "w:bottom", "w:right", "w:insideH", "w:insideV"};
-        for (const char* border_name : border_names) {
-            pugi::xml_node border = tbl_borders.child(border_name);
-            if (!border) {
-                border = tbl_borders.append_child(border_name);
-            }
-            border.attribute("w:color") ? border.attribute("w:color").set_value(color.c_str())
-                                        : border.append_attribute("w:color").set_value(color.c_str());
-        }
-        return *this;
-    }
-
-    Table& Table::set_cell_margins(double top_pts, double bottom_pts, double left_pts, double right_pts)
-    {
-        pugi::xml_node tbl_pr = get_or_create_tbl_pr();
-        pugi::xml_node tbl_cell_mar = tbl_pr.child("w:tblCellMar");
-        if (!tbl_cell_mar) {
-            tbl_cell_mar = tbl_pr.append_child("w:tblCellMar");
-        }
-        
-        struct { const char* name; double value; } margins[] = {
-            {"w:top", top_pts}, {"w:bottom", bottom_pts}, 
-            {"w:left", left_pts}, {"w:right", right_pts}
-        };
-        
-        for (const auto& margin : margins) {
-            pugi::xml_node margin_node = tbl_cell_mar.child(margin.name);
-            if (!margin_node) {
-                margin_node = tbl_cell_mar.append_child(margin.name);
-            }
-            const long long margin_twips = static_cast<long long>(margin.value * 20.0);
-            margin_node.attribute("w:w") ? margin_node.attribute("w:w").set_value(std::to_string(margin_twips).c_str())
-                                         : margin_node.append_attribute("w:w").set_value(std::to_string(margin_twips).c_str());
-            margin_node.attribute("w:type") ? margin_node.attribute("w:type").set_value("dxa")
-                                            : margin_node.append_attribute("w:type").set_value("dxa");
-        }
-        return *this;
-    }
-
-    Alignment Table::get_alignment() const
-    {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto jc = tbl_pr.child("w:jc")) {
-                const std::string val = jc.attribute("w:val").as_string();
-                if (val == "center") return Alignment::CENTER;
-                if (val == "right") return Alignment::RIGHT;
-                if (val == "both") return Alignment::BOTH;
-            }
-        }
-        return Alignment::LEFT;
-    }
-
-    bool Table::get_width(double& width_pts) const
-    {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto tbl_w = tbl_pr.child("w:tblW")) {
-                if (const auto w_attr = tbl_w.attribute("w:w")) {
-                    width_pts = w_attr.as_double() / 20.0;
-                    return true;
-                }
-            }
+        pugi::xml_node next = m_currentNode.next_sibling("w:tr");
+        if (next) {
+            m_currentNode = next;
+            m_tableCell.set_parent(m_currentNode);
+            m_tableCell.set_current(m_currentNode.child("w:tc"));
+            return true;
         }
         return false;
     }
 
-    bool Table::get_border_style(std::string& style) const
+    bool TableRow::can_advance() const
     {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto tbl_borders = tbl_pr.child("w:tblBorders")) {
-                if (const auto top_border = tbl_borders.child("w:top")) {
-                    if (const auto val_attr = top_border.attribute("w:val")) {
-                        style = val_attr.as_string();
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return has_next();
     }
 
-    bool Table::get_border_width(double& width_pts) const
+    bool TableRow::move_to_next_row()
     {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto tbl_borders = tbl_pr.child("w:tblBorders")) {
-                if (const auto top_border = tbl_borders.child("w:top")) {
-                    if (const auto sz_attr = top_border.attribute("w:sz")) {
-                        width_pts = sz_attr.as_double() / 8.0;
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return try_advance();
     }
 
-    bool Table::get_border_color(std::string& color) const
+    absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> TableRow::cells()
     {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto tbl_borders = tbl_pr.child("w:tblBorders")) {
-                if (const auto top_border = tbl_borders.child("w:top")) {
-                    if (const auto color_attr = top_border.attribute("w:color")) {
-                        color = color_attr.as_string();
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        TableCell first_cell(m_currentNode, m_currentNode.child("w:tc"));
+        return ElementRange<TableCell>(first_cell);
     }
 
-    bool Table::get_cell_margins(double& top_pts, double& bottom_pts, double& left_pts, double& right_pts) const
+    TableCell& TableRow::add_cell()
     {
-        if (const auto tbl_pr = m_currentNode.child("w:tblPr")) {
-            if (const auto tbl_cell_mar = tbl_pr.child("w:tblCellMar")) {
-                bool found = false;
-                if (const auto top = tbl_cell_mar.child("w:top")) {
-                    if (const auto w_attr = top.attribute("w:w")) {
-                        top_pts = w_attr.as_double() / 20.0;
-                        found = true;
-                    }
-                }
-                if (const auto bottom = tbl_cell_mar.child("w:bottom")) {
-                    if (const auto w_attr = bottom.attribute("w:w")) {
-                        bottom_pts = w_attr.as_double() / 20.0;
-                        found = true;
-                    }
-                }
-                if (const auto left = tbl_cell_mar.child("w:left")) {
-                    if (const auto w_attr = left.attribute("w:w")) {
-                        left_pts = w_attr.as_double() / 20.0;
-                        found = true;
-                    }
-                }
-                if (const auto right = tbl_cell_mar.child("w:right")) {
-                    if (const auto w_attr = right.attribute("w:w")) {
-                        right_pts = w_attr.as_double() / 20.0;
-                        found = true;
-                    }
-                }
-                return found;
-            }
-        }
-        return false;
+        pugi::xml_node new_cell = m_currentNode.append_child("w:tc");
+        pugi::xml_node new_p = new_cell.append_child("w:p");
+        
+        // Update the TableCell to point to the new cell
+        m_tableCell.set_current(new_cell);
+        return m_tableCell;
     }
 
-    pugi::xml_node Table::get_or_create_tbl_pr()
+    TableCell& TableRow::get_cell(int index)
     {
-        pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
-        if (!tbl_pr) {
-            tbl_pr = m_currentNode.prepend_child("w:tblPr");
+        pugi::xml_node cell = m_currentNode.child("w:tc");
+        for (int i = 0; i < index && cell; ++i) {
+            cell = cell.next_sibling("w:tc");
         }
-        return tbl_pr;
+        
+        if (cell) {
+            m_tableCell.set_current(cell);
+        }
+        return m_tableCell;
     }
 
-    pugi::xml_node Table::get_or_create_tbl_borders(pugi::xml_node tbl_pr)
+    int TableRow::cell_count() const
     {
-        pugi::xml_node tbl_borders = tbl_pr.child("w:tblBorders");
-        if (!tbl_borders) {
-            tbl_borders = tbl_pr.append_child("w:tblBorders");
+        int count = 0;
+        for (pugi::xml_node cell = m_currentNode.child("w:tc"); cell; cell = cell.next_sibling("w:tc")) {
+            ++count;
         }
-        return tbl_borders;
+        return count;
     }
+
 } // namespace duckx
