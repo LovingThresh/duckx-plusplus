@@ -18,6 +18,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "duckx_export.h"
 
 namespace duckx
 {
@@ -102,7 +103,7 @@ namespace duckx
     // Error Context and Details
     // ============================================================================
 
-    struct ErrorContext
+    struct DUCKX_API ErrorContext
     {
         std::string file_path;
         std::string function_name;
@@ -147,7 +148,7 @@ namespace duckx
     // Enhanced Error Class
     // ============================================================================
 
-    class Error
+    class DUCKX_API Error
     {
     public:
         Error()

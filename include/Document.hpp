@@ -9,6 +9,7 @@
 
 #pragma once
 #include <memory>
+#include "duckx_export.h"
 
 #include "Body.hpp"
 #include "DocxFile.hpp"
@@ -26,7 +27,7 @@ namespace duckx
     class Header;
     class Footer;
 
-    class Document
+    class DUCKX_API Document
     {
     public:
         static Document open(const std::string& path);

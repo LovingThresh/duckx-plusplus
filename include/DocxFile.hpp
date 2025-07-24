@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: DocxFile.hpp
  * @brief:
  *
@@ -10,12 +10,13 @@
 #pragma once
 #include <map>
 #include <string>
+#include "duckx_export.h"
 
 struct zip_t;
 
 namespace duckx
 {
-    class DocxFile
+    class DUCKX_API DocxFile
     {
     public:
         DocxFile();

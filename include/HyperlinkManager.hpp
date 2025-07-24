@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: HyperlinkManager.hpp
  * @brief:
  * 
@@ -11,12 +11,13 @@
 
 #include <string>
 #include <pugixml.hpp>
+#include "duckx_export.h"
 
 namespace duckx
 {
     class Document;
 
-    class HyperlinkManager
+    class DUCKX_API HyperlinkManager
     {
     public:
         HyperlinkManager(Document* doc, pugi::xml_document* rels_xml);

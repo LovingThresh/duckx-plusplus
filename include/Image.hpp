@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: DImage.hpp
  * @brief:
  *
@@ -10,12 +10,13 @@
 #pragma once
 #include <pugixml.hpp>
 #include <string>
+#include "duckx_export.h"
 
 #include "DrawingElement.hpp"
 
 namespace duckx
 {
-    class Image : public DrawingElement
+    class DUCKX_API Image : public DrawingElement
     {
     public:
         // Constructor takes the path to the image file on disk.

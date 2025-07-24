@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: DrawingElement.hpp
  * @brief:
  *
@@ -11,6 +11,7 @@
 
 #include <pugixml.hpp>
 #include <string>
+#include "duckx_export.h"
 
 namespace duckx
 {
@@ -20,7 +21,7 @@ namespace duckx
         MARGIN
     };
 
-    class DrawingElement
+    class DUCKX_API DrawingElement
     {
     public:
         virtual ~DrawingElement() = default;

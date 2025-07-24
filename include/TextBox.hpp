@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: TextBox.hpp
  * @brief:
  *
@@ -11,6 +11,7 @@
 #include "BaseElement.hpp"
 #include "DrawingElement.hpp"
 #include "duckxiterator.hpp"
+#include "duckx_export.h"
 
 namespace duckx
 {
@@ -20,7 +21,7 @@ namespace duckx
         SOLID // 实线边框
     };
 
-    class TextBox : public DrawingElement
+    class DUCKX_API TextBox : public DrawingElement
     {
     public:
         TextBox();

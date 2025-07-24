@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: MediaManager.hpp
  * @brief:
  *
@@ -9,6 +9,7 @@
 
 #pragma once
 #include <string>
+#include "duckx_export.h"
 
 // Forward declarations to keep headers clean
 namespace pugi
@@ -26,7 +27,7 @@ namespace duckx
     class Paragraph;
     class Run;
 
-    class MediaManager
+    class DUCKX_API MediaManager
     {
     public:
         MediaManager(Document* owner_doc, DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,

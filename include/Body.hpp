@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: Body.hpp
  * @brief:
  *
@@ -8,10 +8,11 @@
  */
 #pragma once
 #include "BaseElement.hpp"
+#include "duckx_export.h"
 
 namespace duckx
 {
-    class Body
+    class DUCKX_API Body
     {
     public:
         Body() = default;

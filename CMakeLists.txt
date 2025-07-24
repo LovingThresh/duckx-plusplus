@@ -167,6 +167,7 @@ target_include_directories(duckx PRIVATE
 target_include_directories(duckx PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -187,6 +188,13 @@ source_group("Source Files\\ThirdParty\\Zip" FILES
 )
 source_group("Source Files\\ThirdParty\\PugiXML" FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp"
+)
+
+include(GenerateExportHeader)
+generate_export_header(duckx
+        BASE_NAME          "duckx"
+        EXPORT_MACRO_NAME  "DUCKX_API"
+        EXPORT_FILE_NAME   "duckx_export.h"
 )
 
 mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)

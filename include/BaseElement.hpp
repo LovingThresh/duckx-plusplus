@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: BaseElement.hpp
  * @brief:
  *
@@ -14,12 +14,13 @@
 #include <utility>
 
 #include "duckxiterator.hpp"
+#include "duckx_export.h"
 
 namespace duckx
 {
     class Document;
 
-    class DocxElement
+    class DUCKX_API DocxElement
     {
     public:
         DocxElement() = default;
@@ -71,7 +72,7 @@ namespace duckx
     };
 
     // Run contains runs in a paragraph
-    class Run : public DocxElement
+    class DUCKX_API Run : public DocxElement
     {
     public:
         Run() = default;
@@ -107,7 +108,7 @@ namespace duckx
         pugi::xml_node get_or_create_rPr();
     };
 
-    class Paragraph : public DocxElement
+    class DUCKX_API Paragraph : public DocxElement
     {
     public:
         Paragraph() = default;
@@ -147,7 +148,7 @@ namespace duckx
     };
 
     // TableCell contains one or more paragraphs
-    class TableCell : public DocxElement
+    class DUCKX_API TableCell : public DocxElement
     {
     public:
         TableCell() = default;
@@ -168,7 +169,7 @@ namespace duckx
     };
 
     // TableRow consists of one or more TableCells
-    class TableRow : public DocxElement
+    class DUCKX_API TableRow : public DocxElement
     {
     public:
         TableRow() = default;
@@ -189,7 +190,7 @@ namespace duckx
     };
 
     // Table consists of one or more TableRow objects
-    class Table : public DocxElement
+    class DUCKX_API Table : public DocxElement
     {
     public:
         Table() = default;

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: HeaderFooterManager.hpp
  * @brief:
  * 
@@ -8,6 +8,8 @@
  */
 
 #pragma once
+
+#include "duckx_export.h"
 
 #include "constants.hpp"
 
@@ -28,7 +30,7 @@ namespace duckx
     class DocxFile;
     class Document;
 
-    class HeaderFooterManager
+    class DUCKX_API HeaderFooterManager
     {
     public:
         HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: HeaderFooterBase.hpp
  * @brief:
  * 
@@ -10,10 +10,11 @@
 #pragma once
 
 #include "BaseElement.hpp"
+#include "duckx_export.h"
 
 namespace duckx
 {
-    class HeaderFooterBase
+    class DUCKX_API HeaderFooterBase
     {
     public:
         virtual ~HeaderFooterBase() = default;
@@ -29,13 +30,13 @@ namespace duckx
         Table m_table;
     };
 
-    class Header : public HeaderFooterBase
+    class DUCKX_API Header : public HeaderFooterBase
     {
     public:
         explicit Header(pugi::xml_node rootNode);
     };
 
-    class Footer : public HeaderFooterBase
+    class DUCKX_API Footer : public HeaderFooterBase
     {
     public:
         explicit Footer(pugi::xml_node rootNode);
