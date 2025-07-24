@@ -1159,7 +1159,7 @@ namespace duckx
         return *this;
     }
 
-    TableCell& TableCell::set_margins(double top_pts, double bottom_pts, double left_pts, double right_pts)
+    TableCell& TableCell::set_margins(double top_pts, double right_pts, double bottom_pts, double left_pts)
     {
         pugi::xml_node tc_pr = get_or_create_tc_pr();
         pugi::xml_node tc_mar = tc_pr.child("w:tcMar");
@@ -1168,8 +1168,8 @@ namespace duckx
         }
         
         struct { const char* name; double value; } margins[] = {
-            {"w:top", top_pts}, {"w:bottom", bottom_pts}, 
-            {"w:left", left_pts}, {"w:right", right_pts}
+            {"w:top", top_pts}, {"w:right", right_pts}, 
+            {"w:bottom", bottom_pts}, {"w:left", left_pts}
         };
         
         for (const auto& margin : margins) {
