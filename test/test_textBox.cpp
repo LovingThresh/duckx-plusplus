@@ -124,7 +124,7 @@ TEST_F(TextBoxTest, AddParagraph_AddsContentAndReturnsValidParagraph)
     const duckx::Paragraph p = tb.add_paragraph("Hello, TextBox!");
 
     // Test the returned paragraph object.
-    ASSERT_TRUE(p.getNode());
+    ASSERT_TRUE(p.get_node());
     EXPECT_EQ(p.runs().begin()->get_text(), "Hello, TextBox!");
 
     // Test the internal state via the paragraphs() range.
@@ -180,7 +180,7 @@ TEST_F(TextBoxTest, LastParagraph_ReturnsCorrectParagraph)
     (void)tb.add_paragraph("Last");
 
     const duckx::Paragraph retrieved_last = tb.last_paragraph();
-    ASSERT_TRUE(retrieved_last.getNode());
+    ASSERT_TRUE(retrieved_last.get_node());
     EXPECT_EQ(retrieved_last.runs().begin()->get_text(), "Last");
 }
 
@@ -189,7 +189,7 @@ TEST_F(TextBoxTest, LastParagraph_OnEmptyTextBoxReturnsInvalid)
     const duckx::TextBox tb;
     const duckx::Paragraph p = tb.last_paragraph();
     // Expect an invalid paragraph object (with a null node).
-    EXPECT_FALSE(p.getNode());
+    EXPECT_FALSE(p.get_node());
 }
 
 TEST_F(TextBoxTest, SetSizeAndPosition_GeneratesAnchorXML)

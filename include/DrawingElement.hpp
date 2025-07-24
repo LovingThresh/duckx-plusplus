@@ -16,7 +16,7 @@
 namespace duckx
 {
     long long pixels_to_emu(int pixels);
-    enum class RelativeFrom {
+    enum class DUCKX_API RelativeFrom {
         PAGE,
         MARGIN
     };

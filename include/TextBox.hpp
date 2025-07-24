@@ -15,7 +15,7 @@
 
 namespace duckx
 {
-    enum class BorderStyle
+    enum class DUCKX_API BorderStyle
     {
         NONE, // 无边框
         SOLID // 实线边框

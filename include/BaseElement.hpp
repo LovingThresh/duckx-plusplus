@@ -32,7 +32,7 @@ namespace duckx
         virtual void set_parent(pugi::xml_node) = 0;
         virtual void set_current(pugi::xml_node) = 0;
 
-        pugi::xml_node getNode() const;
+        pugi::xml_node get_node() const;
         bool has_next_sibling() const;
 
         enum class ElementType
@@ -61,11 +61,11 @@ namespace duckx
         SiblingInfo peek_next_sibling() const;
 
     protected:
-        pugi::xml_node findNextSibling(const std::string& name) const;
+        pugi::xml_node find_next_sibling(const std::string& name) const;
 
-        pugi::xml_node findNextAnySibling() const;
-        static ElementType mapStringToElementType(const std::string& node_name);
-        static ElementType determineElementType(pugi::xml_node node);
+        pugi::xml_node find_next_any_sibling() const;
+        static ElementType map_string_to_element_type(const std::string& node_name);
+        static ElementType determine_element_type(pugi::xml_node node);
 
         pugi::xml_node m_parentNode; // Parent node in the XML tree
         pugi::xml_node m_currentNode; // Current node in the XML tree
@@ -164,8 +164,39 @@ namespace duckx
         bool can_advance() const;
         bool move_to_next_cell();
 
+        // Add paragraph to cell
+        Paragraph add_paragraph(const std::string& text = "", formatting_flag f = none);
+
+        // TableCell formatting methods
+        TableCell& set_width(double width_pts);
+        TableCell& set_width_type(const std::string& type = "dxa"); // "dxa", "pct", "auto"
+        TableCell& set_vertical_alignment(const std::string& align = "top"); // "top", "center", "bottom"
+        TableCell& set_background_color(const std::string& color);
+        TableCell& set_text_direction(const std::string& direction = "lrTb"); // "lrTb", "tbRl", "btLr", "lrTbV", "tbRlV", "tbLrV"
+        TableCell& set_margins(double top_pts = 0, double bottom_pts = 0, 
+                              double left_pts = 108, double right_pts = 108);
+        TableCell& set_border_style(const std::string& style = "single");
+        TableCell& set_border_width(double width_pts = 0.5);
+        TableCell& set_border_color(const std::string& color = "000000");
+        
+        // TableCell getters
+        bool get_width(double& width_pts) const;
+        bool get_width_type(std::string& type) const;
+        bool get_vertical_alignment(std::string& align) const;
+        bool get_background_color(std::string& color) const;
+        bool get_text_direction(std::string& direction) const;
+        bool get_margins(double& top_pts, double& bottom_pts, 
+                        double& left_pts, double& right_pts) const;
+        bool get_border_style(std::string& style) const;
+        bool get_border_width(double& width_pts) const;
+        bool get_border_color(std::string& color) const;
+
     private:
         Paragraph m_paragraph;
+        
+        // Helper methods
+        pugi::xml_node get_or_create_tc_pr();
+        pugi::xml_node get_or_create_tc_borders(pugi::xml_node tc_pr);
     };
 
     // TableRow consists of one or more TableCells
@@ -185,8 +216,23 @@ namespace duckx
         bool can_advance() const;
         bool move_to_next_row();
 
+        // TableRow formatting methods
+        TableRow& set_height(double height_pts);
+        TableRow& set_height_rule(const std::string& rule = "atLeast"); // "exact", "atLeast", "auto"
+        TableRow& set_header_row(bool is_header = true);
+        TableRow& set_cant_split(bool cant_split = true);
+        
+        // TableRow getters
+        bool get_height(double& height_pts) const;
+        bool get_height_rule(std::string& rule) const;
+        bool is_header_row() const;
+        bool get_cant_split() const;
+
     private:
         TableCell m_tableCell;
+        
+        // Helper methods
+        pugi::xml_node get_or_create_tr_pr();
     };
 
     // Table consists of one or more TableRow objects
@@ -206,7 +252,29 @@ namespace duckx
         bool can_advance() const;
         bool move_to_next_table();
 
+        // Table formatting methods
+        Table& set_alignment(Alignment align);
+        Table& set_width(double width_pts);
+        Table& set_border_style(const std::string& style = "single");
+        Table& set_border_width(double width_pts = 0.5);
+        Table& set_border_color(const std::string& color = "000000");
+        Table& set_cell_margins(double top_pts = 0, double bottom_pts = 0, 
+                               double left_pts = 108, double right_pts = 108);
+        
+        // Table getters
+        Alignment get_alignment() const;
+        bool get_width(double& width_pts) const;
+        bool get_border_style(std::string& style) const;
+        bool get_border_width(double& width_pts) const;
+        bool get_border_color(std::string& color) const;
+        bool get_cell_margins(double& top_pts, double& bottom_pts, 
+                             double& left_pts, double& right_pts) const;
+
     private:
         TableRow m_tableRow;
+        
+        // Helper methods
+        pugi::xml_node get_or_create_tbl_pr();
+        pugi::xml_node get_or_create_tbl_borders(pugi::xml_node tbl_pr);
     };
 } // namespace duckx

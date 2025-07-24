@@ -114,7 +114,7 @@ TEST_F(BodyTest, Paragraphs_WithExistingParagraphs)
     for (auto& p: paragraph_range)
     {
         ++count;
-        EXPECT_TRUE(p.getNode());
+        EXPECT_TRUE(p.get_node());
     }
     EXPECT_EQ(count, 2);
 }
@@ -124,7 +124,7 @@ TEST_F(BodyTest, AddParagraph_EmptyText)
     const auto paragraph = m_body->add_paragraph();
 
     // Should create a valid paragraph
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 
     // Body should now contain one paragraph
     auto paragraph_range = m_body->paragraphs();
@@ -142,7 +142,7 @@ TEST_F(BodyTest, AddParagraph_WithText)
     const auto paragraph = m_body->add_paragraph(test_text);
 
     // Should create a valid paragraph
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 
     // Verify paragraph was added to body
     auto paragraph_range = m_body->paragraphs();
@@ -160,7 +160,7 @@ TEST_F(BodyTest, AddParagraph_WithFormattingFlag)
     const auto paragraph = m_body->add_paragraph(test_text, duckx::bold);
 
     // Should create a valid paragraph
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 
     // Verify paragraph was added
     auto paragraph_range = m_body->paragraphs();
@@ -179,7 +179,7 @@ TEST_F(BodyTest, AddParagraph_MultipleFormattingFlags)
     const auto paragraph = m_body->add_paragraph(test_text, combined_flags);
 
     // Should create a valid paragraph
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 }
 
 TEST_F(BodyTest, AddParagraph_AllFormattingFlags)
@@ -191,7 +191,7 @@ TEST_F(BodyTest, AddParagraph_AllFormattingFlags)
     const auto paragraph = m_body->add_paragraph(test_text, all_flags);
 
     // Should create a valid paragraph
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 }
 
 TEST_F(BodyTest, AddParagraph_LongText)
@@ -200,7 +200,7 @@ TEST_F(BodyTest, AddParagraph_LongText)
     const auto paragraph = m_body->add_paragraph(long_text);
 
     // Should handle long text without issues
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 }
 
 TEST_F(BodyTest, AddParagraph_SpecialCharacters)
@@ -208,7 +208,7 @@ TEST_F(BodyTest, AddParagraph_SpecialCharacters)
     const std::string special_text = "Special chars: !@#$%^&*()_+-=[]{}|;:,.<>?/~`";
     const auto paragraph = m_body->add_paragraph(special_text);
 
-    EXPECT_TRUE(paragraph.getNode());
+    EXPECT_TRUE(paragraph.get_node());
 }
 
 // Table functionality tests
@@ -238,7 +238,7 @@ TEST_F(BodyTest, Tables_WithExistingTables)
     for (auto& table: table_range)
     {
         ++count;
-        EXPECT_TRUE(table.getNode());
+        EXPECT_TRUE(table.get_node());
     }
     EXPECT_EQ(count, 2);
 }
@@ -250,7 +250,7 @@ TEST_F(BodyTest, AddTable_ValidDimensions)
     const auto table = m_body->add_table(rows, cols);
 
     // Should create a valid table
-    EXPECT_TRUE(table.getNode());
+    EXPECT_TRUE(table.get_node());
 
     // Body should now contain one table
     auto table_range = m_body->tables();
@@ -269,7 +269,7 @@ TEST_F(BodyTest, AddTable_MinimumDimensions)
     const auto table = m_body->add_table(rows, cols);
 
     // Should create a valid table with minimum dimensions
-    EXPECT_TRUE(table.getNode());
+    EXPECT_TRUE(table.get_node());
 }
 
 TEST_F(BodyTest, AddTable_LargeDimensions)
@@ -279,7 +279,7 @@ TEST_F(BodyTest, AddTable_LargeDimensions)
     const auto table = m_body->add_table(rows, cols);
 
     // Should handle large tables
-    EXPECT_TRUE(table.getNode());
+    EXPECT_TRUE(table.get_node());
 }
 
 TEST_F(BodyTest, AddTable_ZeroRows)
@@ -329,7 +329,7 @@ TEST_F(BodyTest, MixedContent_ParagraphsAndTables)
     for (auto& p: paragraph_range)
     {
         ++para_count;
-        EXPECT_TRUE(p.getNode());
+        EXPECT_TRUE(p.get_node());
     }
     EXPECT_EQ(para_count, 2);
 
@@ -339,7 +339,7 @@ TEST_F(BodyTest, MixedContent_ParagraphsAndTables)
     for (auto& t: table_range)
     {
         ++table_count;
-        EXPECT_TRUE(t.getNode());
+        EXPECT_TRUE(t.get_node());
     }
     EXPECT_EQ(table_count, 2);
 }
@@ -351,13 +351,13 @@ TEST_F(BodyTest, SequentialOperations)
     {
         std::string text = "Paragraph " + std::to_string(i);
         auto paragraph = m_body->add_paragraph(text);
-        EXPECT_TRUE(paragraph.getNode());
+        EXPECT_TRUE(paragraph.get_node());
     }
 
     for (int i = 0; i < 3; ++i)
     {
         auto table = m_body->add_table(i + 1, i + 2);
-        EXPECT_TRUE(table.getNode());
+        EXPECT_TRUE(table.get_node());
     }
 
     // Verify final counts

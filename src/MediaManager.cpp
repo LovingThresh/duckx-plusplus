@@ -1,4 +1,4 @@
-﻿/*
+/*
  * @file: MediaManager.cpp
  * @brief:
  *
@@ -78,7 +78,7 @@ namespace duckx
         const unsigned int drawing_id = m_doc->get_unique_rid();
 
         // 2. Get the paragraph's XML node
-        pugi::xml_node p_node = p.getNode();
+        pugi::xml_node p_node = p.get_node();
         if (!p_node)
         {
             throw std::runtime_error("Cannot add image to an invalid paragraph.");
@@ -94,7 +94,7 @@ namespace duckx
 
     Run MediaManager::add_textbox(const Paragraph& p, const TextBox& textbox)
     {
-        pugi::xml_node paragraph_node = p.getNode();
+        pugi::xml_node paragraph_node = p.get_node();
         if (!paragraph_node)
         {
             return {};

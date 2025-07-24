@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <iterator>
 
 #include "absl/meta/type_traits.h"
@@ -11,10 +11,10 @@ namespace pugi
 namespace duckx
 {
     template<typename T>
-    class has_getNode_method
+    class has_get_node_method
     {
         template<typename U>
-        static auto test(int) -> decltype(std::declval<U>().getNode(), std::true_type {}) { return {}; }
+        static auto test(int) -> decltype(std::declval<U>().get_node(), std::true_type {}) { return {}; }
 
         template<typename>
         static std::false_type test(...) { return {}; }
@@ -37,10 +37,10 @@ namespace duckx
     };
 
     template<typename T>
-    class has_valid_getNode_return
+    class has_valid_get_node_return
     {
         template<typename U>
-        static auto test(int) -> std::is_same<decltype(std::declval<U>().getNode()), pugi::xml_node> { return {}; }
+        static auto test(int) -> std::is_same<decltype(std::declval<U>().get_node()), pugi::xml_node> { return {}; }
 
         template<typename>
         static std::false_type test(...) { return {}; }
@@ -79,9 +79,9 @@ namespace duckx
     struct is_docx_element
     {
         static constexpr bool value =
-                has_getNode_method<T>::value &&
+                has_get_node_method<T>::value &&
                 has_advance_method<T>::value &&
-                has_valid_getNode_return<T>::value &&
+                has_valid_get_node_return<T>::value &&
                 has_valid_advance_return<T>::value &&
                 has_valid_try_advance_return<T>::value;
     };
@@ -93,7 +93,7 @@ namespace duckx
     class ElementIterator
     {
         static_assert(is_docx_element<T>::value,
-                      "ElementIterator requires a type with getNode() -> pugi::xml_node and advance() -> bool methods");
+                      "ElementIterator requires a type with get_node() -> pugi::xml_node and advance() -> bool methods");
 
     public:
         using iterator_category = std::input_iterator_tag;
@@ -105,7 +105,7 @@ namespace duckx
         explicit ElementIterator(T element)
             : m_current_element(std::move(element)), m_is_end(false)
         {
-            if (!m_current_element.getNode())
+            if (!m_current_element.get_node())
             {
                 m_is_end = true;
             }
@@ -126,7 +126,7 @@ namespace duckx
 
         ElementIterator& operator++()
         {
-            if (!m_current_element.try_advance() || !m_current_element.getNode())
+            if (!m_current_element.try_advance() || !m_current_element.get_node())
             {
                 m_is_end = true;
             }
@@ -143,7 +143,7 @@ namespace duckx
             {
                 return false;
             }
-            return a.m_current_element.getNode() == b.m_current_element.getNode();
+            return a.m_current_element.get_node() == b.m_current_element.get_node();
         }
 
         friend bool operator!=(const ElementIterator& a, const ElementIterator& b)
@@ -160,7 +160,7 @@ namespace duckx
     class ElementRange
     {
         static_assert(is_docx_element<T>::value,
-                      "ElementRange requires a type with getNode() -> pugi::xml_node and advance() -> bool methods");
+                      "ElementRange requires a type with get_node() -> pugi::xml_node and advance() -> bool methods");
 
     public:
         explicit ElementRange(T element_state)
@@ -198,7 +198,7 @@ namespace duckx
 
         bool empty() const
         {
-            return !m_element_state.getNode();
+            return !m_element_state.get_node();
         }
 
         T first() const
@@ -211,7 +211,7 @@ namespace duckx
             size_t count = 0;
             T current = m_element_state;
 
-            if (current.getNode())
+            if (current.get_node())
             {
                 count = 1;
                 while (current.try_advance())
@@ -238,12 +238,12 @@ namespace duckx
     auto make_element_range(T element)
         -> absl::enable_if_t<!is_docx_element<T>::value, void>
     {
-        static_assert(has_getNode_method<T>::value,
-                      "Type must have a getNode() method returning pugi::xml_node");
+        static_assert(has_get_node_method<T>::value,
+                      "Type must have a get_node() method returning pugi::xml_node");
         static_assert(has_advance_method<T>::value,
                       "Type must have an advance() method returning bool");
-        static_assert(has_valid_getNode_return<T>::value,
-                      "getNode() must return pugi::xml_node");
+        static_assert(has_valid_get_node_return<T>::value,
+                      "get_node() must return pugi::xml_node");
         static_assert(has_valid_advance_return<T>::value,
                       "advance() must return T&");
         static_assert(has_valid_try_advance_return<T>::value,

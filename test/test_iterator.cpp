@@ -31,7 +31,7 @@ public:
         return MockDocxElement(static_doc.first_child());
     }
 
-    pugi::xml_node getNode() const { return m_node; }
+    pugi::xml_node get_node() const { return m_node; }
 
     MockDocxElement& advance()
     {
@@ -379,12 +379,12 @@ TEST_F(DocxIteratorTest, ConstIteratorUsage)
 
 TEST_F(DocxIteratorTest, MockElementTypeConstraints)
 {
-    static_assert(duckx::has_getNode_method<MockDocxElement>::value,
-                  "MockDocxElement should have getNode method");
+    static_assert(duckx::has_get_node_method<MockDocxElement>::value,
+                  "MockDocxElement should have get_node method");
     static_assert(duckx::has_advance_method<MockDocxElement>::value,
                   "MockDocxElement should have advance method");
-    static_assert(duckx::has_valid_getNode_return<MockDocxElement>::value,
-                  "MockDocxElement getNode should return pugi::xml_node");
+    static_assert(duckx::has_valid_get_node_return<MockDocxElement>::value,
+                  "MockDocxElement get_node should return pugi::xml_node");
     static_assert(duckx::has_valid_advance_return<MockDocxElement>::value,
                   "MockDocxElement advance should return MockDocxElement&");
     static_assert(duckx::is_docx_element<MockDocxElement>::value,
@@ -440,13 +440,13 @@ TEST_F(DocxIteratorTest, ElementRangeSize)
     MockDocxElement test_element = MockDocxElement::createWithValidNode();
     test_element.set_max_advances(5);
 
-    if (test_element.getNode())
+    if (test_element.get_node())
     {
-        expected_size = 1; // 初始元素
+        expected_size = 1; // 
         while (test_element.get_advance_count() < 5)
         {
             test_element.advance();
-            if (test_element.getNode()) { expected_size++; }
+            if (test_element.get_node()) { expected_size++; }
             else { break; }
         }
     }
@@ -589,7 +589,7 @@ TEST_F(DocxIteratorTest, IteratorChainedAdvance)
     auto range = duckx::make_element_range(element);
     auto it = range.begin();
 
-    // 测试链式前进
+    // 
     const auto it2 = ++++it;
     EXPECT_NE(it2, range.end());
     EXPECT_EQ(it, it2);

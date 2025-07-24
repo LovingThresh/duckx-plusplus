@@ -1,4 +1,4 @@
-﻿#include <gtest/gtest.h>
+#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <cstdio>
@@ -103,14 +103,31 @@ TEST_F(ImageTest, SetSize) {
 }
 
 TEST_F(ImageTest, RealImageFile_BasicFunctionality) {
-    const std::string real_image_path = "logo.png";
-
-    // Skip test if real image file is not available
-    std::ifstream file_check(real_image_path);
-    if (!file_check.good()) {
-        GTEST_SKIP() << "Real image file '" << real_image_path << "' not found. Skipping test.";
+    // Try multiple possible paths for the logo.png file
+    std::vector<std::string> possible_paths = {
+        "logo.png",                                    // Current directory
+        "test/logo.png",                              // From build root
+        "../test/logo.png",                           // From some subdirectory
+        "cmake-build-debug/test/logo.png"             // From project root
+    };
+    
+    std::string real_image_path;
+    bool found = false;
+    
+    for (const auto& path : possible_paths) {
+        std::ifstream file_check(path);
+        if (file_check.good()) {
+            real_image_path = path;
+            found = true;
+            file_check.close();
+            break;
+        }
+        file_check.close();
     }
-    file_check.close();
+    
+    if (!found) {
+        GTEST_SKIP() << "Real image file 'logo.png' not found in any expected location. Skipping test.";
+    }
 
     // Test constructor with real image
     ASSERT_NO_THROW({
@@ -149,14 +166,31 @@ TEST_F(ImageTest, RealImageFile_BasicFunctionality) {
 }
 
 TEST_F(ImageTest, RealImageFile_WithAbsolutePositioning) {
-    const std::string real_image_path = "logo.png";
-
-    // Skip test if real image file is not available
-    std::ifstream file_check(real_image_path);
-    if (!file_check.good()) {
-        GTEST_SKIP() << "Real image file '" << real_image_path << "' not found. Skipping test.";
+    // Try multiple possible paths for the logo.png file
+    std::vector<std::string> possible_paths = {
+        "logo.png",                                    // Current directory
+        "test/logo.png",                              // From build root
+        "../test/logo.png",                           // From some subdirectory
+        "cmake-build-debug/test/logo.png"             // From project root
+    };
+    
+    std::string real_image_path;
+    bool found = false;
+    
+    for (const auto& path : possible_paths) {
+        std::ifstream file_check(path);
+        if (file_check.good()) {
+            real_image_path = path;
+            found = true;
+            file_check.close();
+            break;
+        }
+        file_check.close();
     }
-    file_check.close();
+    
+    if (!found) {
+        GTEST_SKIP() << "Real image file 'logo.png' not found in any expected location. Skipping test.";
+    }
 
     duckx::Image real_image(real_image_path);
 

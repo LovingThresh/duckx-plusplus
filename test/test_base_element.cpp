@@ -105,7 +105,7 @@ TEST_F(RunTest, BasicConstruction)
 
     const dx::Run duckx_run(para_node, run_node);
 
-    EXPECT_TRUE(duckx_run.getNode());
+    EXPECT_TRUE(duckx_run.get_node());
     EXPECT_EQ(duckx_run.get_text(), "Hello World");
 }
 
@@ -212,7 +212,7 @@ TEST_F(ParagraphTest, BasicConstruction)
 
     const dx::Paragraph para(body, para_node);
 
-    EXPECT_TRUE(para.getNode());
+    EXPECT_TRUE(para.get_node());
     EXPECT_TRUE(para.has_next()); // 应该有第二个段落
 }
 
@@ -321,7 +321,7 @@ TEST_F(ParagraphTest, Navigation)
 
     // 移动到下一个段落
     const dx::Paragraph& next_para = para.advance();
-    EXPECT_TRUE(next_para.getNode());
+    EXPECT_TRUE(next_para.get_node());
 
     // 应该还有表格，所以has_next可能返回false（取决于实现）
 }
@@ -335,7 +335,7 @@ TEST_F(TableTest, TableStructure)
 
     const dx::Table table(body, table_node);
 
-    EXPECT_TRUE(table.getNode());
+    EXPECT_TRUE(table.get_node());
     EXPECT_FALSE(table.has_next()); // 应该没有更多表格
 }
 
@@ -406,7 +406,7 @@ TEST_F(EdgeCaseTest, EmptyNodes)
 
     // 测试空节点的处理
     const dx::Run duckx_run(valid_node, empty_node);
-    EXPECT_FALSE(duckx_run.getNode());
+    EXPECT_FALSE(duckx_run.get_node());
     EXPECT_EQ(duckx_run.get_text(), "");
     EXPECT_FALSE(duckx_run.has_next());
 }

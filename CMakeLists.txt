@@ -201,24 +201,7 @@ mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 
 # ====== Sample Executables ======
 if (BUILD_SAMPLES)
-    file(GLOB DUCKX_SAMPLE_FILES "samples/*.cpp")
-
-    # Copy resources to sample output directory
-    copy_duckx_resources_simple("${CMAKE_CURRENT_BINARY_DIR}")
-
-    foreach (SAMPLE_FILE_PATH IN LISTS DUCKX_SAMPLE_FILES)
-        get_filename_component(SAMPLE_NAME ${SAMPLE_FILE_PATH} NAME_WE)
-
-        add_executable(
-                duckx_${SAMPLE_NAME}
-                ${SAMPLE_FILE_PATH}
-        )
-
-        target_link_libraries(duckx_${SAMPLE_NAME} PRIVATE duckx::duckx)
-    endforeach ()
-
-    # The SAMPLES_RESOURCE_TARGET will be set by copy_duckx_resources function
-    # No need for additional custom target here since it's created in the function
+    add_subdirectory(samples)
 endif ()
 
 # ====== Testing Configuration ======

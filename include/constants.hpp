@@ -1,4 +1,6 @@
-﻿#pragma once
+#pragma once
+
+#include "duckx_export.h"
 
 namespace duckx
 {
@@ -16,7 +18,7 @@ namespace duckx
     constexpr formatting_flag smallcaps = 1 << 6;
     constexpr formatting_flag shadow = 1 << 7;
 
-    enum class Alignment
+    enum class DUCKX_API Alignment
     {
         LEFT,
         CENTER,
@@ -24,14 +26,14 @@ namespace duckx
         BOTH
     };
 
-    enum class ListType
+    enum class DUCKX_API ListType
     {
         NONE, // 不是列表项
         BULLET, // 项目符号列表
         NUMBER // 编号列表
     };
 
-    enum class HighlightColor
+    enum class DUCKX_API HighlightColor
     {
         NONE, // No highlight
         BLACK,
@@ -52,7 +54,7 @@ namespace duckx
         // MS Word supports 16 standard highlight colors
     };
 
-    enum class HeaderFooterType
+    enum class DUCKX_API HeaderFooterType
     {
         DEFAULT,
         FIRST,
