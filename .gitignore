@@ -39,3 +39,8 @@ build/*
 
 # temporary files
 /test/logo.png
+
+# thirdparty directory
+./.idea
+./thirdparty/abseil-cpp
+./thirdparty/googletest
