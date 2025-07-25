@@ -1,83 +1,259 @@
-<p align="center"><img src="https://github.com/amiremohamadi/DuckX/blob/master/img/logo.png" width="380"></p>
+<p align="center"><img src="img/logo.png" width="380"></p>
 
-[![Build Status](https://travis-ci.com/amiremohamadi/DuckX.svg?branch=master)](https://travis-ci.com/amiremohamadi/DuckX)
-[![GitHub license](https://img.shields.io/github/license/amiremohamadi/duckx)](https://github.com/amiremohamadi/duckx/blob/master/LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/amiremohamadi/duckx)](https://github.com/amiremohamadi/DuckX/releases)
-[![Twitter follow](https://img.shields.io/twitter/follow/amiremohamadi?style=social)](https://twitter.com/amiremohamadi)
+# DuckX-PLusPlus
 
+A modern C++ library for creating, reading, and writing Microsoft Word DOCX files with enhanced reliability and performance.
 
-# DuckX
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![C++](https://img.shields.io/badge/C%2B%2B-14%2B-blue.svg)]()
 
-Create, read and write Microsoft Office Word docx files.
-More informations are available in [this](https://duckx.readthedocs.io/en/latest/) documentation.
+## 🚀 Key Features
 
+### Modern Error Handling
+- **Hybrid API Design**: Both traditional exceptions and modern `Result<T>` pattern
+- **Rich Error Context**: Detailed error information with file location and context
+- **Monadic Operations**: Functional error handling with `and_then()` and `or_else()`
 
-> DuckX was created when I was looking for a C++ library which can properly parse MS Word .docx files, but couldn't find any
+### Comprehensive Document Support
+- **Full DOCX Support**: Read, write, and edit Microsoft Word documents
+- **Advanced Table Formatting**: Extensive table styling and layout options
+- **Media Management**: Image insertion and handling
+- **Header/Footer Support**: Complete header and footer management
+- **Hyperlink Processing**: Full hyperlink relationship management
 
-## Status ##
+### Developer-Friendly API
+- **Fluent Interface**: Method chaining for intuitive document construction
+- **Memory Safe**: RAII principles and smart pointer usage
+- **Exception Safe**: Guaranteed resource cleanup
+- **Cross-Platform**: Windows, Linux, and macOS support
 
-- Documents (docx) [Word]
-	- Read/Write/Edit
-	- Change document properties
+## 📋 Quick Start
 
-## Quick Start
-
-Here's an example of how to use duckx to read a docx file; It opens a docx file named **file.docx** and goes over paragraphs and runs to print them:
-```c++
+### Basic Document Reading (Exception API)
+```cpp
+#include <duckx.hpp>
 #include <iostream>
-#include <duckx/duckx.hpp>
 
 int main() {
-
-    duckx::Document doc("file.docx");   
-
-    doc.open();
-
-    for (auto p : doc.paragraphs())
-	for (auto r : p.runs())
-            std::cout << r.get_text() << std::endl;
+    try {
+        auto doc = duckx::Document::open("file.docx");
+        
+        for (auto& paragraph : doc.body().paragraphs()) {
+            for (auto& run : paragraph.runs()) {
+                std::cout << run.get_text();
+            }
+            std::cout << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
 }
 ```
 
-<br/>
-And compile your file like this:
+### Modern Result<T> API (Recommended)
+```cpp
+#include <duckx.hpp>
+#include <iostream>
 
-```bash
-g++ sample1.cpp -lduckx
+int main() {
+    auto doc_result = duckx::Document::create_safe("new_document.docx");
+    if (!doc_result.ok()) {
+        std::cerr << "Failed to create document: " 
+                  << doc_result.error().to_string() << std::endl;
+        return 1;
+    }
+    
+    auto doc = std::move(doc_result.value());
+    auto& body = doc.body();
+    
+    // Add content with error handling
+    auto para_result = body.add_paragraph_safe("Hello, World!");
+    if (para_result.ok()) {
+        para_result.value().set_alignment(duckx::Alignment::CENTER);
+    }
+    
+    // Save with error checking
+    auto save_result = doc.save_safe();
+    if (!save_result.ok()) {
+        std::cerr << "Save failed: " << save_result.error().to_string() << std::endl;
+        return 1;
+    }
+    
+    return 0;
+}
 ```
 
-* See other [Examples](https://github.com/amiremohamadi/DuckX/tree/master/samples)
+### Advanced Table Formatting
+```cpp
+auto table_result = body.add_table_safe(3, 4);
+if (table_result.ok()) {
+    auto& table = table_result.value();
+    
+    // Fluent interface with error propagation
+    auto format_result = table.set_width_safe(400.0)
+        .and_then([](auto& t) { return t.set_alignment_safe("center"); })
+        .and_then([](auto& t) { return t.set_border_style_safe("single"); });
+        
+    if (!format_result.ok()) {
+        std::cerr << "Table formatting failed: " 
+                  << format_result.error().to_string() << std::endl;
+    }
+}
+```
 
+## 🔧 Building the Project
 
-## Install ##
+### Windows (Visual Studio)
 
-Easy as pie!
+Create a batch file in the `temp/` directory:
 
-#### Compiling
+```batch
+@echo off
+call "C:\Program Files\Microsoft Visual Studio\2022\Preview\VC\Auxiliary\Build\vcvarsall.bat" x64
+if %errorlevel% neq 0 (
+    echo Failed to setup Visual Studio environment
+    exit /b 1
+)
 
-The preferred way is to create a build folder
+echo Building project...
+cmake --build cmake-build-debug --target run_gtests -j 30
+
+echo Running tests...
+cd cmake-build-debug\test
+run_gtests.exe --gtest_brief=1
+```
+
+### Linux/macOS
+
 ```bash
-git clone https://github.com/amiremohamadi/DuckX.git
-cd DuckX
-mkdir build
-cd build
+# Standard build
+mkdir build && cd build
 cmake ..
 cmake --build .
+
+# Development build with samples and tests
+cmake -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON ..
+cmake --build .
+
+# Run tests
+ctest
+# Or run the unified test executable
+./test/run_gtests
 ```
 
-## Requirements ##
+### CMake Options
 
-- [zip](https://github.com/kuba--/zip)
-- [pugixml](https://github.com/zeux/pugixml)
+- `BUILD_SAMPLES=ON`: Build example programs
+- `BUILD_TESTING=ON`: Enable test building (default)
+- `BUILD_SHARED_LIBS=OFF`: Build static library (default)
+- `DUCKX_USE_SYSTEM_ABSL=OFF`: Use bundled Abseil (default)
+- `DUCKX_ENABLE_ABSL=ON`: Enable Abseil integration (default)
 
+## 📚 API Design Patterns
 
-### Donation
-> Please consider donating to sustain our activities.
-<p align="left"><img src="img/btcqr.png" width="280"></p>
+### Dual API Support
+DuckX-Custom provides both traditional exception-based and modern Result<T> APIs:
 
-BITCOIN: bc1qex0wdwp22alnmvncxs3gyj5q5jaucsvpkp4d6z
+```cpp
+// Exception-based (legacy compatibility)
+void save() const;
+Table& add_table(int rows, int cols);
 
+// Result-based (modern, recommended)
+Result<void> save_safe() const;
+Result<Table&> add_table_safe(int rows, int cols);
+```
 
-### Licensing
+### Error Handling Categories
 
-This library is available to anybody free of charge, under the terms of MIT License (see LICENSE.md).
+The error system provides comprehensive error categorization:
+- `FILE_IO`: File system operations
+- `XML_PARSING`: Document structure parsing
+- `DOCX_FORMAT`: DOCX specification compliance
+- `VALIDATION`: Input validation errors
+- `RESOURCE`: Resource management issues
+
+## 🏗️ Architecture
+
+### Core Components
+
+1. **Document Management**
+   - `Document`: Main document class with dual APIs
+   - `DocxFile`: Low-level DOCX file operations
+   - `Body`: Document body container
+
+2. **Element Hierarchy**
+   - `BaseElement`: Base class for all document elements
+   - `Paragraph`, `Run`: Text content and formatting
+   - `Table`, `TableRow`, `TableCell`: Advanced table structures
+
+3. **Manager Classes**
+   - `MediaManager`: Image and media file handling
+   - `HeaderFooterManager`: Header/footer with type support
+   - `HyperlinkManager`: Hyperlink relationship management
+
+### Dependencies (All Bundled)
+
+- **Abseil-cpp**: Modern C++ utilities and status types
+- **PugiXML**: Fast XML parsing and manipulation
+- **ZIP Library**: DOCX compression/decompression
+- **STB Image**: Image processing support
+- **GoogleTest**: Testing framework (test-only)
+
+## 📖 Examples
+
+Explore the comprehensive examples in the `samples/` directory:
+
+- `sample1.cpp`: Basic document reading
+- `sample10.cpp`: Table creation and formatting
+- `sample15.cpp`: Advanced table formatting with Result<T> API
+- `sample_comprehensive_test.cpp`: Full workflow demonstration
+
+## 🧪 Testing
+
+DuckX-Custom features a comprehensive testing suite:
+
+- **Framework**: GoogleTest with unified test runner
+- **Coverage**: 90%+ test coverage target
+- **Modern API Testing**: Complete Result<T> API validation
+- **Resource Management**: Automatic test resource copying
+
+Run tests with:
+```bash
+# Run all tests
+./test/run_gtests
+
+# Run with brief output
+./test/run_gtests --gtest_brief=1
+```
+
+## 🛣️ Roadmap
+
+See [ROADMAP.md](docs/ROADMAP.md) for detailed development plans:
+
+- **Q3 2025**: API standardization, style system, engineering tools Phase 1
+- **Q4 2025**: Template system, document comparison/merge, advanced engineering features
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see our coding conventions:
+
+- Use `_safe()` suffix for Result<T> returning methods
+- Follow RAII and exception-safe patterns
+- PascalCase for classes, snake_case for methods
+- Comprehensive unit testing for new features
+
+## 📄 License
+
+This library is available under the MIT License. See [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+DuckX-Custom is built upon the foundation of the original DuckX library, with extensive modernization and feature enhancements for professional document processing needs.
+
+---
+
+**Built with ❤️ for modern C++ development**
