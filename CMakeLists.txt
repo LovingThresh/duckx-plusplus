@@ -44,6 +44,11 @@ if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif ()
 
+# Suppress Abseil deprecated builtin warnings on macOS/Clang
+if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-deprecated-builtins)
+endif ()
+
 # ====== Abseil Integration ======
 if (DUCKX_USE_SYSTEM_ABSL)
     # Try to find system-installed Abseil

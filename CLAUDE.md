@@ -8,10 +8,11 @@ DuckX-PLusPlus is a C++ library for creating, reading, and writing Microsoft Wor
 
 ## Build Commands
 
-### Windows (Using Visual Studio)
+### Windows (Multiple Compiler Support)
 
-Create a temporary batch file in the `temp/` directory to build and test:
+The project supports multiple compiler toolchains on Windows:
 
+**MSVC (Primary - Fully Supported)**
 ```batch
 @echo off
 REM Setup Visual Studio environment
@@ -33,6 +34,31 @@ echo Running tests...
 cd /d U:\Users\liuye\CLionProjects\duckx-custom\cmake-build-debug\test
 run_gtests.exe --gtest_brief=1
 ```
+
+**MinGW GCC (Experimental)**
+```batch
+REM Configure with MinGW
+cmake -B cmake-build-debug-mingw -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON -G "Ninja"
+
+REM Build
+C:\Users\liuye\AppData\Local\Programs\CLion\bin\cmake\win\x64\bin\cmake.exe --build cmake-build-debug-mingw --target run_gtests -j 30
+```
+
+**Visual Studio Clang (Experimental)**  
+```batch
+REM Configure with Clang
+cmake -B cmake-build-debug-visual-studio-clang -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON -T ClangCL
+
+REM Build
+C:\Users\liuye\AppData\Local\Programs\CLion\bin\cmake\win\x64\bin\cmake.exe --build cmake-build-debug-visual-studio-clang --target run_gtests -j 30
+```
+
+**Build Status**:
+- ✅ **MSVC**: Fully working, all 190 tests pass
+- ⚠️ **MinGW GCC**: May require environment-specific configuration, works in CLion IDE  
+- ⚠️ **Visual Studio Clang**: May require environment-specific configuration, works in CLion IDE
+
+**Note**: Alternative compilers (MinGW/Clang) may face compatibility issues with bundled Abseil library in certain environments. For production builds, MSVC is recommended.
 
 ### Linux/macOS (Standard CMake)
 

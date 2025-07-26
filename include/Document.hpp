@@ -75,9 +75,9 @@ namespace duckx
         static Document create(const std::string& path);
         void save() const;
 
-        Document::Document(Document&& other) noexcept = default;
-        Document& Document::operator=(Document&& other) noexcept = default;
-        Document::~Document() = default;
+        Document(Document&& other) noexcept = default;
+        Document& operator=(Document&& other) noexcept = default;
+        ~Document() = default;
 
         Body& body();
         const Body& body() const;

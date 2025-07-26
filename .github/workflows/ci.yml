@@ -38,8 +38,18 @@ jobs:
         
     - name: Run Unified Test Suite
       run: |
-        cd build/test
-        ./run_gtests.exe --gtest_brief=1
+        cd build
+        cmake --build . --target run_gtests --config ${{ matrix.build_type }}
+        cd test
+        if [ -f "./run_gtests.exe" ]; then
+          ./run_gtests.exe --gtest_brief=1
+        elif [ -f "./run_gtests" ]; then
+          ./run_gtests --gtest_brief=1
+        else
+          echo "❌ Test executable not found"
+          ls -la
+          exit 1
+        fi
       shell: bash
 
   # Linux Build with GCC
@@ -47,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc-9, gcc-11, clang-12]
+        compiler: [gcc-9, gcc-11, clang-14]
         build_type: [Debug, Release]
         
     steps:
@@ -71,9 +81,17 @@ jobs:
     - name: Setup Clang
       if: startsWith(matrix.compiler, 'clang')
       run: |
-        sudo apt-get install -y ${{ matrix.compiler }} libc++-$(echo ${{ matrix.compiler }} | cut -d- -f2)-dev
+        # Add LLVM repository for more recent Clang versions
+        CLANG_VERSION=$(echo ${{ matrix.compiler }} | cut -d- -f2)
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        UBUNTU_CODENAME=$(lsb_release -cs)
+        sudo add-apt-repository "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main"
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.compiler }} clang++-${CLANG_VERSION}
+        # Install libc++ if available, otherwise use libstdc++
+        sudo apt-get install -y libc++-${CLANG_VERSION}-dev libc++abi-${CLANG_VERSION}-dev || echo "libc++ not available, using libstdc++"
         echo "CC=${{ matrix.compiler }}" >> $GITHUB_ENV
-        echo "CXX=clang++-$(echo ${{ matrix.compiler }} | cut -d- -f2)" >> $GITHUB_ENV
+        echo "CXX=clang++-${CLANG_VERSION}" >> $GITHUB_ENV
         
     - name: Configure CMake
       run: |
@@ -90,8 +108,16 @@ jobs:
         
     - name: Run Unified Test Suite
       run: |
-        cd build/test
-        ./run_gtests --gtest_brief=1
+        cd build
+        cmake --build . --target run_gtests
+        cd test
+        if [ -f "./run_gtests" ]; then
+          ./run_gtests --gtest_brief=1
+        else
+          echo "❌ Test executable not found"
+          ls -la
+          exit 1
+        fi
 
   # macOS Build
   build-macos:
@@ -125,8 +151,16 @@ jobs:
         
     - name: Run Unified Test Suite
       run: |
-        cd build/test
-        ./run_gtests --gtest_brief=1
+        cd build
+        cmake --build . --target run_gtests
+        cd test
+        if [ -f "./run_gtests" ]; then
+          ./run_gtests --gtest_brief=1
+        else
+          echo "❌ Test executable not found"
+          ls -la
+          exit 1
+        fi
 
   # Code Quality Checks
   code-quality:
