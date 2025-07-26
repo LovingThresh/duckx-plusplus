@@ -185,8 +185,12 @@ TEST_F(ResultAPITest, TableCellSetWidthSafeValid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
-    auto& cell = *row.cells().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
+    auto cell_iter = row.cells().begin();
+    ASSERT_NE(cell_iter, row.cells().end());
+    auto& cell = *cell_iter;
     
     auto result = cell.set_width_safe(50.0);
     EXPECT_TRUE(result.ok());
@@ -197,8 +201,12 @@ TEST_F(ResultAPITest, TableCellSetBackgroundColorSafeValid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
-    auto& cell = *row.cells().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
+    auto cell_iter = row.cells().begin();
+    ASSERT_NE(cell_iter, row.cells().end());
+    auto& cell = *cell_iter;
     
     auto result = cell.set_background_color_safe("FF0000");
     EXPECT_TRUE(result.ok());
@@ -209,8 +217,12 @@ TEST_F(ResultAPITest, TableCellSetBackgroundColorSafeInvalid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
-    auto& cell = *row.cells().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
+    auto cell_iter = row.cells().begin();
+    ASSERT_NE(cell_iter, row.cells().end());
+    auto& cell = *cell_iter;
     
     auto result = cell.set_background_color_safe("INVALID_COLOR");
     EXPECT_FALSE(result.ok());
@@ -247,8 +259,12 @@ TEST_F(ResultAPITest, TableCellSetVerticalAlignmentSafeInvalid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
-    auto& cell = *row.cells().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
+    auto cell_iter = row.cells().begin();
+    ASSERT_NE(cell_iter, row.cells().end());
+    auto& cell = *cell_iter;
     
     auto result = cell.set_vertical_alignment_safe("invalid_alignment");
     EXPECT_FALSE(result.ok());
@@ -267,7 +283,9 @@ TEST_F(ResultAPITest, TableRowSetHeightSafeValid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
     
     auto result = row.set_height_safe(25.0);
     EXPECT_TRUE(result.ok());
@@ -278,7 +296,9 @@ TEST_F(ResultAPITest, TableRowSetHeightSafeNegative) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
     
     auto result = row.set_height_safe(-10.0);
     EXPECT_FALSE(result.ok());
@@ -293,7 +313,9 @@ TEST_F(ResultAPITest, TableRowSetHeightRuleSafeValid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
     
     auto result1 = row.set_height_rule_safe("exact");
     EXPECT_TRUE(result1.ok());
@@ -310,7 +332,9 @@ TEST_F(ResultAPITest, TableRowSetHeightRuleSafeInvalid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
     
     auto result = row.set_height_rule_safe("invalid_rule");
     EXPECT_FALSE(result.ok());

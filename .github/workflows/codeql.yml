@@ -1,12 +1,11 @@
 name: "CodeQL Security Analysis"
 
 on:
-  push:
-    branches: [ master, main, develop ]
   pull_request:
     branches: [ master, main ]
   schedule:
     - cron: '17 3 * * 1'  # Weekly on Mondays at 3:17 AM
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   analyze:
@@ -81,3 +80,4 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+      continue-on-error: true  # Allow workflow to continue even if code scanning is not enabled
