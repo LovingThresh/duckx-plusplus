@@ -7,7 +7,6 @@
  */
 
 #pragma once
-#include <pugixml.hpp>
 #include <string>
 #include "duckx_export.h"
 

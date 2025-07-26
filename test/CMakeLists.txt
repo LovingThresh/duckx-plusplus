@@ -81,14 +81,7 @@ source_group("Test Resources" FILES ${RESOURCE_FILES_FOR_IDE})
 # Add the resource files to the test target for IDE visibility
 target_sources(run_gtests PRIVATE ${RESOURCE_FILES_FOR_IDE})
 
-# ====== Post-Build Resource Copy ======
-# Add a post-build step to ensure resources are in the executable directory
-add_custom_command(TARGET run_gtests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
-        "$<TARGET_FILE_DIR:run_gtests>/my_test.docx"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
-        "$<TARGET_FILE_DIR:run_gtests>/logo.png"
-        COMMENT "Copying test resources to executable directory"
-)
+# ====== Resource Management Note ======
+# Resources are now managed through test_utils::get_temp_path()
+# which automatically locates the correct temp/ directory.
+# No manual copying needed as test_utils handles path resolution.

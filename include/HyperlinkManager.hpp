@@ -9,8 +9,8 @@
 #pragma once
 
 #include <string>
-#include <pugixml.hpp>
 #include "duckx_export.h"
+#include "pugixml.hpp"
 
 namespace duckx
 {

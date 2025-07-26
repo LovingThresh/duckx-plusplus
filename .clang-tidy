@@ -1,0 +1,12 @@
+﻿# .clang-tidy
+Checks: '-*,readability-identifier-naming'
+CheckOptions:
+  # 核心规则：区分 Class 和 Struct 的成员命名
+  - key: readability-identifier-naming.ClassMemberPrefix     # 规则1：类的成员变量以 'm_' 开头
+    value: 'm_'
+  - key: readability-identifier-naming.StructMemberPrefix    # 规则2：结构体的成员变量没有前缀
+    value: ''
+
+  # 修正问题：防止 clang-tidy 将 'p' 识别为指针前缀
+  - key: readability-identifier-naming.PointerPrefix         # 规则3：指针类型没有特殊前缀
+    value: ''
