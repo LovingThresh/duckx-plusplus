@@ -4,7 +4,21 @@
 
 A modern C++ library for creating, reading, and writing Microsoft Word DOCX files with enhanced reliability and performance.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+## 🌟 About DuckX-PLusPlus
+
+**DuckX-PLusPlus** is an enhanced version built upon the foundation of the original DuckX library. While the original DuckX provided basic DOCX functionality, it had several limitations in terms of error handling, API design, and advanced features. This "PlusPlus" version addresses these limitations with comprehensive modernization:
+
+### Key Improvements Over Original DuckX:
+- ✨ **Dual API Design**: Both traditional exceptions and modern `Result<T>` pattern support
+- 🛡️ **Enhanced Error Handling**: Rich error context with detailed information and error chaining
+- 🎯 **Advanced Table Formatting**: Extensive table styling and layout options beyond basic functionality
+- 🔗 **Functional Programming Support**: Monadic operations with `and_then()` and `or_else()`
+- 💾 **Modern Memory Management**: Extensive use of RAII principles and smart pointers
+- ⚡ **Performance Optimizations**: Faster document processing and lower memory footprint
+
+**[中文版 README](README_zh.md)** | **[English README](README.md)**
+
+[![CI/CD Pipeline](https://github.com/LovingThresh/duckx-custom/actions/workflows/ci.yml/badge.svg)](https://github.com/LovingThresh/duckx-custom/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![C++](https://img.shields.io/badge/C%2B%2B-14%2B-blue.svg)]()
 
@@ -155,7 +169,7 @@ ctest
 ## 📚 API Design Patterns
 
 ### Dual API Support
-DuckX-Custom provides both traditional exception-based and modern Result<T> APIs:
+DuckX-PLusPlus provides both traditional exception-based and modern Result<T> APIs:
 
 ```cpp
 // Exception-based (legacy compatibility)
@@ -214,7 +228,7 @@ Explore the comprehensive examples in the `samples/` directory:
 
 ## 🧪 Testing
 
-DuckX-Custom features a comprehensive testing suite:
+DuckX-PLusPlus features a comprehensive testing suite:
 
 - **Framework**: GoogleTest with unified test runner
 - **Coverage**: 90%+ test coverage target
@@ -234,8 +248,14 @@ Run tests with:
 
 See [ROADMAP.md](docs/ROADMAP.md) for detailed development plans:
 
-- **Q3 2025**: API standardization, style system, engineering tools Phase 1
-- **Q4 2025**: Template system, document comparison/merge, advanced engineering features
+### Near-term Releases (v0.0.6 → v0.8.0)
+- **v0.1.0**: Complete Result<T> API coverage and error handling standardization
+- **v0.2.0 - v0.4.0**: Enhanced table formatting and document properties management
+- **v0.5.0 - v0.7.0**: Performance optimization and style system implementation
+
+### Major Milestones
+- **v0.8.0** (Q3 2025): Feature-complete Beta version with engineering tools Phase 1
+- **v1.0.0** (Q4 2025): Stable release with template system and advanced engineering features
 
 ## 🤝 Contributing
 
@@ -252,7 +272,7 @@ This library is available under the MIT License. See [LICENSE](LICENSE) for deta
 
 ## 🙏 Acknowledgments
 
-DuckX-Custom is built upon the foundation of the original DuckX library, with extensive modernization and feature enhancements for professional document processing needs.
+DuckX-PLusPlus is built upon the foundation of the original [DuckX library](https://github.com/amiremohamadi/DuckX), with extensive modernization and feature enhancements for professional document processing needs. We extend our gratitude to the original DuckX contributors for providing the solid foundation that made this enhanced version possible.
 
 ---
 

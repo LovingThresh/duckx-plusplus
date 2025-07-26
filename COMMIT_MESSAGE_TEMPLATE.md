@@ -36,27 +36,34 @@
 基于当前的更改，建议的提交信息如下：
 
 ```
-docs(project): 完善项目文档体系并更新开发时间线
+chore(infra): 建立完整的 CI/CD 基础设施并调整版本策略
 
-- 创建全面的项目发展路线图 (docs/ROADMAP.md)
-  - 制定 Q3/Q4 2025 详细开发计划
-  - 规划基础功能完善和高级特性开发
-  - 明确工程人员特色功能和模板系统目标
-- 完全重写 README.md 以反映重构后的现代化特性
-  - 突出 Result<T> API 和混合错误处理策略
-  - 添加详细的代码示例展示双重 API 设计
-  - 更新构建指南支持 Windows Visual Studio 和 Linux/macOS
-  - 集成项目 logo 显示和现代化 badge
-- 更新 CLAUDE.md 构建命令为正确的 Windows 批处理方式
-  - 添加 Visual Studio 环境设置的完整批处理脚本
-  - 保持 Linux/macOS 标准 CMake 构建流程
+- 移除过时的 Travis CI 配置 (.travis.yml)
+- 创建完整的 GitHub Actions CI/CD 流水线
+  - ci.yml: 多平台构建测试 (Windows/Linux/macOS)
+  - release.yml: 自动化发布流程，支持多平台发布包
+  - codeql.yml: 代码安全分析和漏洞扫描
+- 完善 GitHub 项目管理模板
+  - 结构化的 Bug Report 和 Feature Request 模板
+  - 详细的 Pull Request 检查清单
+  - Issue 配置引导到文档和讨论区
+- 调整版本发布策略从 1.0 系列到 0.x 系列
+  - 当前版本定位为 v0.0.6 开发版本
+  - 规划渐进式发布路径：0.1.0 → 0.8.0 → 1.0.0
+  - 更新路线图和 README 以反映新的版本策略
+- 更新所有 GitHub 链接指向正确的仓库地址
+  - Repository: https://github.com/LovingThresh/duckx-custom
+  - 更新 CI 徽章和文档链接
 
-此次文档更新全面展示了项目从传统异常处理向现代 Result<T> 
-模式的重大重构成果，为用户提供了清晰的使用指南和发展规划。
+此次更新建立了现代化的开源项目基础设施，支持自动化测试、
+代码质量检查、安全扫描和多平台发布，为项目的持续集成和
+社区贡献提供了完整的工具链支持。
 
-新增：完整的项目路线图和现代化 README
-更新：构建系统说明和开发时间线 
-完善：项目文档体系和用户指南
+新增：完整的 GitHub Actions CI/CD 流水线
+新增：项目管理模板和社区引导
+更新：版本策略调整为渐进式 0.x 发布
+修复：GitHub 仓库链接和徽章更新
+完善：开源项目标准化基础设施
 ```
 
 ## 重要提醒

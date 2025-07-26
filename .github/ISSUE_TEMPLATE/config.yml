@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/LovingThresh/duckx-custom/blob/master/README.md
+    about: Check our comprehensive documentation and examples
+  - name: 🗺️ Development Roadmap
+    url: https://github.com/LovingThresh/duckx-custom/blob/master/docs/ROADMAP.md
+    about: See our planned features and development timeline
+  - name: 🤝 Contributing Guide
+    url: https://github.com/LovingThresh/duckx-custom/blob/master/CONTRIBUTING.md
+    about: Learn how to contribute to the project
+  - name: 💬 Discussions
+    url: https://github.com/LovingThresh/duckx-custom/discussions
+    about: Ask questions and discuss ideas with the community

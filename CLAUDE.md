@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DuckX-Custom is a C++ library for creating, reading, and writing Microsoft Word DOCX files. It features a modern hybrid error handling system using both traditional exceptions and a `Result<T>` pattern for enhanced reliability and user experience.
+DuckX-PLusPlus is a C++ library for creating, reading, and writing Microsoft Word DOCX files. It features a modern hybrid error handling system using both traditional exceptions and a `Result<T>` pattern for enhanced reliability and user experience.
 
 ## Build Commands
 

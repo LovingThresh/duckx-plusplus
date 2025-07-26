@@ -1,0 +1,231 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v0.0.6, v0.1.0, v1.0.0, etc.
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: DuckX-PLusPlus ${{ github.ref }}
+        body: |
+          ## What's Changed
+          
+          This release includes the latest features and improvements to DuckX-PLusPlus.
+          
+          ### Key Features
+          - Modern C++ DOCX document processing
+          - Hybrid error handling with Result<T> API
+          - Comprehensive table formatting support
+          - Cross-platform compatibility (Windows, Linux, macOS)
+          
+          ### Installation
+          
+          Download the appropriate package for your platform below, or build from source using:
+          
+          ```bash
+          git clone https://github.com/LovingThresh/duckx-custom.git
+          cd duckx-custom
+          mkdir build && cd build
+          cmake -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON ..
+          cmake --build .
+          ```
+          
+          ### Documentation
+          
+          - [README](https://github.com/LovingThresh/duckx-custom/blob/master/README.md)
+          - [API Documentation](https://github.com/LovingThresh/duckx-custom/blob/master/CLAUDE.md)
+          - [Contributing Guide](https://github.com/LovingThresh/duckx-custom/blob/master/CONTRIBUTING.md)
+          - [Development Roadmap](https://github.com/LovingThresh/duckx-custom/blob/master/docs/ROADMAP.md)
+          
+          **Full Changelog**: https://github.com/LovingThresh/duckx-custom/compare/...
+        draft: false
+        prerelease: false
+
+  # Build release artifacts for multiple platforms
+  build-windows:
+    needs: create-release
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Setup Visual Studio
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --config Release --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --build-config Release --output-on-failure
+        
+    - name: Package Release
+      run: |
+        mkdir duckx-plusplus-windows
+        cp -r build/Release/* duckx-plusplus-windows/ || true
+        cp -r build/samples/Release/* duckx-plusplus-windows/ || true
+        cp README.md LICENSE CONTRIBUTING.md duckx-plusplus-windows/
+        7z a duckx-plusplus-windows.zip duckx-plusplus-windows/
+        
+    - name: Upload Windows Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./duckx-plusplus-windows.zip
+        asset_name: duckx-plusplus-windows-x64.zip
+        asset_content_type: application/zip
+
+  build-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure
+        
+    - name: Package Release
+      run: |
+        mkdir duckx-plusplus-linux
+        cp -r build/lib* duckx-plusplus-linux/ || true
+        cp -r build/samples/ duckx-plusplus-linux/ || true
+        cp -r include/ duckx-plusplus-linux/
+        cp README.md LICENSE CONTRIBUTING.md duckx-plusplus-linux/
+        tar -czf duckx-plusplus-linux.tar.gz duckx-plusplus-linux/
+        
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./duckx-plusplus-linux.tar.gz
+        asset_name: duckx-plusplus-linux-x64.tar.gz
+        asset_content_type: application/gzip
+
+  build-macos:
+    needs: create-release
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        brew install cmake
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure
+        
+    - name: Package Release
+      run: |
+        mkdir duckx-plusplus-macos
+        cp -r build/lib* duckx-plusplus-macos/ || true
+        cp -r build/samples/ duckx-plusplus-macos/ || true
+        cp -r include/ duckx-plusplus-macos/
+        cp README.md LICENSE CONTRIBUTING.md duckx-plusplus-macos/
+        tar -czf duckx-plusplus-macos.tar.gz duckx-plusplus-macos/
+        
+    - name: Upload macOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./duckx-plusplus-macos.tar.gz
+        asset_name: duckx-plusplus-macos-x64.tar.gz
+        asset_content_type: application/gzip
+
+  # Build source package
+  build-source:
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Create Source Package
+      run: |
+        # Create clean source package excluding build artifacts and temporary files
+        mkdir duckx-plusplus-source
+        cp -r . duckx-plusplus-source/
+        cd duckx-plusplus-source
+        
+        # Clean up unwanted files
+        rm -rf .git .github/workflows build cmake-build-* .idea .claude
+        rm -f *.tmp *.log *~ .DS_Store
+        
+        cd ..
+        tar -czf duckx-plusplus-source.tar.gz duckx-plusplus-source/
+        
+    - name: Upload Source Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./duckx-plusplus-source.tar.gz
+        asset_name: duckx-plusplus-source.tar.gz
+        asset_content_type: application/gzip

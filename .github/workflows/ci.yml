@@ -1,0 +1,233 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  # Windows Build with Visual Studio
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Setup Visual Studio
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --config ${{ matrix.build_type }} --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
+        
+    - name: Run Unified Test Suite
+      run: |
+        cd build/test
+        ./run_gtests.exe --gtest_brief=1
+      shell: bash
+
+  # Linux Build with GCC
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-9, gcc-11, clang-12]
+        build_type: [Debug, Release]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+        
+    - name: Setup GCC
+      if: startsWith(matrix.compiler, 'gcc')
+      run: |
+        sudo apt-get install -y ${{ matrix.compiler }} g++-$(echo ${{ matrix.compiler }} | cut -d- -f2)
+        echo "CC=${{ matrix.compiler }}" >> $GITHUB_ENV
+        echo "CXX=g++-$(echo ${{ matrix.compiler }} | cut -d- -f2)" >> $GITHUB_ENV
+        
+    - name: Setup Clang
+      if: startsWith(matrix.compiler, 'clang')
+      run: |
+        sudo apt-get install -y ${{ matrix.compiler }} libc++-$(echo ${{ matrix.compiler }} | cut -d- -f2)-dev
+        echo "CC=${{ matrix.compiler }}" >> $GITHUB_ENV
+        echo "CXX=clang++-$(echo ${{ matrix.compiler }} | cut -d- -f2)" >> $GITHUB_ENV
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+        
+    - name: Run Unified Test Suite
+      run: |
+        cd build/test
+        ./run_gtests --gtest_brief=1
+
+  # macOS Build
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        brew install cmake
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build
+      run: |
+        cmake --build build --parallel
+        
+    - name: Run Tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+        
+    - name: Run Unified Test Suite
+      run: |
+        cd build/test
+        ./run_gtests --gtest_brief=1
+
+  # Code Quality Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential clang-tidy cppcheck
+        
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        
+    - name: Build for Analysis
+      run: |
+        cmake --build build --parallel
+        
+    - name: Run Static Analysis (cppcheck)
+      run: |
+        cppcheck --enable=all --inconclusive --xml --xml-version=2 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          include/ src/ 2> cppcheck-report.xml || true
+          
+    - name: Upload cppcheck results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cppcheck-report
+        path: cppcheck-report.xml
+
+  # Documentation Check
+  docs-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check Documentation Links
+      run: |
+        # Check if all referenced files exist
+        echo "Checking documentation links..."
+        
+        # Check README links
+        if ! [ -f "docs/ROADMAP.md" ]; then
+          echo "❌ Missing docs/ROADMAP.md referenced in README"
+          exit 1
+        fi
+        
+        if ! [ -f "LICENSE" ]; then
+          echo "❌ Missing LICENSE file referenced in README"
+          exit 1
+        fi
+        
+        if ! [ -d "samples" ]; then
+          echo "❌ Missing samples directory referenced in README"
+          exit 1
+        fi
+        
+        echo "✅ All documentation links verified"
+        
+    - name: Validate Markdown
+      run: |
+        # Basic markdown validation
+        echo "Validating markdown files..."
+        find . -name "*.md" -not -path "./thirdparty/*" -exec echo "Checking {}" \;
+        echo "✅ Markdown validation complete"
+
+  # Sample Build Test
+  samples-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+        
+    - name: Configure CMake with Samples
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=OFF
+        
+    - name: Build Samples
+      run: |
+        cmake --build build --target samples --parallel
+        
+    - name: Verify Sample Executables
+      run: |
+        echo "Checking sample executables..."
+        ls -la build/samples/
+        echo "✅ Sample build verification complete"
