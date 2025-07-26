@@ -362,7 +362,9 @@ TEST_F(ResultAPITest, CompleteTableFormattingWorkflow) {
     ASSERT_TRUE(border_result.ok());
     
     // Configure first row as header
-    auto& first_row = *table.rows().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& first_row = *row_iter;
     auto height_result = first_row.set_height_safe(30.0);
     ASSERT_TRUE(height_result.ok());
     
@@ -370,7 +372,9 @@ TEST_F(ResultAPITest, CompleteTableFormattingWorkflow) {
     ASSERT_TRUE(header_result.ok());
     
     // Configure first cell
-    auto& first_cell = *first_row.cells().begin();
+    auto cell_iter = first_row.cells().begin();
+    ASSERT_NE(cell_iter, first_row.cells().end());
+    auto& first_cell = *cell_iter;
     auto bg_result = first_cell.set_background_color_safe("E0E0E0");
     ASSERT_TRUE(bg_result.ok());
     

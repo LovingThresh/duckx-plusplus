@@ -41,7 +41,7 @@ namespace duckx
                     ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
             }
             return Result<Document>(Document(std::move(file)));
-        } catch (const std::exception& e) {
+        } catch (const std::exception&) {
             return Result<Document>(errors::file_access_denied(path, 
                 ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
         }
@@ -61,7 +61,7 @@ namespace duckx
                     ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
             }
             return Result<Document>(Document(std::move(file)));
-        } catch (const std::exception& e) {
+        } catch (const std::exception&) {
             return Result<Document>(errors::file_access_denied(path, 
                 ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
         }

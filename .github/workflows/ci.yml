@@ -10,6 +10,7 @@ jobs:
   # Windows Build with Visual Studio
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 60
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -41,13 +42,21 @@ jobs:
         cd build
         cmake --build . --target run_gtests --config ${{ matrix.build_type }}
         cd test
-        if [ -f "./run_gtests.exe" ]; then
+        # For Visual Studio builds, executable is in Debug/Release subdirectory
+        if [ -f "./${{ matrix.build_type }}/run_gtests.exe" ]; then
+          ./${{ matrix.build_type }}/run_gtests.exe --gtest_brief=1
+        elif [ -f "./run_gtests.exe" ]; then
           ./run_gtests.exe --gtest_brief=1
         elif [ -f "./run_gtests" ]; then
           ./run_gtests --gtest_brief=1
         else
           echo "❌ Test executable not found"
+          echo "Looking in current directory:"
           ls -la
+          echo "Looking in Debug directory:"
+          ls -la Debug/ 2>/dev/null || echo "No Debug directory"
+          echo "Looking in Release directory:"
+          ls -la Release/ 2>/dev/null || echo "No Release directory"
           exit 1
         fi
       shell: bash
@@ -55,6 +64,7 @@ jobs:
   # Linux Build with GCC
   build-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         compiler: [gcc-9, gcc-11, clang-14]
@@ -122,6 +132,7 @@ jobs:
   # macOS Build
   build-macos:
     runs-on: macos-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -165,6 +176,7 @@ jobs:
   # Code Quality Checks
   code-quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
@@ -202,6 +214,7 @@ jobs:
   # Documentation Check
   docs-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
     - name: Checkout code
@@ -240,6 +253,7 @@ jobs:
   # Sample Build Test
   samples-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
