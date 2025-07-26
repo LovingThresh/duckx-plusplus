@@ -9,6 +9,7 @@
 #include "Document.hpp"
 #include "duckxiterator.hpp"
 #include "BaseElement.hpp"
+#include "test_utils.hpp"
 
 // Mock class that satisfies the DocxElement concept
 class MockDocxElement
@@ -74,7 +75,7 @@ protected:
     {
         try
         {
-            doc = std::make_unique<duckx::Document>(duckx::Document::open("my_test.docx"));
+            doc = std::make_unique<duckx::Document>(duckx::Document::open(duckx::test_utils::get_temp_path("my_test.docx")));
             valid_doc_available = true;
         }
         catch (const std::exception&)
@@ -96,7 +97,7 @@ protected:
     {
         try
         {
-            return std::make_unique<duckx::Document>(duckx::Document::create("test_temp.docx"));
+            return std::make_unique<duckx::Document>(duckx::Document::create(duckx::test_utils::get_temp_path("test_temp.docx")));
         }
         catch (const std::exception&)
         {
