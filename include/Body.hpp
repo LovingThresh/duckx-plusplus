@@ -8,6 +8,7 @@
  */
 #pragma once
 #include "BaseElement.hpp"
+#include "Error.hpp"
 #include "duckx_export.h"
 
 namespace duckx
@@ -25,6 +26,10 @@ namespace duckx
 
         Paragraph add_paragraph(const std::string& text = "", formatting_flag f = none);
         Table add_table(int rows, int cols);
+
+        // Modern Result<T> API versions
+        Result<Paragraph> add_paragraph_safe(const std::string& text = "", formatting_flag f = none);
+        Result<Table> add_table_safe(int rows, int cols);
 
     private:
         pugi::xml_node m_bodyNode;

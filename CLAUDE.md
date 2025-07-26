@@ -177,3 +177,75 @@ Check `samples/` directory for complete examples:
 - `BUILD_SHARED_LIBS=OFF`: Build static library (default)
 - `DUCKX_USE_SYSTEM_ABSL=OFF`: Use bundled Abseil (default)
 - `DUCKX_ENABLE_ABSL=ON`: Enable Abseil integration (default)
+
+## C++ Template Gotchas and Solutions
+
+### 1. Reference Types in Template Containers
+**Problem**: C++ doesn't allow reference types in certain template containers (union, optional, etc.)
+```cpp
+// ❌ WRONG: Will cause compilation errors
+Result<Table&> // Error: reference type in template
+Result<TableRow&> // Error: cannot use reference in union/optional
+
+// ✅ CORRECT: Use pointer or value types
+Result<Table*> // OK: pointer type
+Result<void> // OK: void for operations without return value
+```
+
+### 2. Iterator Dereferencing
+**Problem**: Iterators are not elements, they point to elements
+```cpp
+// ❌ WRONG: Using iterator as element
+auto& row = table.rows().begin();
+row.set_height_safe(10); // Error: iterator has no set_height_safe
+
+// ✅ CORRECT: Dereference iterator first
+auto& row = *table.rows().begin();
+row.set_height_safe(10); // OK: row is TableRow&
+```
+
+### 3. Optional Value Access
+**Problem**: `absl::optional<T>` cannot be used directly as `T`
+```cpp
+// ❌ WRONG: Direct access to optional content
+error.context().to_string() // Error: optional has no to_string
+
+// ✅ CORRECT: Check and access value
+if (error.context().has_value()) {
+    error.context().value().to_string() // OK
+}
+```
+
+### 4. Monadic Operations Type Matching
+**Problem**: `and_then` expects consistent return types
+```cpp
+// ❌ WRONG: Type mismatch in chain
+body.add_paragraph_safe("test") // Returns Result<Paragraph>
+    .and_then([](Paragraph& p) {
+        return body.add_table_safe(2, 2); // Returns Result<Table> - TYPE MISMATCH!
+    });
+
+// ✅ CORRECT: Use sequential operations for different types
+auto para_result = body.add_paragraph_safe("test");
+if (para_result.ok()) {
+    auto table_result = body.add_table_safe(2, 2);
+}
+```
+
+### 5. GoogleTest Macro Parameter Order
+**Problem**: EXPECT_EQ parameter order matters for some types
+```cpp
+// ❌ POTENTIALLY PROBLEMATIC: 
+EXPECT_EQ(actual.value(), expected); // May cause issues
+
+// ✅ SAFER: Expected value first
+EXPECT_EQ(expected, actual.value()); // More reliable
+```
+
+## Build System Notes
+
+### Windows Environment
+- Use proper batch file syntax with delayed expansion (`setlocal enabledelayedexpansion`)
+- Use `!errorlevel!` instead of `%errorlevel%` in loops
+- Always use `/d` with `cd` command for drive changes
+- Generator is typically Visual Studio, not Ninja (check cmake-build-debug structure)
