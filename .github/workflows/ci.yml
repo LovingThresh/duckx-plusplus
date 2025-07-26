@@ -79,8 +79,12 @@ jobs:
     - name: Cache APT packages
       uses: actions/cache@v4
       with:
-        path: /var/cache/apt
+        path: |
+          /var/cache/apt/archives
+          /var/lib/apt/lists
         key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/ci.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
         
     - name: Install dependencies
       run: |
@@ -126,7 +130,7 @@ jobs:
 
   # macOS Build
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 45
     strategy:
       matrix:

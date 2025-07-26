@@ -70,11 +70,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake build-essential
         
-        # Configure and build the project
-        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
-        cmake --build build --parallel
+        # Configure and build only the core library for faster analysis
+        # Skip samples and tests to reduce build time
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=OFF -DBUILD_TESTING=OFF
+        cmake --build build --target duckx --parallel
         
-        echo 'Build completed for CodeQL analysis'
+        echo 'Core library build completed for CodeQL analysis'
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

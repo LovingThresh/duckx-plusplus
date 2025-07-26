@@ -225,8 +225,12 @@ TEST_F(ResultAPITest, TableCellSetVerticalAlignmentSafeValid) {
     ASSERT_TRUE(doc_result.ok());
     
     auto table = doc_result.value().body().add_table(2, 2);
-    auto& row = *table.rows().begin();
-    auto& cell = *row.cells().begin();
+    auto row_iter = table.rows().begin();
+    ASSERT_NE(row_iter, table.rows().end());
+    auto& row = *row_iter;
+    auto cell_iter = row.cells().begin();
+    ASSERT_NE(cell_iter, row.cells().end());
+    auto& cell = *cell_iter;
     
     auto result1 = cell.set_vertical_alignment_safe("top");
     EXPECT_TRUE(result1.ok());
