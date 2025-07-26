@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "StyleManager.hpp"
+
 namespace duckx
 {
     // Hack on pugixml (可以放在一个公共的 utility 文件中)
@@ -190,6 +192,9 @@ namespace duckx
                                                       &m_content_types_xml);
 
         m_link_manager = std::make_unique<HyperlinkManager>(this, &m_rels_xml);
+
+        // Initialize style manager
+        m_style_manager = std::make_unique<StyleManager>();
     }
 
     void Document::save() const
@@ -203,6 +208,14 @@ namespace duckx
         m_document_xml.print(writer, "  ", pugi::format_default);
 
         m_file->write_entry("word/document.xml", writer.result);
+
+        // Generate and save styles.xml if StyleManager has styles defined
+        if (m_style_manager && m_style_manager->style_count() > 0) {
+            auto styles_xml_result = m_style_manager->generate_styles_xml_safe();
+            if (styles_xml_result.ok()) {
+                m_file->write_entry("word/styles.xml", styles_xml_result.value());
+            }
+        }
 
         xml_string_writer rels_writer;
         m_rels_xml.print(rels_writer, "", pugi::format_raw);
@@ -233,6 +246,11 @@ namespace duckx
     HyperlinkManager& Document::links() const
     {
         return *m_link_manager;
+    }
+
+    StyleManager& Document::styles() const
+    {
+        return *m_style_manager;
     }
 
     std::string Document::get_next_relationship_id()

@@ -17,6 +17,7 @@
 #include "HyperlinkManager.hpp"
 #include "MediaManager.hpp"
 #include "HeaderFooterBase.hpp"
+#include "StyleManager.hpp"
 
 namespace duckx
 {
@@ -83,6 +84,7 @@ namespace duckx
         const Body& body() const;
         MediaManager& media() const;
         HyperlinkManager& links() const;
+        StyleManager& styles() const;
 
         std::string get_next_relationship_id();
         unsigned int get_unique_rid();
@@ -103,6 +105,7 @@ namespace duckx
         std::unique_ptr<MediaManager> m_media_manager;
         std::unique_ptr<HeaderFooterManager> m_hf_manager;
         std::unique_ptr<HyperlinkManager> m_link_manager;
+        std::unique_ptr<StyleManager> m_style_manager;
         int m_rid_counter = 1;
     };
 } // namespace duckx

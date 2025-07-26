@@ -72,6 +72,7 @@ namespace duckx
         XML_NODE_NOT_FOUND = 202,
         XML_ATTRIBUTE_MISSING = 203,
         XML_NAMESPACE_ERROR = 204,
+        XML_MANIPULATION_FAILED = 205,
 
         // DOCX format errors (300-399)
         DOCX_INVALID_FORMAT = 300,
@@ -150,7 +151,7 @@ namespace duckx
         TEST_COVERAGE_DATA_INVALID = 1102,
         CODE_BLOCK_FORMAT_UNSUPPORTED = 1103,
         TECHNICAL_FORMAT_INVALID = 1104,
-        BATCH_PROCESSING_FAILED = 1105
+        BATCH_PROCESSING_FAILED = 1105,
     };
 
     // ============================================================================
@@ -581,6 +582,14 @@ namespace duckx
             };
         }
 
+        inline Error xml_manipulation_failed(const absl::string_view operation, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::XML_PARSING, ErrorCode::XML_MANIPULATION_FAILED,
+                absl::StrFormat("XML manipulation failed: %s", operation), ctx
+            };
+        }
+
         inline Error docx_invalid_format(const absl::string_view details, const ErrorContext& ctx = {})
         {
             return {
@@ -713,6 +722,54 @@ namespace duckx
             return {
                 ErrorCategory::VALIDATION, ErrorCode::INVALID_HEIGHT_VALUE,
                 absl::StrFormat("Invalid height value: %f", height), ctx
+            };
+        }
+
+        inline Error invalid_font_size(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_FONT_SIZE,
+                absl::StrFormat("Invalid font size: %s", details), ctx
+            };
+        }
+
+        inline Error invalid_spacing(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_SPACING,
+                absl::StrFormat("Invalid spacing: %s", details), ctx
+            };
+        }
+
+        inline Error style_inheritance_cycle(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_INHERITANCE_CYCLE,
+                absl::StrFormat("Style inheritance cycle: %s", details), ctx
+            };
+        }
+
+        inline Error style_dependency_missing(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_DEPENDENCY_MISSING,
+                absl::StrFormat("Style dependency missing: %s", details), ctx
+            };
+        }
+
+        inline Error style_property_invalid(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_PROPERTY_INVALID,
+                absl::StrFormat("Style property invalid: %s", details), ctx
+            };
+        }
+
+        inline Error invalid_color_format(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_COLOR_FORMAT,
+                absl::StrFormat("Invalid color format: %s", details), ctx
             };
         }
     } // namespace errors

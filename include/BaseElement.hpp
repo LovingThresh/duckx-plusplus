@@ -20,6 +20,7 @@
 namespace duckx
 {
     class Document;
+    class StyleManager;
 
     /*!
      * @brief Abstract base class for all DOCX document elements
@@ -32,6 +33,10 @@ namespace duckx
     public:
         DocxElement() = default;
         DocxElement(pugi::xml_node parentNode, pugi::xml_node currentNode);
+        DocxElement(const DocxElement&) = default;
+        DocxElement& operator=(const DocxElement&) = default;
+        DocxElement(DocxElement&&) = default;
+        DocxElement& operator=(DocxElement&&) = default;
 
         virtual ~DocxElement() = default;
         /*! @brief Check if there's a next element of any type */
@@ -95,6 +100,10 @@ namespace duckx
     public:
         Run() = default;
         Run(pugi::xml_node, pugi::xml_node);
+        Run(const Run&) = default;
+        Run& operator=(const Run&) = default;
+        Run(Run&&) = default;
+        Run& operator=(Run&&) = default;
         bool has_next() const override;
         bool has_next_same_type() const override;
         void set_parent(pugi::xml_node) override;
@@ -129,6 +138,14 @@ namespace duckx
         bool can_advance() const;
         bool move_to_next_run();
 
+        // Modern Result<T> API for style application (recommended)
+        /*! @brief Safely apply a character style by name */
+        Result<void> apply_style_safe(const StyleManager& style_manager, const std::string& style_name);
+        /*! @brief Safely get the currently applied style name */
+        Result<std::string> get_style_safe() const;
+        /*! @brief Safely remove style from this run */
+        Result<void> remove_style_safe();
+
     private:
         pugi::xml_node get_or_create_rPr();
     };
@@ -145,6 +162,10 @@ namespace duckx
     public:
         Paragraph() = default;
         Paragraph(pugi::xml_node, pugi::xml_node);
+        Paragraph(const Paragraph&) = default;
+        Paragraph& operator=(const Paragraph&) = default;
+        Paragraph(Paragraph&&) = default;
+        Paragraph& operator=(Paragraph&&) = default;
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
@@ -181,6 +202,14 @@ namespace duckx
         bool get_spacing(double& before_pts, double& after_pts) const;
         bool get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const;
         bool get_list_style(ListType& type, int& level, int& numId) const;
+
+        // Modern Result<T> API for style application (recommended)
+        /*! @brief Safely apply a paragraph style by name */
+        Result<void> apply_style_safe(const StyleManager& style_manager, const std::string& style_name);
+        /*! @brief Safely get the currently applied style name */
+        Result<std::string> get_style_safe() const;
+        /*! @brief Safely remove style from this paragraph */
+        Result<void> remove_style_safe();
 
     private:
         pugi::xml_node get_or_create_pPr();
@@ -335,6 +364,10 @@ namespace duckx
     public:
         Table() = default;
         Table(pugi::xml_node, pugi::xml_node);
+        Table(const Table&) = default;
+        Table& operator=(const Table&) = default;
+        Table(Table&&) = default;
+        Table& operator=(Table&&) = default;
         void set_parent(pugi::xml_node) override;
         void set_current(pugi::xml_node) override;
         bool has_next() const override;
@@ -382,6 +415,14 @@ namespace duckx
         TableRow& get_row(int index);
         /*! @brief Get the number of rows in this table */
         int row_count() const;
+
+        // Modern Result<T> API for style application (recommended)
+        /*! @brief Safely apply a table style by name */
+        Result<void> apply_style_safe(const StyleManager& style_manager, const std::string& style_name);
+        /*! @brief Safely get the currently applied style name */
+        Result<std::string> get_style_safe() const;
+        /*! @brief Safely remove style from this table */
+        Result<void> remove_style_safe();
 
     private:
         TableRow m_tableRow;

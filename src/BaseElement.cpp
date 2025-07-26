@@ -15,6 +15,7 @@
 
 #include "Document.hpp"
 #include "HyperlinkManager.hpp"
+#include "StyleManager.hpp"
 
 namespace duckx
 {
@@ -998,7 +999,16 @@ namespace duckx
         pugi::xml_node pPr_node = m_currentNode.child("w:pPr");
         if (!pPr_node)
         {
-            pPr_node = m_currentNode.insert_child_before("w:pPr", m_currentNode.first_child());
+            // Try to insert before first child, but if that fails, just append
+            pugi::xml_node first_child = m_currentNode.first_child();
+            if (first_child) {
+                pPr_node = m_currentNode.insert_child_before("w:pPr", first_child);
+            }
+            
+            // If insert_child_before failed or there was no first child, append
+            if (!pPr_node) {
+                pPr_node = m_currentNode.append_child("w:pPr");
+            }
         }
         return pPr_node;
     }
@@ -2361,6 +2371,227 @@ namespace duckx
             ++count;
         }
         return count;
+    }
+
+    // ============================================================================
+    // Style Application Implementation
+    // ============================================================================
+
+    // Run Style Application Methods
+    Result<void> Run::apply_style_safe(const StyleManager& style_manager, const std::string& style_name)
+    {
+        // Verify style exists and is compatible
+        auto style_result = style_manager.get_style_safe(style_name);
+        if (!style_result.ok()) {
+            return Result<void>(style_result.error());
+        }
+        
+        const Style* style = style_result.value();
+        if (style->type() != StyleType::CHARACTER && style->type() != StyleType::MIXED) {
+            return Result<void>(errors::style_property_invalid(
+                absl::StrFormat("Style '%s' is not a character or mixed style", style_name),
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Get or create run properties node
+        pugi::xml_node rpr = get_or_create_rPr();
+        if (!rpr) {
+            return Result<void>(errors::xml_manipulation_failed(
+                "Failed to create run properties node",
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Apply style reference
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (!style_ref) {
+            style_ref = rpr.append_child("w:rStyle");
+        }
+        style_ref.attribute("w:val") ? 
+            style_ref.attribute("w:val").set_value(style_name.c_str()) :
+            style_ref.append_attribute("w:val").set_value(style_name.c_str());
+        
+        return Result<void>{};
+    }
+
+    Result<std::string> Run::get_style_safe() const
+    {
+        pugi::xml_node rpr = m_currentNode.child("w:rPr");
+        if (!rpr) {
+            return Result<std::string>{std::string{}}; // No style applied, return empty string
+        }
+        
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (!style_ref) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_attribute val_attr = style_ref.attribute("w:val");
+        if (!val_attr) {
+            return Result<std::string>{std::string{}}; // No style value
+        }
+        
+        return Result<std::string>{std::string(val_attr.value())};
+    }
+
+    Result<void> Run::remove_style_safe()
+    {
+        pugi::xml_node rpr = m_currentNode.child("w:rPr");
+        if (!rpr) {
+            return Result<void>{}; // No properties to remove
+        }
+        
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (style_ref) {
+            rpr.remove_child(style_ref);
+        }
+        
+        return Result<void>{};
+    }
+
+    // Paragraph Style Application Methods
+    Result<void> Paragraph::apply_style_safe(const StyleManager& style_manager, const std::string& style_name)
+    {
+        // Verify style exists and is compatible
+        auto style_result = style_manager.get_style_safe(style_name);
+        if (!style_result.ok()) {
+            return Result<void>(style_result.error());
+        }
+        
+        const Style* style = style_result.value();
+        if (style->type() != StyleType::PARAGRAPH && style->type() != StyleType::MIXED) {
+            return Result<void>(errors::style_property_invalid(
+                absl::StrFormat("Style '%s' is not a paragraph or mixed style", style_name),
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Get or create paragraph properties node
+        pugi::xml_node ppr = get_or_create_pPr();
+        if (!ppr) {
+            return Result<void>(errors::xml_manipulation_failed(
+                "Failed to create paragraph properties node",
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Apply style reference
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (!style_ref) {
+            style_ref = ppr.append_child("w:pStyle");
+        }
+        style_ref.attribute("w:val") ? 
+            style_ref.attribute("w:val").set_value(style_name.c_str()) :
+            style_ref.append_attribute("w:val").set_value(style_name.c_str());
+        
+        return Result<void>{};
+    }
+
+    Result<std::string> Paragraph::get_style_safe() const
+    {
+        pugi::xml_node ppr = m_currentNode.child("w:pPr");
+        if (!ppr) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (!style_ref) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_attribute val_attr = style_ref.attribute("w:val");
+        if (!val_attr) {
+            return Result<std::string>{std::string{}}; // No style value
+        }
+        
+        return Result<std::string>{std::string(val_attr.value())};
+    }
+
+    Result<void> Paragraph::remove_style_safe()
+    {
+        pugi::xml_node ppr = m_currentNode.child("w:pPr");
+        if (!ppr) {
+            return Result<void>{}; // No properties to remove
+        }
+        
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (style_ref) {
+            ppr.remove_child(style_ref);
+        }
+        
+        return Result<void>{};
+    }
+
+    // Table Style Application Methods
+    Result<void> Table::apply_style_safe(const StyleManager& style_manager, const std::string& style_name)
+    {
+        // Verify style exists and is compatible
+        auto style_result = style_manager.get_style_safe(style_name);
+        if (!style_result.ok()) {
+            return Result<void>(style_result.error());
+        }
+        
+        const Style* style = style_result.value();
+        if (style->type() != StyleType::TABLE && style->type() != StyleType::MIXED) {
+            return Result<void>(errors::style_property_invalid(
+                absl::StrFormat("Style '%s' is not a table or mixed style", style_name),
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Get or create table properties node
+        pugi::xml_node tblpr = m_currentNode.child("w:tblPr");
+        if (!tblpr) {
+            tblpr = m_currentNode.prepend_child("w:tblPr");
+        }
+        
+        if (!tblpr) {
+            return Result<void>(errors::xml_manipulation_failed(
+                "Failed to create table properties node",
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Apply style reference
+        pugi::xml_node style_ref = tblpr.child("w:tblStyle");
+        if (!style_ref) {
+            style_ref = tblpr.append_child("w:tblStyle");
+        }
+        style_ref.attribute("w:val") ? 
+            style_ref.attribute("w:val").set_value(style_name.c_str()) :
+            style_ref.append_attribute("w:val").set_value(style_name.c_str());
+        
+        return Result<void>{};
+    }
+
+    Result<std::string> Table::get_style_safe() const
+    {
+        pugi::xml_node tblpr = m_currentNode.child("w:tblPr");
+        if (!tblpr) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_node style_ref = tblpr.child("w:tblStyle");
+        if (!style_ref) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_attribute val_attr = style_ref.attribute("w:val");
+        if (!val_attr) {
+            return Result<std::string>{std::string{}}; // No style value
+        }
+        
+        return Result<std::string>{std::string(val_attr.value())};
+    }
+
+    Result<void> Table::remove_style_safe()
+    {
+        pugi::xml_node tblpr = m_currentNode.child("w:tblPr");
+        if (!tblpr) {
+            return Result<void>{}; // No properties to remove
+        }
+        
+        pugi::xml_node style_ref = tblpr.child("w:tblStyle");
+        if (style_ref) {
+            tblpr.remove_child(style_ref);
+        }
+        
+        return Result<void>{};
     }
 
 } // namespace duckx

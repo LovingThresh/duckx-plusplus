@@ -276,6 +276,94 @@ EXPECT_EQ(expected, actual.value()); // More reliable
 - Always use `/d` with `cd` command for drive changes
 - Generator is typically Visual Studio, not Ninja (check cmake-build-debug structure)
 
+### C++14 Compatibility and Development Guidelines
+
+#### C++ Standard Version Compliance
+**Core Principle**: Maintain strict C++14 compatibility throughout the codebase
+
+**Strategy for Modern C++ Features**:
+1. **First**: Check if the feature exists in **Abseil-cpp** (bundled dependency)
+2. **Second**: If not available in Abseil, implement C++14-compatible alternative
+3. **Never**: Use C++17/20/23 features directly without compatibility layer
+
+**Standard Library Feature Compatibility**:
+```cpp
+// ❌ WRONG: Using newer standard features
+std::string str = "example";
+if (str.starts_with("ex")) { ... }        // C++20
+if (str.contains("amp")) { ... }          // C++23  
+std::optional<int> opt = std::nullopt;     // C++17
+
+// Structured bindings (C++17)
+for (const auto& [key, value] : map) { ... }
+
+// Nested namespace definition (C++17)
+namespace company::project::module { ... }
+
+// ✅ CORRECT: C++14 compatible or Abseil alternatives
+#include "absl/strings/str_format.h"       // Use Abseil string utilities
+#include "absl/types/optional.h"           // Use absl::optional instead of std::optional
+
+if (!str.empty() && str[0] == 'e') { ... }                    // Manual prefix check
+if (str.find("amp") != std::string::npos) { ... }             // Manual substring search
+absl::optional<int> opt = absl::nullopt;                      // Abseil optional
+
+// Traditional pair access (C++14)
+for (const auto& pair : map) {
+    const auto& key = pair.first;
+    const auto& value = pair.second;
+    // ...
+}
+
+// Traditional nested namespace (C++14)
+namespace company {
+namespace project {
+namespace module {
+    // ...
+} // namespace module
+} // namespace project
+} // namespace company
+```
+
+#### Error Handling Type System Compliance
+**Core Problem**: Template type systems require explicit construction for type safety
+
+**Error Return Pattern**:
+```cpp
+// ❌ WRONG: Implicit conversion may fail with explicit constructors
+return errors::validation_failed("field", "reason");
+
+// ✅ CORRECT: Always use explicit Result<T> construction
+return Result<void>(errors::validation_failed("field", "reason"));
+return Result<SomeType*>(errors::element_not_found("element"));
+```
+
+**Error Factory Function Dependencies**:
+- **Before using**: Verify error factory function exists in `Error.hpp`
+- **Pattern**: All error functions must be defined in `namespace duckx::errors`
+- **Consistency**: Match ErrorCategory and ErrorCode enums
+
+#### Dependency Resolution Strategy
+**Abseil-first Approach**:
+1. **String Operations**: Use `absl/strings/` utilities before manual implementation
+2. **Container Types**: Use `absl/container/` flat_hash_map, flat_hash_set, etc.
+3. **Type Utilities**: Use `absl/types/` optional, variant, span
+4. **Status Types**: Use `absl/status/` for compatibility layers
+
+**Manual Implementation Guidelines**:
+- Only implement when Abseil equivalent doesn't exist
+- Maintain C++14 compatibility
+- Document why manual implementation was chosen
+- Consider future migration path to standard library
+
+#### Development Workflow
+**Pre-implementation Checklist**:
+1. ✅ Verify C++14 compatibility of all language features used
+2. ✅ Check Abseil documentation for equivalent functionality  
+3. ✅ Ensure all error factory functions are declared before use
+4. ✅ Use explicit `Result<T>` construction for error returns
+5. ✅ Test with MSVC (primary target compiler)
+
 ## Git-Related Information
 
 - **Git Flow**: This project follows a modified Git Flow strategy
