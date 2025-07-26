@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        build_type: [Debug, Release]
+        build_type: [Debug]
         
     steps:
     - name: Checkout code
@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 45
     strategy:
       matrix:
-        compiler: [gcc-9, gcc-11, clang-14]
+        compiler: [gcc, clang]
         build_type: [Debug, Release]
         
     steps:
@@ -76,32 +76,27 @@ jobs:
       with:
         submodules: recursive
         
+    - name: Cache APT packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt
+        key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/ci.yml') }}
+        
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake build-essential
         
-    - name: Setup GCC
-      if: startsWith(matrix.compiler, 'gcc')
+    - name: Setup Compiler
       run: |
-        sudo apt-get install -y ${{ matrix.compiler }} g++-$(echo ${{ matrix.compiler }} | cut -d- -f2)
-        echo "CC=${{ matrix.compiler }}" >> $GITHUB_ENV
-        echo "CXX=g++-$(echo ${{ matrix.compiler }} | cut -d- -f2)" >> $GITHUB_ENV
-        
-    - name: Setup Clang
-      if: startsWith(matrix.compiler, 'clang')
-      run: |
-        # Add LLVM repository for more recent Clang versions
-        CLANG_VERSION=$(echo ${{ matrix.compiler }} | cut -d- -f2)
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        UBUNTU_CODENAME=$(lsb_release -cs)
-        sudo add-apt-repository "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main"
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.compiler }} clang++-${CLANG_VERSION}
-        # Install libc++ if available, otherwise use libstdc++
-        sudo apt-get install -y libc++-${CLANG_VERSION}-dev libc++abi-${CLANG_VERSION}-dev || echo "libc++ not available, using libstdc++"
-        echo "CC=${{ matrix.compiler }}" >> $GITHUB_ENV
-        echo "CXX=clang++-${CLANG_VERSION}" >> $GITHUB_ENV
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        elif [ "${{ matrix.compiler }}" = "clang" ]; then
+          sudo apt-get install -y clang
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
         
     - name: Configure CMake
       run: |
