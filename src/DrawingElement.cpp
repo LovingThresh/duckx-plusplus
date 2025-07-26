@@ -1,16 +1,16 @@
-﻿/*
- * @file: Drawing.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.08
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file DrawingElement.cpp
+ * @brief Implementation of drawable element base functionality
+ * 
+ * Provides common drawing operations including coordinate conversion,
+ * sizing, positioning, and base XML generation functionality.
  */
 #include "DrawingElement.hpp"
 
 namespace duckx
 {
     // 1 inch = 914400 EMUs. Common screen DPI is 96.
+    /*! @brief Convert pixels to EMU using standard 96 DPI */
     long long pixels_to_emu(const int pixels)
     {
         if (pixels <= 0)

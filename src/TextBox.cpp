@@ -1,10 +1,9 @@
-﻿/*
- * @file: TextBox.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.08
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file TextBox.cpp
+ * @brief Implementation of floating text box functionality
+ * 
+ * Provides text box creation, content management, border styling,
+ * and XML generation for drawable text containers.
  */
 #include "TextBox.hpp"
 

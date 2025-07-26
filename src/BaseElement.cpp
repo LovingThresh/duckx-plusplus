@@ -1,10 +1,9 @@
-/*
- * @file: BaseElement.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file BaseElement.cpp
+ * @brief Implementation of base element classes for DOCX document structure
+ * 
+ * Contains implementations for paragraphs, runs, tables, rows, and cells
+ * including formatting, navigation, and XML manipulation functionality.
  */
 #include "BaseElement.hpp"
 
@@ -19,24 +18,28 @@
 
 namespace duckx
 {
+    // Mapping of XML node names to element type integers
     std::unordered_map<std::string, int> node_map = {
-        {"w:p", 0},
-        {"w:tbl", 1},
-        {"w:r", 2},
-        {"w:tr", 3},
-        {"w:tc", 4}
+        {"w:p", 0},   // Paragraph
+        {"w:tbl", 1}, // Table
+        {"w:r", 2},   // Run
+        {"w:tr", 3},  // Table row
+        {"w:tc", 4}   // Table cell
     };
 
+    /*! @brief Convert points to twips (twentieths of a point) */
     long long points_to_twips(const double pts)
     {
         return static_cast<long long>(pts * 20.0);
     }
 
+    /*! @brief Convert line spacing to OOXML format */
     long long line_spacing_to_ooxml(const double spacing)
     {
         return static_cast<long long>(spacing * 240.0);
     }
 
+    /*! @brief Convert highlight color enum to string */
     static std::string highlight_color_to_string(const HighlightColor color)
     {
         static const std::map<HighlightColor, std::string> color_map = {

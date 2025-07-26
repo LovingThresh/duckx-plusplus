@@ -38,13 +38,20 @@ Follow the build instructions in [README.md](README.md) or [CLAUDE.md](CLAUDE.md
    - **Private members** prefixed with `m_`: `m_file`, `m_body`, `m_document`
    - **Constants** in UPPER_SNAKE_CASE: `MAX_TABLE_ROWS`
 
-3. **Memory Management**
+3. **Documentation Standards**
+   - Follow the [Documentation Style Guide](docs/DOCUMENTATION_STYLE.md)
+   - **English only** for all comments and documentation
+   - Document **file purpose**, **class responsibilities**, and **key methods**
+   - Add **inline comments** only for complex algorithms
+   - Use **Doxygen-compatible** syntax with `@brief`, `@param`, `@return`
+
+4. **Memory Management**
    - Use RAII principles and smart pointers (`std::unique_ptr`, `std::shared_ptr`)
    - Prefer move semantics for expensive operations
    - Ensure exception-safe resource handling
    - Avoid raw pointers except for non-owning references
 
-4. **API Design Patterns**
+5. **API Design Patterns**
    - **Dual API Support**: Provide both exception-based and Result<T> versions
    ```cpp
    // Exception-based (legacy compatibility)

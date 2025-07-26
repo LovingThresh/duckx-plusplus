@@ -1,3 +1,10 @@
+/*!
+ * @file duckxiterator.hpp
+ * @brief Iterator and range utilities for DOCX document elements
+ * 
+ * Provides type-safe iterators and ranges for traversing document elements
+ * like paragraphs, tables, runs, and cells with STL-compatible interfaces.
+ */
 #pragma once
 #include <iterator>
 
@@ -10,6 +17,7 @@ namespace pugi
 
 namespace duckx
 {
+    /*! @brief SFINAE helper to detect get_node() method */
     template<typename T>
     class has_get_node_method
     {
@@ -75,6 +83,7 @@ namespace duckx
         static constexpr bool value = decltype(test<T>(0))::value;
     };
 
+    /*! @brief Type trait to check if T is a valid DOCX element */
     template<typename T>
     struct is_docx_element
     {
@@ -89,6 +98,12 @@ namespace duckx
     template<typename T>
     using enable_if_docx_element_t = absl::enable_if_t<is_docx_element<T>::value, int>;
 
+    /*!
+     * @brief STL-compatible iterator for DOCX document elements
+     * 
+     * Provides forward iteration over document elements like paragraphs,
+     * runs, tables, and cells with standard iterator semantics.
+     */
     template<class T, enable_if_docx_element_t<T>  = 0>
     class ElementIterator
     {
@@ -156,6 +171,12 @@ namespace duckx
         bool m_is_end;
     };
 
+    /*!
+     * @brief Range wrapper for DOCX document elements
+     * 
+     * Provides STL-compatible range interface for document elements,
+     * enabling range-based for loops and STL algorithms.
+     */
     template<class T, enable_if_docx_element_t<T>  = 0>
     class ElementRange
     {
@@ -196,16 +217,19 @@ namespace duckx
             return ElementIterator<T>();
         }
 
+        /*! @brief Check if the range is empty */
         bool empty() const
         {
             return !m_element_state.get_node();
         }
 
+        /*! @brief Get the first element in the range */
         T first() const
         {
             return m_element_state;
         }
 
+        /*! @brief Calculate the size of the range */
         size_t size() const
         {
             size_t count = 0;
@@ -227,6 +251,7 @@ namespace duckx
         T m_element_state;
     };
 
+    /*! @brief Factory function to create element ranges */   
     template<typename T>
     auto make_element_range(T element)
         -> absl::enable_if_t<is_docx_element<T>::value, ElementRange<T>>

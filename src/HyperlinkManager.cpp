@@ -1,10 +1,9 @@
-﻿/*
- * @file: HyperlinkManager.cpp
- * @brief:
+/*!
+ * @file HyperlinkManager.cpp
+ * @brief Implementation of hyperlink management system
  * 
- * @author: liuy
- * @date: 2025.06.10
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+ * Handles creation and management of hyperlinks including
+ * external URL relationships and XML generation.
  */
 #include "HyperlinkManager.hpp"
 #include "Document.hpp" // Include full header for get_unique_rid()

@@ -1,10 +1,9 @@
-﻿/*
- * @file: HeaderFooterBase.cpp
- * @brief:
+/*!
+ * @file HeaderFooterBase.cpp
+ * @brief Implementation of base header and footer functionality
  * 
- * @author: liuy
- * @date: 2025.06.09
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+ * Provides common operations for header and footer elements including
+ * content management and XML node handling.
  */
 #include "HeaderFooterBase.hpp"
 

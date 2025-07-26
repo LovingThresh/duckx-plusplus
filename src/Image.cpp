@@ -1,10 +1,9 @@
-﻿/*
- * @file: Image.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file Image.cpp
+ * @brief Implementation of image embedding functionality
+ * 
+ * Handles image file loading, processing, sizing, and XML generation
+ * for embedding images into DOCX documents.
  */
 #include "Image.hpp"
 

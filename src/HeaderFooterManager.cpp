@@ -1,10 +1,9 @@
-﻿/*
- * @file: HeaderFooterManager.cpp
- * @brief:
+/*!
+ * @file HeaderFooterManager.cpp
+ * @brief Implementation of header and footer management system
  * 
- * @author: liuy
- * @date: 2025.06.09
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+ * Handles creation, persistence, and XML generation for document
+ * headers and footers with support for different page types.
  */
 #include "HeaderFooterManager.hpp"
 #include <stdexcept>

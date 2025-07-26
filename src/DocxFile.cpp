@@ -1,10 +1,9 @@
-﻿/*
- * @file: DocFile.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file DocxFile.cpp
+ * @brief Implementation of low-level DOCX file operations
+ * 
+ * Handles ZIP archive operations, file I/O, and XML template generation
+ * for DOCX document structure creation and management.
  */
 #include "DocxFile.hpp"
 

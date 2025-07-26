@@ -1,9 +1,9 @@
 /*!
- * @brief
- *
- * @author LiuYe
- * @date 2025.06.29
- * @copyright (c) 2013-2025 Honghu Yuntu Corporation
+ * @file Error.hpp
+ * @brief Comprehensive error handling system
+ * 
+ * Provides modern error handling with categorized error codes, rich context
+ * information, and Result<T> monadic operations for robust error management.
  */
 #pragma once
 
@@ -26,6 +26,12 @@ namespace duckx
     // Error Categories and Codes
     // ============================================================================
 
+    /*!
+     * @brief High-level error categories for organizing error types
+     * 
+     * Provides logical grouping of errors to help with error handling
+     * and debugging. Each category covers a specific domain of operations.
+     */
     enum class ErrorCategory
     {
         GENERAL = 0,

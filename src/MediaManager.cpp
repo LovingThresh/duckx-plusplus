@@ -1,10 +1,9 @@
-/*
- * @file: MediaManager.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file MediaManager.cpp
+ * @brief Implementation of media element management system
+ * 
+ * Handles embedding of media files (images, textboxes) including
+ * file operations, relationship management, and XML generation.
  */
 
 #include "MediaManager.hpp"

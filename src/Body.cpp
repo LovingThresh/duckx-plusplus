@@ -1,10 +1,9 @@
-﻿/*
- * @file: Body.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file Body.cpp
+ * @brief Implementation of document body content management
+ * 
+ * Handles the main content area operations including paragraph and table
+ * creation, iteration, and the modern Result<T> API implementations.
  */
 #include "../include/Body.hpp"
 
@@ -101,10 +100,10 @@ namespace duckx
 
     Table Body::add_table(const int rows, const int cols)
     {
-        // 1. 创建表格主节点 <w:tbl>
+        // Create table structure following DOCX specification requirements
         pugi::xml_node new_tbl_node = m_bodyNode.append_child("w:tbl");
 
-        // 2. 添加表格属性 <w:tblPr> 和默认边框，使其可见
+        // Add table properties with default borders for visibility
         pugi::xml_node tbl_pr_node = new_tbl_node.append_child("w:tblPr");
         pugi::xml_node tbl_borders_node = tbl_pr_node.append_child("w:tblBorders");
         tbl_borders_node.append_child("w:top").append_attribute("w:val").set_value("single");
@@ -114,27 +113,27 @@ namespace duckx
         tbl_borders_node.append_child("w:insideH").append_attribute("w:val").set_value("single");
         tbl_borders_node.append_child("w:insideV").append_attribute("w:val").set_value("single");
 
-        // 3. 定义表格网格 <w:tblGrid>
+        // Define table grid structure with column widths
         pugi::xml_node tbl_grid_node = new_tbl_node.append_child("w:tblGrid");
         for (int i = 0; i < cols; ++i)
         {
-            // 为每一列定义一个 gridCol，并设置默认宽度
+            // Set default column width (2390 twips ≈ 4.2cm)
             tbl_grid_node.append_child("w:gridCol").append_attribute("w:w").set_value("2390");
         }
 
-        // 4. 创建行 <w:tr> 和单元格 <w:tc>
+        // Create table rows and cells with required paragraph nodes
         for (int r = 0; r < rows; ++r)
         {
             pugi::xml_node tr_node = new_tbl_node.append_child("w:tr");
             for (int c = 0; c < cols; ++c)
             {
                 pugi::xml_node tc_node = tr_node.append_child("w:tc");
-                // 关键：每个单元格必须包含一个空段落 <w:p>
+                // Each cell must contain at least one paragraph (DOCX requirement)
                 tc_node.append_child("w:p");
             }
         }
 
-        // 5. 返回一个指向新创建的表格的 Table 对象
+        // Return Table wrapper for the created XML structure
         return {m_bodyNode, new_tbl_node};
     }
 

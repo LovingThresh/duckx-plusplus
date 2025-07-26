@@ -1,10 +1,9 @@
-/*
- * @file: Document.hpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file Document.hpp
+ * @brief Main document interface for DOCX file operations
+ * 
+ * Provides high-level document creation, opening, and manipulation functionality
+ * with both modern Result<T> API and legacy exception-based interfaces.
  */
 
 #pragma once
@@ -28,12 +27,47 @@ namespace duckx
     class Header;
     class Footer;
 
+    /*!
+     * @brief Main document class for DOCX file operations
+     * 
+     * Provides factory methods for creating/opening documents and access to
+     * document components like body, media, and headers/footers.
+     * 
+     * @example Basic usage:
+     * @code
+     * auto doc = Document::create_safe("output.docx");
+     * if (doc.ok()) {
+     *     doc.value().body().add_paragraph_safe("Hello World");
+     *     doc.value().save_safe();
+     * }
+     * @endcode
+     */
     class DUCKX_API Document
     {
     public:
         // Modern Result<T> API (recommended)
+        
+        /*!
+         * @brief Safely opens an existing DOCX document
+         * @param path Path to the DOCX file to open
+         * @return Result containing Document instance or error details
+         */
         static Result<Document> open_safe(const std::string& path);
+        
+        /*!
+         * @brief Safely creates a new DOCX document
+         * @param path Output file path for the document
+         * @return Result containing Document instance or error details
+         * 
+         * Creates a new document with basic structure. File is not written
+         * until save_safe() is called.
+         */
         static Result<Document> create_safe(const std::string& path);
+        
+        /*!
+         * @brief Safely saves the document to disk
+         * @return Result indicating success or error details
+         */
         Result<void> save_safe() const;
         
         // Legacy exception-based API (for backward compatibility)
