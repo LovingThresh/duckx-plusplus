@@ -76,10 +76,19 @@ set(RESOURCE_FILES_FOR_IDE
         "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
 )
 
-source_group("Test Resources" FILES ${RESOURCE_FILES_FOR_IDE})
+# Only add resources that exist to avoid CMake errors
+set(EXISTING_RESOURCES "")
+foreach(resource_file ${RESOURCE_FILES_FOR_IDE})
+    if(EXISTS ${resource_file})
+        list(APPEND EXISTING_RESOURCES ${resource_file})
+    endif()
+endforeach()
 
-# Add the resource files to the test target for IDE visibility
-target_sources(run_gtests PRIVATE ${RESOURCE_FILES_FOR_IDE})
+if(EXISTING_RESOURCES)
+    source_group("Test Resources" FILES ${EXISTING_RESOURCES})
+    # Note: Cannot add non-source files to target_sources in CMake
+    # Resources are copied via copy_test_resources_simple() function
+endif()
 
 # ====== Resource Management Note ======
 # Resources are now managed through test_utils::get_temp_path()
