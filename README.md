@@ -32,6 +32,7 @@ A modern C++ library for creating, reading, and writing Microsoft Word DOCX file
 ### Comprehensive Document Support
 - **Full DOCX Support**: Read, write, and edit Microsoft Word documents
 - **Advanced Table Formatting**: Extensive table styling and layout options
+- **Style System**: Complete style management with built-in and custom styles
 - **Media Management**: Image insertion and handling
 - **Header/Footer Support**: Complete header and footer management
 - **Hyperlink Processing**: Full hyperlink relationship management
@@ -115,6 +116,47 @@ if (table_result.ok()) {
         std::cerr << "Table formatting failed: " 
                   << format_result.error().to_string() << std::endl;
     }
+}
+```
+
+### Style System Integration
+```cpp
+// Create and apply custom styles
+auto& styles = doc.styles();
+
+// Create a custom paragraph style
+auto heading_result = styles.create_mixed_style_safe("Custom Heading");
+if (heading_result.ok()) {
+    auto* style = heading_result.value();
+    
+    // Configure paragraph properties
+    duckx::ParagraphStyleProperties para_props;
+    para_props.alignment = duckx::Alignment::CENTER;
+    para_props.space_after_pts = 12.0;
+    
+    // Configure character properties
+    duckx::CharacterStyleProperties char_props;
+    char_props.font_name = "Arial";
+    char_props.font_size_pts = 18.0;
+    char_props.font_color_hex = "2F5496";
+    
+    style->set_paragraph_properties_safe(para_props);
+    style->set_character_properties_safe(char_props);
+}
+
+// Apply style to document elements
+auto para_result = body.add_paragraph_safe("Styled Heading");
+if (para_result.ok()) {
+    auto apply_result = para_result.value().apply_style_safe(styles, "Custom Heading");
+    if (!apply_result.ok()) {
+        std::cerr << "Style application failed: " << apply_result.error().to_string() << std::endl;
+    }
+}
+
+// Use built-in styles
+auto normal_para = body.add_paragraph_safe("Normal text");
+if (normal_para.ok()) {
+    normal_para.value().apply_style_safe(styles, "Normal");
 }
 ```
 
@@ -205,6 +247,7 @@ The error system provides comprehensive error categorization:
    - `Table`, `TableRow`, `TableCell`: Advanced table structures
 
 3. **Manager Classes**
+   - `StyleManager`: Style creation, management, and application
    - `MediaManager`: Image and media file handling
    - `HeaderFooterManager`: Header/footer with type support
    - `HyperlinkManager`: Hyperlink relationship management
@@ -224,6 +267,8 @@ Explore the comprehensive examples in the `samples/` directory:
 - `sample1.cpp`: Basic document reading
 - `sample10.cpp`: Table creation and formatting
 - `sample15.cpp`: Advanced table formatting with Result<T> API
+- `sample20_complete_style_system.cpp`: Complete style system demonstration
+- `sample21_style_priority_test.cpp`: Style vs direct formatting priority
 - `sample_comprehensive_test.cpp`: Full workflow demonstration
 
 ## 🧪 Testing
@@ -251,7 +296,8 @@ See [ROADMAP.md](docs/ROADMAP.md) for detailed development plans:
 ### Near-term Releases (v0.0.6 → v0.8.0)
 - **v0.1.0**: Complete Result<T> API coverage and error handling standardization
 - **v0.2.0 - v0.4.0**: Enhanced table formatting and document properties management
-- **v0.5.0 - v0.7.0**: Performance optimization and style system implementation
+- **v0.5.0 - v0.6.0**: Performance optimization and style system implementation ✅ **Completed**
+- **v0.7.0**: Testing and documentation enhancement
 
 ### Major Milestones
 - **v0.8.0** (Q3 2025): Feature-complete Beta version with engineering tools Phase 1
