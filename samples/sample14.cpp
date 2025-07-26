@@ -149,10 +149,30 @@ int main()
 
     try
     {
-        // 1. Open an existing .docx file for reading
-        std::cout << "Opening 'sample7_paragraph_layout.docx' for analysis..." << std::endl;
-        duckx::Document doc = duckx::Document::open(duckx::test_utils::get_temp_path("sample7_paragraph_layout.docx"));
+        // 1. Create a document with various paragraph formatting for analysis
+        std::cout << "Creating test document for analysis..." << std::endl;
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample14_analysis_test.docx"));
         auto& body = doc.body();
+        
+        // Add sample content with various formatting
+        body.add_paragraph("Sample 14: Document Analysis Demo").add_run("", duckx::bold);
+        body.add_paragraph(); // Empty paragraph
+        auto p_spaced = body.add_paragraph("This paragraph has extra spacing before and after it.");
+        p_spaced.set_spacing(12, 18);
+        body.add_paragraph("Notice the gap between this paragraph and the one above.");
+        body.add_paragraph(); // Empty paragraph
+        auto p_double = body.add_paragraph("This paragraph demonstrates double line spacing with longer text to show the effect clearly.");
+        p_double.set_line_spacing(2.0);
+        body.add_paragraph(); // Empty paragraph
+        auto p_indented = body.add_paragraph("This quote is indented from both margins for emphasis.");
+        p_indented.set_indentation(36.0, 36.0);
+        
+        doc.save();
+        std::cout << "Test document created and saved." << std::endl;
+        
+        // 2. Now reopen the document for analysis
+        std::cout << "Reopening document for analysis..." << std::endl;
+        doc = duckx::Document::open(duckx::test_utils::get_temp_path("sample14_analysis_test.docx"));
 
         std::cout << "Document opened. Starting analysis of paragraphs.\n" << std::endl;
 
@@ -168,19 +188,11 @@ int main()
         }
 
         std::cout << "\n--------------------------------------------------------------" << std::endl;
-        std::cout << "Successfully analyzed 'sample7_paragraph_layout.docx'." << std::endl;
+        std::cout << "Successfully analyzed document with paragraph formatting." << std::endl;
     }
     catch (const std::exception& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        // Provide a helpful hint if the file is not found
-        if (std::string(e.what()).find("Failed to open file") != std::string::npos ||
-            std::string(e.what()).find("zip") != std::string::npos)
-        {
-            std::cerr <<
-                    "Hint: Make sure 'sample7_paragraph_layout.docx' exists in the same directory as the executable."
-                    << std::endl;
-        }
         return 1;
     }
 

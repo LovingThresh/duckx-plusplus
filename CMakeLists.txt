@@ -17,11 +17,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ====== Resource Files Setup ======
-# Define resource files that need to be copied to various locations
-# Resources are now managed in the temp/ directory
+# Define resource files from their source locations
 set(DUCKX_RESOURCE_FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/temp/my_test.docx"
-        "${CMAKE_CURRENT_SOURCE_DIR}/temp/logo.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test/my_test.docx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
 )
 
 # Simple function to copy resource files using configure_file only
@@ -206,8 +205,9 @@ generate_export_header(duckx
 mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 
 # ====== Ensure temp directory exists ======
-# Create temp directory for generated files
+# Create temp directory for generated files and copy test resources
 file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/temp")
+copy_duckx_resources_simple("${CMAKE_SOURCE_DIR}/temp")
 
 # ====== Sample Executables ======
 if (BUILD_SAMPLES)

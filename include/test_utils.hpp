@@ -54,73 +54,65 @@ inline bool create_directory(const std::string& path) {
 /*!
  * @brief Get the project root directory path
  * @return Path to project root directory
+ * @note Simplified version - assumes standard build directory structure
  */
 inline std::string get_project_root() {
-    // Try to find project root by looking for key directories
-    std::vector<std::string> candidates = {
-        ".",                    // Current directory
-        "..",                   // One level up (from build subdir)
-        "../..",                // Two levels up (from build/test subdir)
-        "../../..",             // Three levels up (if deeply nested)
-        "../../../../"          // Even deeper nesting
-    };
-    
-    for (const auto& candidate : candidates) {
-        if (directory_exists(candidate + "/include") && 
-            directory_exists(candidate + "/src")) {
-            return candidate;
-        }
-    }
-    
-    // If not found, default to current directory
-    return ".";
+    // For test executables running from build/test/, project root is ../..
+    return "../..";
 }
 
 /*!
- * @brief Ensure temp directory exists and return a path within it
- * @param filename The filename to place in temp directory
- * @return Full path to the file in temp directory
+ * @brief Get path for test resources (input files) or generated files (output)
+ * @param filename The filename to locate or create
+ * @return Full path to the file
  */
 inline std::string get_temp_path(const std::string& filename) {
-    std::string project_root = get_project_root();
-    std::string temp_dir = project_root + "/temp";
-    
-    // Debug: Print current working directory and paths being checked
-    std::cout << "Debug: Looking for file: " << filename << std::endl;
-    std::cout << "Debug: Project root: " << project_root << std::endl;
-    std::cout << "Debug: Temp dir: " << temp_dir << std::endl;
-    
-    // Try multiple possible locations for the file
-    std::vector<std::string> candidate_paths = {
-        temp_dir + "/" + filename,          // Project temp directory  
-        "./" + filename,                    // Current directory
-        "../" + filename,                   // One level up
-        "../../" + filename,                // Two levels up  
-        "../temp/" + filename,              // Temp in parent
-        "../../temp/" + filename            // Temp in grandparent
+    // Standard temp directory paths for different execution contexts:
+    std::vector<std::string> temp_paths = {
+        "temp/" + filename,        // From project root (samples)
+        "../temp/" + filename      // From build/test (tests)
     };
     
-    for (const auto& path : candidate_paths) {
-        std::ifstream test_file(path);
-        if (test_file.good()) {
+    // For known input resources (copied by CMake), require existence
+    std::vector<std::string> known_inputs = {"my_test.docx", "logo.png"};
+    bool is_input_resource = false;
+    for (const auto& input : known_inputs) {
+        if (filename == input) {
+            is_input_resource = true;
+            break;
+        }
+    }
+    
+    if (is_input_resource) {
+        // For input resources, must exist (copied by CMake)
+        for (const auto& path : temp_paths) {
+            std::ifstream test_file(path);
+            if (test_file.good()) {
+                test_file.close();
+                return path;
+            }
             test_file.close();
-            std::cout << "Debug: Found file at: " << path << std::endl;
-            return path;
         }
-        test_file.close();
-    }
-    
-    // Create temp directory if it doesn't exist (fallback)
-    if (!directory_exists(temp_dir)) {
-        if (create_directory(temp_dir)) {
-            std::cout << "Created temp directory: " << temp_dir << std::endl;
-        } else {
-            std::cerr << "Warning: Failed to create temp directory: " << temp_dir << std::endl;
+        
+        std::cerr << "Error: Input resource '" << filename << "' not found at:" << std::endl;
+        std::cerr << "  - " << temp_paths[0] << " (for samples)" << std::endl;
+        std::cerr << "  - " << temp_paths[1] << " (for tests)" << std::endl;
+        std::cerr << "Ensure CMake has copied test resources to temp directories." << std::endl;
+        return temp_paths[0];
+    } else {
+        // For output files, try to find existing first, otherwise return expected path
+        for (const auto& path : temp_paths) {
+            std::ifstream test_file(path);
+            if (test_file.good()) {
+                test_file.close();
+                return path;
+            }
+            test_file.close();
         }
+        
+        // File doesn't exist - that's OK for output files, just return the expected path
+        return temp_paths[0]; // Return samples path for new files
     }
-    
-    std::cout << "Debug: Using fallback path: " << temp_dir + "/" + filename << std::endl;
-    return temp_dir + "/" + filename;
 }
 
 /*!

@@ -55,7 +55,7 @@ int main()
         // Copy one from other samples if needed.
         try
         {
-            duckx::Image image("logo.png");
+            duckx::Image image(duckx::test_utils::get_temp_path("logo.png"));
             auto p = body.add_paragraph();
             p.add_run("An image from MediaManager: ");
             p.add_run("");
@@ -74,7 +74,7 @@ int main()
         std::cout << "Step 4: Adding a second image (requires a fourth rId)..." << std::endl;
         try
         {
-            const duckx::Image image2("logo.png");
+            const duckx::Image image2(duckx::test_utils::get_temp_path("logo.png"));
             auto p = body.add_paragraph("A second image to ensure counter continues to increment:");
             p.add_run("");
             doc.media().add_image(p, image2);

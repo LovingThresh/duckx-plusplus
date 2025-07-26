@@ -103,7 +103,7 @@ int main()
         body.add_paragraph("Below is an image and a textbox (if 'logo.png' is available).");
         try
         {
-            duckx::Image img("logo.png"); // Assumes logo.png is in the execution directory
+            duckx::Image img(duckx::test_utils::get_temp_path("logo.png")); // Uses test_utils for proper path resolution
             duckx::TextBox tb(duckx::BorderStyle::SOLID);
             tb.add_new_paragraph("This is a test inside a textbox.");
             tb.add_paragraph("It supports paragraphs too!").add_run("", duckx::italic);
