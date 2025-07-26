@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <string>
+#include <fstream>
 #include <iostream>
+#include <string>
 
 // Platform-specific includes for directory creation
 #ifdef _WIN32
@@ -84,7 +85,32 @@ inline std::string get_temp_path(const std::string& filename) {
     std::string project_root = get_project_root();
     std::string temp_dir = project_root + "/temp";
     
-    // Create temp directory if it doesn't exist
+    // Debug: Print current working directory and paths being checked
+    std::cout << "Debug: Looking for file: " << filename << std::endl;
+    std::cout << "Debug: Project root: " << project_root << std::endl;
+    std::cout << "Debug: Temp dir: " << temp_dir << std::endl;
+    
+    // Try multiple possible locations for the file
+    std::vector<std::string> candidate_paths = {
+        temp_dir + "/" + filename,          // Project temp directory  
+        "./" + filename,                    // Current directory
+        "../" + filename,                   // One level up
+        "../../" + filename,                // Two levels up  
+        "../temp/" + filename,              // Temp in parent
+        "../../temp/" + filename            // Temp in grandparent
+    };
+    
+    for (const auto& path : candidate_paths) {
+        std::ifstream test_file(path);
+        if (test_file.good()) {
+            test_file.close();
+            std::cout << "Debug: Found file at: " << path << std::endl;
+            return path;
+        }
+        test_file.close();
+    }
+    
+    // Create temp directory if it doesn't exist (fallback)
     if (!directory_exists(temp_dir)) {
         if (create_directory(temp_dir)) {
             std::cout << "Created temp directory: " << temp_dir << std::endl;
@@ -93,6 +119,7 @@ inline std::string get_temp_path(const std::string& filename) {
         }
     }
     
+    std::cout << "Debug: Using fallback path: " << temp_dir + "/" + filename << std::endl;
     return temp_dir + "/" + filename;
 }
 

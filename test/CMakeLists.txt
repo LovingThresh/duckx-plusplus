@@ -8,14 +8,15 @@ if (MSVC)
 endif ()
 
 # ====== Test Resource Management ======
-# Simple function to copy test resources using configure_file only
+# Function to copy test resources from their source locations
 function(copy_test_resources_simple target_dir)
-    set(TEST_RESOURCE_FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
+    # Define test resources with their actual source locations
+    set(TEST_RESOURCE_MAPPINGS
+            "${CMAKE_CURRENT_SOURCE_DIR}/my_test.docx"     # Test document in test directory
+            "${CMAKE_SOURCE_DIR}/img/logo.png"             # Logo image in img directory  
     )
 
-    foreach(resource_file ${TEST_RESOURCE_FILES})
+    foreach(resource_file ${TEST_RESOURCE_MAPPINGS})
         if(EXISTS ${resource_file})
             get_filename_component(resource_filename ${resource_file} NAME)
             # Use only configure_file - no custom commands to avoid conflicts
@@ -24,6 +25,7 @@ function(copy_test_resources_simple target_dir)
                     ${target_dir}/${resource_filename}
                     COPYONLY
             )
+            message(STATUS "Copied test resource: ${resource_file} -> ${target_dir}/${resource_filename}")
         else()
             message(WARNING "Test resource file not found: ${resource_file}")
         endif()
@@ -62,6 +64,10 @@ copy_test_resources_simple("${CMAKE_CURRENT_BINARY_DIR}")
 copy_test_resources_simple("${CMAKE_BINARY_DIR}")
 copy_test_resources_simple("${CMAKE_BINARY_DIR}/test")
 
+# Also ensure temp directory exists and copy resources there for test_utils compatibility
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/temp")
+copy_test_resources_simple("${CMAKE_BINARY_DIR}/temp")
+
 # ====== Google Test Integration ======
 include(GoogleTest)
 gtest_discover_tests(run_gtests)
@@ -70,10 +76,10 @@ gtest_discover_tests(run_gtests)
 # For Visual Studio and other IDEs, organize test files
 source_group("Test Sources" FILES ${TEST_SOURCES})
 
-# Add resource files to the IDE project for easy access
+# Add resource files to the IDE project for easy access (using actual source locations)
 set(RESOURCE_FILES_FOR_IDE
-        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/my_test.docx"
+        "${CMAKE_SOURCE_DIR}/img/logo.png"
 )
 
 # Only add resources that exist to avoid CMake errors
@@ -91,6 +97,10 @@ if(EXISTING_RESOURCES)
 endif()
 
 # ====== Resource Management Note ======
-# Resources are now managed through test_utils::get_temp_path()
-# which automatically locates the correct temp/ directory.
-# No manual copying needed as test_utils handles path resolution.
+# Test resources are copied from their source locations:
+# - my_test.docx: From test/ directory (version controlled)  
+# - logo.png: From img/ directory (version controlled)
+# 
+# Resources are copied to build directories during CMake configuration.
+# Tests use test_utils::get_temp_path() for runtime path resolution,
+# which searches multiple locations including copied resources.
