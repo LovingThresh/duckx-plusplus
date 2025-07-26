@@ -35,7 +35,11 @@ namespace duckx
         MEDIA_HANDLING = 4,
         ELEMENT_OPERATION = 5,
         VALIDATION = 6,
-        RESOURCE = 7
+        RESOURCE = 7,
+        STYLE_SYSTEM = 8,
+        TEMPLATE_SYSTEM = 9,
+        DOCUMENT_COMPARISON = 10,
+        ENGINEERING_TOOLS = 11
     };
 
     enum class ErrorCode
@@ -92,11 +96,55 @@ namespace duckx
         INVALID_COLOR_FORMAT = 603,
         INVALID_ALIGNMENT = 604,
         INVALID_SPACING = 605,
+        INVALID_TABLE_DIMENSIONS = 606,
+        INVALID_BORDER_STYLE = 607,
+        INVALID_MARGIN_VALUE = 608,
+        INVALID_PADDING_VALUE = 609,
+        INVALID_WIDTH_VALUE = 610,
+        INVALID_HEIGHT_VALUE = 611,
+        INVALID_TEMPLATE_VARIABLE = 612,
 
         // Resource errors (700-799)
         MEMORY_ALLOCATION_FAILED = 700,
         RESOURCE_LIMIT_EXCEEDED = 701,
-        DEPENDENCY_NOT_AVAILABLE = 702
+        DEPENDENCY_NOT_AVAILABLE = 702,
+
+        // Style system errors (800-899)
+        STYLE_NOT_FOUND = 800,
+        STYLE_ALREADY_EXISTS = 801,
+        STYLE_INVALID_TYPE = 802,
+        STYLE_PROPERTY_INVALID = 803,
+        STYLE_APPLICATION_FAILED = 804,
+        STYLE_INHERITANCE_CYCLE = 805,
+        STYLE_TEMPLATE_INVALID = 806,
+        STYLE_MANAGER_NOT_INITIALIZED = 807,
+        STYLE_XML_GENERATION_FAILED = 808,
+        STYLE_DEPENDENCY_MISSING = 809,
+
+        // Template system errors (900-999)
+        TEMPLATE_NOT_FOUND = 900,
+        TEMPLATE_SYNTAX_ERROR = 901,
+        TEMPLATE_VARIABLE_UNDEFINED = 902,
+        TEMPLATE_FUNCTION_NOT_REGISTERED = 903,
+        TEMPLATE_CONDITION_INVALID = 904,
+        TEMPLATE_LOOP_SYNTAX_ERROR = 905,
+        TEMPLATE_GENERATION_FAILED = 906,
+        TEMPLATE_ENGINE_NOT_INITIALIZED = 907,
+
+        // Document comparison errors (1000-1099)
+        COMPARISON_DOCUMENTS_INVALID = 1000,
+        COMPARISON_ALGORITHM_FAILED = 1001,
+        DIFF_REPORT_GENERATION_FAILED = 1002,
+        MERGE_CONFLICT_UNRESOLVABLE = 1003,
+        MERGE_STRATEGY_INVALID = 1004,
+
+        // Engineering tools errors (1100-1199)
+        REQUIREMENT_TABLE_INVALID = 1100,
+        TRACEABILITY_MATRIX_FAILED = 1101,
+        TEST_COVERAGE_DATA_INVALID = 1102,
+        CODE_BLOCK_FORMAT_UNSUPPORTED = 1103,
+        TECHNICAL_FORMAT_INVALID = 1104,
+        BATCH_PROCESSING_FAILED = 1105
     };
 
     // ============================================================================
@@ -124,6 +172,38 @@ namespace duckx
         {
             additional_info[std::string(key)] = std::string(value);
             return *this;
+        }
+
+        // Convenience methods for common context information
+        ErrorContext& with_element_type(const absl::string_view element_type)
+        {
+            return with_info("element_type", element_type);
+        }
+
+        ErrorContext& with_document_path(const absl::string_view doc_path)
+        {
+            return with_info("document_path", doc_path);
+        }
+
+        ErrorContext& with_table_position(int row, int col)
+        {
+            return with_info("table_row", std::to_string(row))
+                   .with_info("table_col", std::to_string(col));
+        }
+
+        ErrorContext& with_style_name(const absl::string_view style_name)
+        {
+            return with_info("style_name", style_name);
+        }
+
+        ErrorContext& with_template_name(const absl::string_view template_name)
+        {
+            return with_info("template_name", template_name);
+        }
+
+        ErrorContext& with_validation_rule(const absl::string_view rule_name)
+        {
+            return with_info("validation_rule", rule_name);
         }
 
         std::string to_string() const
@@ -516,6 +596,107 @@ namespace duckx
                 absl::StrFormat("Invalid argument '%s': %s", arg_name, reason), ctx
             };
         }
+
+        // Style system errors
+        inline Error style_not_found(const absl::string_view style_name, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_NOT_FOUND,
+                absl::StrFormat("Style not found: %s", style_name), ctx
+            };
+        }
+
+        inline Error style_already_exists(const absl::string_view style_name, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_ALREADY_EXISTS,
+                absl::StrFormat("Style already exists: %s", style_name), ctx
+            };
+        }
+
+        inline Error style_application_failed(const absl::string_view style_name, const absl::string_view reason,
+                                             const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::STYLE_SYSTEM, ErrorCode::STYLE_APPLICATION_FAILED,
+                absl::StrFormat("Failed to apply style '%s': %s", style_name, reason), ctx
+            };
+        }
+
+        // Template system errors
+        inline Error template_not_found(const absl::string_view template_path, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::TEMPLATE_SYSTEM, ErrorCode::TEMPLATE_NOT_FOUND,
+                absl::StrFormat("Template not found: %s", template_path), ctx
+            };
+        }
+
+        inline Error template_syntax_error(const absl::string_view details, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::TEMPLATE_SYSTEM, ErrorCode::TEMPLATE_SYNTAX_ERROR,
+                absl::StrFormat("Template syntax error: %s", details), ctx
+            };
+        }
+
+        inline Error template_variable_undefined(const absl::string_view var_name, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::TEMPLATE_SYSTEM, ErrorCode::TEMPLATE_VARIABLE_UNDEFINED,
+                absl::StrFormat("Template variable undefined: %s", var_name), ctx
+            };
+        }
+
+        // Engineering tools errors
+        inline Error requirement_table_invalid(const absl::string_view reason, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::ENGINEERING_TOOLS, ErrorCode::REQUIREMENT_TABLE_INVALID,
+                absl::StrFormat("Requirement table invalid: %s", reason), ctx
+            };
+        }
+
+        inline Error code_block_format_unsupported(const absl::string_view language, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::ENGINEERING_TOOLS, ErrorCode::CODE_BLOCK_FORMAT_UNSUPPORTED,
+                absl::StrFormat("Code block format unsupported: %s", language), ctx
+            };
+        }
+
+        // Table-specific validation errors
+        inline Error invalid_table_dimensions(int rows, int cols, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_TABLE_DIMENSIONS,
+                absl::StrFormat("Invalid table dimensions: %dx%d", rows, cols), ctx
+            };
+        }
+
+        inline Error invalid_border_style(const absl::string_view style, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_BORDER_STYLE,
+                absl::StrFormat("Invalid border style: %s", style), ctx
+            };
+        }
+
+        inline Error invalid_width_value(double width, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_WIDTH_VALUE,
+                absl::StrFormat("Invalid width value: %f", width), ctx
+            };
+        }
+
+        inline Error invalid_height_value(double height, const ErrorContext& ctx = {})
+        {
+            return {
+                ErrorCategory::VALIDATION, ErrorCode::INVALID_HEIGHT_VALUE,
+                absl::StrFormat("Invalid height value: %f", height), ctx
+            };
+        }
     } // namespace errors
 
     // ============================================================================
@@ -596,6 +777,22 @@ namespace duckx
 
 #define DUCKX_ERROR_CONTEXT_OP(operation) \
     duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation)
+
+// Enhanced context macros for specific scenarios
+#define DUCKX_ERROR_CONTEXT_TABLE(operation, row, col) \
+    duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation).with_table_position(row, col)
+
+#define DUCKX_ERROR_CONTEXT_STYLE(operation, style_name) \
+    duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation).with_style_name(style_name)
+
+#define DUCKX_ERROR_CONTEXT_TEMPLATE(operation, template_name) \
+    duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation).with_template_name(template_name)
+
+#define DUCKX_ERROR_CONTEXT_ELEMENT(operation, element_type) \
+    duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation).with_element_type(element_type)
+
+#define DUCKX_ERROR_CONTEXT_VALIDATION(operation, rule_name) \
+    duckx::ErrorContext(__FILE__, __FUNCTION__, __LINE__, operation).with_validation_rule(rule_name)
 
 #define DUCKX_RETURN_IF_ERROR(result) \
     do { \
