@@ -249,3 +249,54 @@ EXPECT_EQ(expected, actual.value()); // More reliable
 - Use `!errorlevel!` instead of `%errorlevel%` in loops
 - Always use `/d` with `cd` command for drive changes
 - Generator is typically Visual Studio, not Ninja (check cmake-build-debug structure)
+
+## Git-Related Information
+
+- **Git Flow**: This project follows a modified Git Flow strategy
+- **Branching Strategy**:
+  - `main`: Stable production releases
+  - `develop`: Ongoing development branch
+  - `feature/`: Individual feature development branches
+  - `bugfix/`: Bug resolution branches
+  - `hotfix/`: Urgent production fixes
+- **Commit Message Guidelines**:
+  - Use descriptive, concise commit messages
+  - Prefix with type: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
+- **Recommended Git Commands**:
+  - `git flow init`: Initialize Git Flow in repository
+  - `git flow feature start <name>`: Start a new feature branch
+  - `git flow feature finish <name>`: Complete a feature branch
+  - `git flow release start <version>`: Create a new release branch
+- **Common Git Workflows**:
+  - Always pull before starting work
+  - Use `git rebase` instead of `git merge` for cleaner history
+  - Use meaningful branch names
+  - Squash commits before merging feature branches
+  - **Repository Management**:
+    - Use multiple repository management techniques, carefully check code standards and branch status before committing
+    - Git information should be as detailed as possible, covering key context of code changes
+    - Maintain readability and professionalism in commit messages
+
+## Code Generation and Documentation Workflows
+
+### Language Usage Guidelines
+- **When writing Markdown documentation**: Use English
+- **When writing git commit messages**: Use Chinese
+
+### Commit Message Generation for Code Comments
+
+When generating git commit messages for code comment updates:
+
+  1. Use concise Chinese format following project commit style
+  2. Do not include bot signatures
+  3. Organize with this structure:
+    - Concise title line (e.g., docs(core): 完善核心代码库 Doxygen 注释体系)
+    - Overview description
+    - "核心改进" section listing specific changes
+    - "覆盖核心模块" section describing involved modules
+  4. Highlight key points:
+    - File count statistics
+    - Comment standards and formats
+    - Adherence to project specifications
+    - Core functional modules involved
+  5. Only provide commit message content, do not execute actual git commits
