@@ -8,6 +8,7 @@
 
 #include <duckx.hpp>
 #include <iostream>
+#include "test_utils.hpp"
 
 using namespace duckx;
 
@@ -16,7 +17,7 @@ int main()
     try
     {
         // Create a new document using modern Result<T> API
-        auto doc_result = Document::create_safe("sample15_table_formatting.docx");
+        auto doc_result = Document::create_safe(test_utils::get_temp_path("sample15_table_formatting.docx"));
         if (!doc_result.ok())
         {
             std::cerr << "Failed to create document: " << doc_result.error().to_string() << std::endl;

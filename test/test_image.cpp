@@ -7,6 +7,7 @@
 #include "Document.hpp"
 #include "Image.hpp"
 #include "BaseElement.hpp"
+#include "test_utils.hpp"
 
 // Helper function to create a minimal valid PNG file for testing
 void create_dummy_png_file(const std::string& path) {
@@ -105,10 +106,12 @@ TEST_F(ImageTest, SetSize) {
 TEST_F(ImageTest, RealImageFile_BasicFunctionality) {
     // Try multiple possible paths for the logo.png file
     std::vector<std::string> possible_paths = {
-        "logo.png",                                    // Current directory
-        "test/logo.png",                              // From build root
-        "../test/logo.png",                           // From some subdirectory
-        "cmake-build-debug/test/logo.png"             // From project root
+        "logo.png",                                    // Current directory (copied by CMake)
+        "temp/logo.png",                              // Temp directory from project root
+        "../temp/logo.png",                           // Temp directory from build root
+        "test/logo.png",                              // Legacy location from build root
+        "../test/logo.png",                           // Legacy location from subdirectory
+        duckx::test_utils::get_temp_path("logo.png")  // Use temp path utility
     };
     
     std::string real_image_path;
@@ -168,10 +171,12 @@ TEST_F(ImageTest, RealImageFile_BasicFunctionality) {
 TEST_F(ImageTest, RealImageFile_WithAbsolutePositioning) {
     // Try multiple possible paths for the logo.png file
     std::vector<std::string> possible_paths = {
-        "logo.png",                                    // Current directory
-        "test/logo.png",                              // From build root
-        "../test/logo.png",                           // From some subdirectory
-        "cmake-build-debug/test/logo.png"             // From project root
+        "logo.png",                                    // Current directory (copied by CMake)
+        "temp/logo.png",                              // Temp directory from project root
+        "../temp/logo.png",                           // Temp directory from build root
+        "test/logo.png",                              // Legacy location from build root
+        "../test/logo.png",                           // Legacy location from subdirectory
+        duckx::test_utils::get_temp_path("logo.png")  // Use temp path utility
     };
     
     std::string real_image_path;

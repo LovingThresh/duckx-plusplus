@@ -8,13 +8,14 @@
  */
 #include <iostream>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
     try
     {
         // 1. 创建一个新的 .docx 文件
-        duckx::Document doc = duckx::Document::create("sample4_inline_textbox_rich.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample4_inline_textbox_rich.docx"));
         auto& body = doc.body();
 
         body.add_paragraph("Sample 4: Rich Inline TextBox Functionality").add_run("", duckx::bold);

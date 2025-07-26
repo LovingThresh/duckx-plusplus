@@ -12,6 +12,7 @@
 #include <vector>
 #include <iomanip>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 // ==========================================================
 //  Helper functions to make output readable
@@ -150,7 +151,7 @@ int main()
     {
         // 1. Open an existing .docx file for reading
         std::cout << "Opening 'sample7_paragraph_layout.docx' for analysis..." << std::endl;
-        duckx::Document doc = duckx::Document::open("sample7_paragraph_layout.docx");
+        duckx::Document doc = duckx::Document::open(duckx::test_utils::get_temp_path("sample7_paragraph_layout.docx"));
         auto& body = doc.body();
 
         std::cout << "Document opened. Starting analysis of paragraphs.\n" << std::endl;

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 using namespace duckx;
 
@@ -21,7 +22,7 @@ void print_separator(const std::string& title) {
 void demonstrate_successful_operations() {
     print_separator("Successful Operations with Result<T> API");
     
-    auto doc_result = Document::create_safe("sample16_body_result_api.docx");
+    auto doc_result = Document::create_safe(test_utils::get_temp_path("sample16_body_result_api.docx"));
     if (!doc_result.ok()) {
         std::cerr << "Failed to create document: " << doc_result.error().to_string() << std::endl;
         return;
@@ -111,7 +112,7 @@ void demonstrate_successful_operations() {
 void demonstrate_error_handling() {
     print_separator("Error Handling and Validation");
     
-    auto doc_result = Document::create_safe("sample16_error_handling.docx");
+    auto doc_result = Document::create_safe(test_utils::get_temp_path("sample16_error_handling.docx"));
     if (!doc_result.ok()) {
         std::cerr << "Failed to create document: " << doc_result.error().to_string() << std::endl;
         return;
@@ -203,7 +204,7 @@ void demonstrate_error_handling() {
 void demonstrate_monadic_operations() {
     print_separator("Monadic Operations (and_then, or_else)");
     
-    auto doc_result = Document::create_safe("sample16_monadic_operations.docx");
+    auto doc_result = Document::create_safe(test_utils::get_temp_path("sample16_monadic_operations.docx"));
     if (!doc_result.ok()) {
         std::cerr << "Failed to create document: " << doc_result.error().to_string() << std::endl;
         return;
@@ -287,7 +288,7 @@ void demonstrate_monadic_operations() {
 void demonstrate_performance_and_limits() {
     print_separator("Performance and Limits Testing");
     
-    auto doc_result = Document::create_safe("sample16_performance.docx");
+    auto doc_result = Document::create_safe(test_utils::get_temp_path("sample16_performance.docx"));
     if (!doc_result.ok()) {
         std::cerr << "Failed to create document: " << doc_result.error().to_string() << std::endl;
         return;

@@ -8,13 +8,14 @@
  */
 #include <iostream>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
     try
     {
         // 1. 创建一个新的 .docx 文件
-        duckx::Document doc = duckx::Document::create("sample5_alignment_test.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample5_alignment_test.docx"));
         auto& body = doc.body();
 
         // ==========================================================

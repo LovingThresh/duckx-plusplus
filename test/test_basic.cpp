@@ -1,10 +1,11 @@
 #include <sstream>
 #include "Document.hpp"
 #include "gtest/gtest.h"
+#include "test_utils.hpp"
 
 TEST(DocxContentTest, ChecksContentsOfMyTestFile)
 {
-    auto doc = duckx::Document::open("my_test.docx");
+    auto doc = duckx::Document::open(duckx::test_utils::get_temp_path("my_test.docx"));
 
     std::ostringstream actual_content_stream;
     for (auto& p: doc.body().paragraphs())

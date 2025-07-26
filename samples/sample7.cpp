@@ -9,6 +9,7 @@
 #include <iostream>
 #include <locale>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
@@ -23,7 +24,7 @@ int main()
 
     try
     {
-        duckx::Document doc = duckx::Document::create("sample7_paragraph_layout.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample7_paragraph_layout.docx"));
         auto& body = doc.body();
 
         body.add_paragraph("Sample 7: Paragraph Layout and Formatting")

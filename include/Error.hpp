@@ -400,15 +400,16 @@ namespace duckx
     class Result
     {
     public:
-        // Success constructor
-        explicit Result(T&& value)
-            : m_value(std::move(value)) {}
+        // Success constructor - allow implicit conversion for usability
+        template<typename U = T, typename = std::enable_if_t<!std::is_same<std::decay_t<U>, Result>::value && !std::is_same<std::decay_t<U>, Error>::value>>
+        Result(U&& value)
+            : m_value(std::forward<U>(value)) {}
 
-        explicit Result(const T& value)
+        Result(const T& value)
             : m_value(value) {}
 
-        // Error constructor
-        explicit Result(const Error& error)
+        // Error constructor - allow implicit conversion from Error for usability
+        Result(const Error& error)
             : m_error(error) {}
 
         explicit Result(Error&& error)
@@ -533,6 +534,17 @@ namespace duckx
         absl::Status to_status() const
         {
             return ok() ? absl::OkStatus() : m_error->to_status();
+        }
+
+        // Monadic operations for Result<void>
+        template<typename F>
+        auto and_then(F&& f) -> decltype(f())
+        {
+            if (!ok())
+            {
+                return m_error.value();
+            }
+            return f();
         }
 
     private:

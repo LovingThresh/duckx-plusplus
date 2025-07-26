@@ -1,12 +1,13 @@
 #include <duckx.hpp>
 #include <iostream>
+#include "test_utils.hpp"
 using namespace std;
 
 int main()
 {
     try
     {
-        auto doc = duckx::Document::open("my_test.docx");
+        auto doc = duckx::Document::open(duckx::test_utils::get_temp_path("my_test.docx"));
 
         std::cout << "--- Document Content (using for-each loop) ---" << std::endl;
 

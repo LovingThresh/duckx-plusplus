@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# Temporary files and generated documents
+temp/
+*.docx
+
 # Compiled Object files
 *.slo
 *.lo
@@ -44,3 +48,4 @@ build/*
 ./.idea
 ./thirdparty/abseil-cpp
 ./thirdparty/googletest
+./cmake-build-*/*

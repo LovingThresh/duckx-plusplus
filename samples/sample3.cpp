@@ -9,14 +9,15 @@
 #include <iostream>
 
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
     try
     {
-        duckx::Document doc = duckx::Document::create("sample3_test_with_image.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample3_test_with_image.docx"));
         const auto p = doc.body().add_paragraph("Company Logo:");
-        const duckx::Image logo("logo.png");
+        const duckx::Image logo(duckx::test_utils::get_temp_path("logo.png"));
         doc.media().add_image(p, logo);
         doc.save();
     }

@@ -11,8 +11,8 @@ endif ()
 # Simple function to copy test resources using configure_file only
 function(copy_test_resources_simple target_dir)
     set(TEST_RESOURCE_FILES
-            "${CMAKE_CURRENT_SOURCE_DIR}/../samples/my_test.docx"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../img/logo.png"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
     )
 
     foreach(resource_file ${TEST_RESOURCE_FILES})
@@ -72,8 +72,8 @@ source_group("Test Sources" FILES ${TEST_SOURCES})
 
 # Add resource files to the IDE project for easy access
 set(RESOURCE_FILES_FOR_IDE
-        "${CMAKE_CURRENT_SOURCE_DIR}/../samples/my_test.docx"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../img/logo.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
 )
 
 source_group("Test Resources" FILES ${RESOURCE_FILES_FOR_IDE})
@@ -85,10 +85,10 @@ target_sources(run_gtests PRIVATE ${RESOURCE_FILES_FOR_IDE})
 # Add a post-build step to ensure resources are in the executable directory
 add_custom_command(TARGET run_gtests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/../samples/my_test.docx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/my_test.docx"
         "$<TARGET_FILE_DIR:run_gtests>/my_test.docx"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/../img/logo.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../temp/logo.png"
         "$<TARGET_FILE_DIR:run_gtests>/logo.png"
         COMMENT "Copying test resources to executable directory"
 )

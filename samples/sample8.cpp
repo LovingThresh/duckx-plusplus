@@ -9,6 +9,7 @@
 #include <iostream>
 #include <locale>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     try
     {
         // 1. Create a new .docx file
-        duckx::Document doc = duckx::Document::create("sample8_lists.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample8_lists.docx"));
         auto& body = doc.body();
 
         body.add_paragraph("Sample 8: Creating Lists")

@@ -8,6 +8,7 @@
  */
 #include <iostream>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 int main()
 {
@@ -24,7 +25,7 @@ int main()
 
     try
     {
-        duckx::Document doc = duckx::Document::create("sample6_font_formatting.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample6_font_formatting.docx"));
         auto& body = doc.body();
 
         body.add_paragraph("Sample 6: Font Formatting")

@@ -10,6 +10,7 @@
 #include <locale>
 #include <string>
 #include "duckx.hpp"
+#include "test_utils.hpp"
 
 // A helper function to add a titled section to the document
 void add_section_title(duckx::Body& body, const std::string& title)
@@ -34,7 +35,7 @@ int main()
     try
     {
         // 1. Create a new .docx file
-        duckx::Document doc = duckx::Document::create("comprehensive_test.docx");
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("comprehensive_test.docx"));
         auto& body = doc.body();
 
         // ==========================================================

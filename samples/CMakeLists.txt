@@ -34,7 +34,7 @@ if(SAMPLE_TARGETS)
                 TARGET run_samples
                 POST_BUILD
                 COMMAND ${sample_target}
-                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 COMMENT "--- Running sample: ${sample_target} ---"
         )
     endforeach()
