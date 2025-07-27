@@ -35,7 +35,7 @@ int main()
     try
     {
         // 1. Create a new .docx file
-        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("comprehensive_test.docx"));
+        duckx::Document doc = duckx::Document::create(duckx::test_utils::get_temp_path("sample_comprehensive_test.docx"));
         auto& body = doc.body();
 
         // ==========================================================

@@ -33,48 +33,13 @@ int main()
         // Create a table with 3 rows and 4 columns
         auto table = body.add_table(3, 4);
 
-        // Configure table using modern Result<T> API with error handling
-        auto table_config_result = table.set_width_safe(400.0);
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table width: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
-
-        table_config_result = table_config_result.value()->set_alignment_safe("center");
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table alignment: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
-
-        table_config_result = table_config_result.value()->set_border_style_safe("single");
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table border style: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
-
-        table_config_result = table_config_result.value()->set_border_width_safe(1.0);
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table border width: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
-
-        table_config_result = table_config_result.value()->set_border_color_safe("000000");
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table border color: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
-
-        table_config_result = table_config_result.value()->set_cell_margins_safe(5.0, 5.0, 5.0, 5.0);
-        if (!table_config_result.ok())
-        {
-            std::cerr << "Failed to set table cell margins: " << table_config_result.error().to_string() << std::endl;
-            return 1;
-        }
+        // Configure table using traditional API since safe methods don't exist
+        table.set_width(400.0);
+        table.set_alignment("center");
+        table.set_border_style("single");
+        table.set_border_width(1.0);
+        table.set_border_color("000000");
+        table.set_cell_margins(5.0, 5.0, 5.0, 5.0);
 
         // Fill table with data using modern API
         int row_index = 0;

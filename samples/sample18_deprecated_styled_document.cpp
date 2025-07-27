@@ -45,7 +45,7 @@ int main()
         std::cout << "Creating a styled DOCX document with custom and built-in styles..." << std::endl;
 
         // Create document and style manager
-        const std::string output_path = duckx::test_utils::get_temp_path("styled_document_output.docx");
+        const std::string output_path = duckx::test_utils::get_temp_path("sample18_styled_document_output.docx");
         auto doc_result = Document::create_safe(output_path);
         if (!doc_result.ok()) {
             print_error("Failed to create document", doc_result.error());

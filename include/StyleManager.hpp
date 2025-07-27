@@ -17,11 +17,12 @@
 #include "Error.hpp"
 #include "constants.hpp"
 #include "duckx_export.h"
+#include "pugixml.hpp"
 
 namespace duckx
 {
     // Forward declarations
-    class BaseElement;
+    class DocxElement;
     class Paragraph;
     class Run;
     class Table;
@@ -292,7 +293,7 @@ namespace duckx
          * @param style_name Name of style to apply
          * @return Result indicating success or error
          */
-        Result<void> apply_style_safe(BaseElement& element, const std::string& style_name);
+        Result<void> apply_style_safe(DocxElement& element, const std::string& style_name);
         
         /*!
          * @brief Apply a style to a paragraph
@@ -318,6 +319,32 @@ namespace duckx
          */
         Result<void> apply_table_style_safe(Table& table, const std::string& style_name);
         
+        // ---- Direct Property Application ----
+        
+        /*!
+         * @brief Apply paragraph properties directly to a paragraph element
+         * @param paragraph Target paragraph to apply properties to
+         * @param props Paragraph properties to apply
+         * @return Result indicating success or error
+         */
+        Result<void> apply_paragraph_properties_safe(Paragraph& paragraph, const ParagraphStyleProperties& props);
+        
+        /*!
+         * @brief Apply character properties directly to a run element
+         * @param run Target run to apply properties to
+         * @param props Character properties to apply
+         * @return Result indicating success or error
+         */
+        Result<void> apply_character_properties_safe(Run& run, const CharacterStyleProperties& props);
+        
+        /*!
+         * @brief Apply table properties directly to a table element
+         * @param table Target table to apply properties to
+         * @param props Table properties to apply
+         * @return Result indicating success or error
+         */
+        Result<void> apply_table_properties_safe(Table& table, const TableStyleProperties& props);
+        
         // ---- Style Enumeration and Query ----
         
         /*!
@@ -338,6 +365,66 @@ namespace duckx
          * @return Number of styles in the manager
          */
         size_t style_count() const { return m_styles.size(); }
+        
+        // ---- Style Reading and Extraction ----
+        
+        /*!
+         * @brief Read paragraph properties from an element
+         * @param element Target paragraph element to read from
+         * @return Result containing paragraph style properties or error
+         */
+        Result<ParagraphStyleProperties> read_paragraph_properties_safe(const Paragraph& element) const;
+        
+        /*!
+         * @brief Read character properties from an element
+         * @param element Target run element to read from
+         * @return Result containing character style properties or error
+         */
+        Result<CharacterStyleProperties> read_character_properties_safe(const Run& element) const;
+        
+        /*!
+         * @brief Read table properties from an element
+         * @param element Target table element to read from
+         * @return Result containing table style properties or error
+         */
+        Result<TableStyleProperties> read_table_properties_safe(const Table& element) const;
+        
+        /*!
+         * @brief Extract complete style definition from document element
+         * @param element Source element to extract style from
+         * @param style_name Name for the extracted style
+         * @return Result containing pointer to created style or error
+         */
+        Result<Style*> extract_style_from_element_safe(const DocxElement& element, const std::string& style_name);
+        
+        /*!
+         * @brief Read all effective properties of a paragraph (including inheritance)
+         * @param paragraph Source paragraph
+         * @return Result containing resolved paragraph properties or error
+         */
+        Result<ParagraphStyleProperties> get_effective_paragraph_properties_safe(const Paragraph& paragraph) const;
+        
+        /*!
+         * @brief Read all effective properties of a run (including inheritance)
+         * @param run Source run
+         * @return Result containing resolved character properties or error
+         */
+        Result<CharacterStyleProperties> get_effective_character_properties_safe(const Run& run) const;
+        
+        /*!
+         * @brief Read all effective properties of a table (including inheritance)
+         * @param table Source table
+         * @return Result containing resolved table properties or error
+         */
+        Result<TableStyleProperties> get_effective_table_properties_safe(const Table& table) const;
+        
+        /*!
+         * @brief Compare two styles for differences
+         * @param style1_name Name of first style to compare
+         * @param style2_name Name of second style to compare
+         * @return Result containing comparison report or error
+         */
+        Result<std::string> compare_styles_safe(const std::string& style1_name, const std::string& style2_name) const;
         
         // ---- Style Export and Import ----
         
@@ -373,9 +460,14 @@ namespace duckx
         
         Result<Style*> create_style_internal_safe(const std::string& name, StyleType type);
         Result<void> validate_style_name_safe(const std::string& name) const;
-        Result<void> apply_paragraph_properties_safe(Paragraph& paragraph, const ParagraphStyleProperties& props);
-        Result<void> apply_character_properties_safe(Run& run, const CharacterStyleProperties& props);
-        Result<void> apply_table_properties_safe(Table& table, const TableStyleProperties& props);
+        
+        // Style reading helper methods
+        Result<ParagraphStyleProperties> read_paragraph_properties_from_xml_safe(const pugi::xml_node& ppr_node) const;
+        Result<CharacterStyleProperties> read_character_properties_from_xml_safe(const pugi::xml_node& rpr_node) const;
+        Result<TableStyleProperties> read_table_properties_from_xml_safe(const pugi::xml_node& tblpr_node) const;
+        Result<ParagraphStyleProperties> resolve_paragraph_inheritance_safe(const ParagraphStyleProperties& base_props, const std::string& style_name) const;
+        Result<CharacterStyleProperties> resolve_character_inheritance_safe(const CharacterStyleProperties& base_props, const std::string& style_name) const;
+        Result<TableStyleProperties> resolve_table_inheritance_safe(const TableStyleProperties& base_props, const std::string& style_name) const;
     };
     
 } // namespace duckx

@@ -95,7 +95,7 @@ int main()
         
         print_section("📄 CURRENT: Basic Document Creation");
         
-        const std::string output_path = duckx::test_utils::get_temp_path("current_capabilities.docx");
+        const std::string output_path = duckx::test_utils::get_temp_path("sample19_current_capabilities.docx");
         auto doc_result = Document::create_safe(output_path);
         if (!doc_result.ok()) {
             std::cerr << "Failed to create document" << std::endl;
