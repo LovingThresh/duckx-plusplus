@@ -1,3 +1,14 @@
+/*!
+ * @file test_body.cpp
+ * @brief Unit tests for Body class legacy API functionality
+ * 
+ * Tests document body content management with traditional exception-based
+ * API including paragraph and table operations, content manipulation,
+ * and iterator-based traversal patterns.
+ * 
+ * @date 2025.07
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Body.hpp"

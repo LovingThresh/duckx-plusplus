@@ -1,9 +1,12 @@
 /*!
  * @file test_style_manager.cpp
- * @brief Unit tests for StyleManager functionality
+ * @brief Unit tests for StyleManager class and style operations
  * 
- * Comprehensive tests for the style management system including style creation,
- * properties, built-in styles, and error handling.
+ * Tests comprehensive style management system including style creation,
+ * inheritance, built-in libraries, property application, and XML generation.
+ * Validates Result<T> error handling and style validation mechanisms.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

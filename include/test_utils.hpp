@@ -1,6 +1,12 @@
 /*!
  * @file test_utils.hpp
  * @brief Utility functions for tests and samples (C++14 compatible)
+ * 
+ * Provides cross-platform utility functions for file system operations,
+ * path resolution, and test resource management. Maintains C++14 compatibility
+ * while offering robust file handling for testing and sample applications.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

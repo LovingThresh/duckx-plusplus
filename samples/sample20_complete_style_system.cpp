@@ -8,8 +8,7 @@
  * - Using built-in and custom styles
  * - Generating properly formatted DOCX output
  * 
- * @author DuckX-PLusPlus Development Team
- * @date 2025
+ * @date 2025.07
  */
 
 #include <iostream>

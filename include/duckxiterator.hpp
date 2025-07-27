@@ -4,6 +4,9 @@
  * 
  * Provides type-safe iterators and ranges for traversing document elements
  * like paragraphs, tables, runs, and cells with STL-compatible interfaces.
+ * Implements compile-time type checking and modern iterator patterns.
+ * 
+ * @date 2025.07
  */
 #pragma once
 #include <iterator>

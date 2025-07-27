@@ -1,8 +1,12 @@
 /*!
- * @brief Test suite for the duckx::TextBox class.
- *
- * @author LiuYe
- * @date 2025.07.05
+ * @file test_textBox.cpp
+ * @brief Unit tests for TextBox class and floating text containers
+ * 
+ * Tests TextBox creation, border styling, paragraph management,
+ * and drawing element functionality with positioning options
+ * and comprehensive content manipulation capabilities.
+ * 
+ * @date 2025.07
  * @copyright (c) 2013-2025 Honghu Yuntu Corporation
  */
 #include <gtest/gtest.h>

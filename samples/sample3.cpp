@@ -1,10 +1,12 @@
-/*
- * @file: sample3.cpp
- * @brief:
- *
- * @author: liuye
- * @date: 2025.06.07
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample3.cpp
+ * @brief Image embedding and media handling demonstration
+ * 
+ * Demonstrates embedding images into DOCX documents with various
+ * positioning options, sizing controls, and media management features.
+ * Shows comprehensive image integration workflow.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 

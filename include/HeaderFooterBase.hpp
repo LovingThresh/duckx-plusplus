@@ -3,7 +3,10 @@
  * @brief Base classes for document headers and footers
  * 
  * Provides common functionality for header and footer elements
- * including content management and XML node handling.
+ * including content management and XML node handling. Serves as
+ * the foundation for header and footer implementations.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

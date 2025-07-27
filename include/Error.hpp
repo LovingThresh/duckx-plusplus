@@ -4,6 +4,10 @@
  * 
  * Provides modern error handling with categorized error codes, rich context
  * information, and Result<T> monadic operations for robust error management.
+ * Implements hybrid error handling strategy supporting both traditional exceptions
+ * and functional programming patterns.
+ * 
+ * @date 2025.07
  */
 #pragma once
 

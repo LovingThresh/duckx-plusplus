@@ -1,10 +1,12 @@
-﻿/*
- * @file: sample10.cpp
- * @brief: A sample demonstrating how to create and populate tables.
- *
- * @author: liuye
- * @date: 2025.06.11
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample10.cpp
+ * @brief Table creation and manipulation demonstration
+ * 
+ * Demonstrates creating and populating tables with various formatting
+ * options including borders, cell styling, row management, and
+ * comprehensive table layout configurations.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 #include <locale>

@@ -1,10 +1,12 @@
-/*
- * @file: sample4_inline_textbox.cpp
- * @brief: A sample demonstrating how to add and manipulate inline TextBoxes.
- *
- * @author: liuye
- * @date: 2025.06.08
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample4.cpp
+ * @brief TextBox creation and inline content demonstration
+ * 
+ * Demonstrates creating and manipulating inline TextBoxes with
+ * various border styles, positioning options, and rich content.
+ * Shows floating text container functionality and paragraph management.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 #include "duckx.hpp"

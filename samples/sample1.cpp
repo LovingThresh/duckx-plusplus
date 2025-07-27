@@ -1,3 +1,14 @@
+/*!
+ * @file sample1.cpp
+ * @brief Basic document reading and content extraction example
+ * 
+ * Demonstrates basic usage of DuckX-PLusPlus library for reading
+ * DOCX documents and extracting text content using modern iterator
+ * patterns and range-based loops.
+ * 
+ * @date 2025.07
+ */
+
 #include <duckx.hpp>
 #include <iostream>
 #include "test_utils.hpp"

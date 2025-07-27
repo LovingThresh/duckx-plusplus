@@ -1,9 +1,12 @@
-/*
- * @file: test_result_api.cpp
- * @brief: Tests for the modern Result<T> API
- *
- * @author: duckx-custom team
- * @date: 2025.07.24
+/*!
+ * @file test_result_api.cpp
+ * @brief Unit tests for Result<T> API and error handling system
+ * 
+ * Tests modern Result<T> error handling patterns, monadic operations,
+ * error chaining, and comprehensive safety mechanisms across all
+ * library components with detailed error context validation.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

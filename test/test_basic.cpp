@@ -1,3 +1,14 @@
+/*!
+ * @file test_basic.cpp
+ * @brief Basic functionality tests for DOCX document operations
+ * 
+ * Tests fundamental document reading, content extraction, and
+ * text processing capabilities. Validates core library functionality
+ * with basic use cases and content verification.
+ * 
+ * @date 2025.07
+ */
+
 #include <sstream>
 #include "Document.hpp"
 #include "gtest/gtest.h"

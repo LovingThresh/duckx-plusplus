@@ -1,10 +1,12 @@
 /*!
  * @file sample22_style_reading_system.cpp
- * @brief Comprehensive demonstration of the style reading and extraction system
+ * @brief Style reading and extraction system demonstration
  * 
- * This sample demonstrates how to read style properties from document elements,
- * extract styles for reuse, compare styles, and handle style inheritance.
- * Features the modern Result<T> error handling approach throughout.
+ * Demonstrates reading existing styles from DOCX documents,
+ * extracting style properties, analyzing document formatting,
+ * and handling style inheritance with Result<T> error patterns.
+ * 
+ * @date 2025.07
  */
 
 #include <iostream>

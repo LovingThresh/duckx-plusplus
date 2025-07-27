@@ -1,4 +1,15 @@
-﻿#include <gtest/gtest.h>
+/*!
+ * @file test_docxFile.cpp
+ * @brief Unit tests for DocxFile class and ZIP archive operations
+ * 
+ * Tests low-level DOCX file operations including ZIP archive management,
+ * entry reading/writing, file creation, and XML template generation.
+ * Validates underlying file system operations for document management.
+ * 
+ * @date 2025.07
+ */
+
+#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "DocxFile.hpp"
 #include <fstream>

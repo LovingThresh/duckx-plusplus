@@ -1,4 +1,15 @@
-﻿#include <array>
+/*!
+ * @file test_document.cpp
+ * @brief Unit tests for Document class and document operations
+ * 
+ * Tests document creation, opening, manipulation, and saving functionality
+ * with both modern Result<T> and legacy exception-based APIs. Validates
+ * factory pattern implementation and document component management.
+ * 
+ * @date 2025.07
+ */
+
+#include <array>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Document.hpp"

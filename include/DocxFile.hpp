@@ -3,7 +3,10 @@
  * @brief Low-level DOCX file operations and ZIP archive management
  * 
  * Provides direct access to DOCX file structure, ZIP archive operations,
- * and static methods for generating standard DOCX XML templates.
+ * and static methods for generating standard DOCX XML templates. Handles
+ * the underlying file system and ZIP archive operations for document management.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

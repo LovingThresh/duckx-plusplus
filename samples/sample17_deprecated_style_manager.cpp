@@ -11,8 +11,7 @@
  * - XML generation for DOCX integration
  * - Error handling with Result<T> pattern
  * 
- * @author DuckX-PLusPlus Development Team
- * @date 2025
+ * @date 2025.07
  */
 
 #include <iostream>

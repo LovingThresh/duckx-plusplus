@@ -4,6 +4,10 @@
  * 
  * Provides high-level document creation, opening, and manipulation functionality
  * with both modern Result<T> API and legacy exception-based interfaces.
+ * Implements the factory pattern for document creation and manages all document
+ * components including body, media, headers/footers, and styles.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

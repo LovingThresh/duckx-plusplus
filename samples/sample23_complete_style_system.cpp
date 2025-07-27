@@ -1,10 +1,12 @@
 /*!
  * @file sample23_complete_style_system.cpp
- * @brief Complete demonstration of the integrated style application and reading system
+ * @brief Complete integrated style system demonstration
  * 
- * This sample showcases the full cycle of style management: creating styles,
- * applying them to elements, reading properties back, and using the modern
- * Result<T> error handling throughout.
+ * Demonstrates the full style system workflow including creation,
+ * application, inheritance, comprehensive document styling,
+ * and modern Result<T> error handling throughout the process.
+ * 
+ * @date 2025.07
  */
 
 #include <iostream>

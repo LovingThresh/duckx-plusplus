@@ -2,9 +2,12 @@
  * @file StyleManager.hpp
  * @brief Style management system for DOCX documents
  * 
- * Provides a comprehensive style management system with support for paragraph styles,
- * character styles, table styles, and built-in style libraries. Integrates with the
- * modern Result<T> error handling system for robust style operations.
+ * Provides comprehensive style management with support for paragraph, character,
+ * and table styles, plus built-in style libraries. Features include style inheritance,
+ * property application, XML generation, and integration with Result<T> error handling
+ * for robust style operations.
+ * 
+ * @date 2025.07
  */
 #pragma once
 

@@ -1,9 +1,14 @@
 /*!
- * @brief Test suite for the duckx::HyperlinkManager class.
- *
- * @author LiuYe
- * @date 2025.07.05
+ * @file test_hyperlinkManager.cpp
+ * @brief Unit tests for HyperlinkManager class functionality
+ * 
+ * Tests hyperlink creation, relationship management, URL handling,
+ * and XML structure generation. Validates external link management
+ * with unique ID generation and document integration.
+ * 
+ * @date 2025.07
  */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "HyperlinkManager.hpp"

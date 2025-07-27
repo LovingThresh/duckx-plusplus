@@ -3,7 +3,10 @@
  * @brief Manager class for document hyperlinks and external relationships
  * 
  * Handles the creation and management of hyperlinks in DOCX documents,
- * including URL relationships and XML structure generation.
+ * including URL relationships and XML structure generation. Provides
+ * relationship management for external links with unique ID generation.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

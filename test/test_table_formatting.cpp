@@ -1,9 +1,12 @@
-/*
- * @file: test_table_formatting.cpp
- * @brief: Unit tests for Table formatting methods
+/*!
+ * @file test_table_formatting.cpp
+ * @brief Unit tests for table formatting with Result<T> API
  * 
- * Tests the newly added Table, TableRow, and TableCell formatting methods
- * to ensure they work correctly and maintain API consistency.
+ * Tests advanced table formatting capabilities including borders,
+ * alignment, cell styling, row management, and comprehensive table
+ * layout configurations with modern error handling patterns.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

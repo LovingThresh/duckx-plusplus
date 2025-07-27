@@ -1,3 +1,14 @@
+/*!
+ * @file test_image.cpp
+ * @brief Unit tests for Image class and media embedding functionality
+ * 
+ * Tests image embedding, format support, sizing controls, positioning
+ * options, and XML generation for proper DOCX media integration
+ * with comprehensive file handling validation.
+ * 
+ * @date 2025.07
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

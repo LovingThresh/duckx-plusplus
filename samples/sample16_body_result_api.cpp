@@ -1,8 +1,12 @@
-/*
- * Sample 16: Body Result<T> API Demonstration
+/*!
+ * @file sample16_body_result_api.cpp
+ * @brief Body class Result<T> API comprehensive demonstration
  * 
- * This sample demonstrates the modern Result<T> API for Body class operations,
- * showcasing comprehensive error handling and monadic operations.
+ * Demonstrates the modern Result<T> API for Body class operations
+ * including monadic error handling, chaining operations, and
+ * comprehensive safety patterns for document body manipulation.
+ * 
+ * @date 2025.07
  */
 
 #include <iostream>

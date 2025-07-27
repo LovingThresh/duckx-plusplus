@@ -1,3 +1,14 @@
+/*!
+ * @file test_iterator.cpp
+ * @brief Unit tests for iterator and range utilities
+ * 
+ * Tests type-safe iterators, range traversal, STL compatibility,
+ * and modern iterator patterns for document elements including
+ * compile-time type checking and range-based loop support.
+ * 
+ * @date 2025.07
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <sstream>

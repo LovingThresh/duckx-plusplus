@@ -3,7 +3,10 @@
  * @brief TextBox element for creating floating text containers
  * 
  * Provides functionality to create text boxes that can contain paragraphs
- * and be positioned as drawing elements within DOCX documents.
+ * and be positioned as drawing elements within DOCX documents. Supports
+ * border styles and comprehensive paragraph management.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

@@ -3,7 +3,10 @@
  * @brief Document body content management
  * 
  * Handles the main content area of DOCX documents where paragraphs,
- * tables, and other elements are added and managed.
+ * tables, and other elements are added and managed. Provides both
+ * legacy and modern Result<T> APIs for content manipulation.
+ * 
+ * @date 2025.07
  */
 #pragma once
 #include "BaseElement.hpp"

@@ -3,7 +3,10 @@
  * @brief Base class for drawable elements in DOCX documents
  * 
  * Provides common functionality for elements that can be drawn in documents,
- * including sizing, positioning, and XML generation interfaces.
+ * including sizing, positioning, and XML generation interfaces. Supports
+ * images, text boxes, and other drawable content with EMU positioning.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

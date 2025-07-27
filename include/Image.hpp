@@ -3,7 +3,10 @@
  * @brief Image element for embedding images in DOCX documents
  * 
  * Provides functionality to embed images into DOCX documents with
- * support for various image formats and positioning options.
+ * support for common image formats (PNG, JPEG, etc.) and positioning options.
+ * Handles image loading, sizing, and XML generation for proper DOCX integration.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

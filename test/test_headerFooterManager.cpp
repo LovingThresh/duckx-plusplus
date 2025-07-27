@@ -1,9 +1,12 @@
 /*!
- * @brief Test suite for the duckx::HeaderFooterManager and related classes.
- *
- * @author LiuYe
- * @date 2025.07.05
- * @copyright (c) 2013-2025 Honghu Yuntu Corporation
+ * @file test_headerFooterManager.cpp
+ * @brief Unit tests for HeaderFooterManager class functionality
+ * 
+ * Tests header and footer creation, management, and persistence
+ * with support for different header/footer types, XML serialization,
+ * and comprehensive document structure integration.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

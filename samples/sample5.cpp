@@ -1,10 +1,12 @@
-/*
- * @file: sample5_alignment.cpp
- * @brief: A sample demonstrating how to set paragraph alignment.
- *
- * @author: liuye
- * @date: 2025.06.09
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample5.cpp
+ * @brief Paragraph alignment and spacing demonstration
+ * 
+ * Demonstrates setting various paragraph alignment options including
+ * left, center, right, and justified alignment with spacing controls,
+ * indentation settings, and line spacing configurations.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 #include "duckx.hpp"

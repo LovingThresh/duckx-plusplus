@@ -1,9 +1,12 @@
-/*
- * @file: sample15.cpp
- * @brief: Table formatting sample demonstrating modern Result<T> API
- *
- * @author: duckx-custom team
- * @date: 2025.07.24
+/*!
+ * @file sample15.cpp
+ * @brief Table formatting with modern Result<T> API demonstration
+ * 
+ * Demonstrates advanced table formatting capabilities using the modern
+ * Result<T> error handling API including borders, alignment, cell styling,
+ * and comprehensive table layout with monadic error handling patterns.
+ * 
+ * @date 2025.07
  */
 
 #include <duckx.hpp>

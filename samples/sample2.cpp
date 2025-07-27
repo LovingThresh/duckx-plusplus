@@ -1,3 +1,14 @@
+/*!
+ * @file sample2.cpp
+ * @brief Document creation and basic content addition example
+ * 
+ * Demonstrates creating a new DOCX document, adding content with
+ * various formatting options, and saving the document. Shows
+ * step-by-step document construction workflow.
+ * 
+ * @date 2025.07
+ */
+
 #include <iostream>
 #include "duckx.hpp"
 #include "test_utils.hpp"

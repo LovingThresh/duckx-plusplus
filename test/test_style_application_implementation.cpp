@@ -1,9 +1,12 @@
 /*!
  * @file test_style_application_implementation.cpp
- * @brief Tests for the newly implemented style application methods
+ * @brief Implementation tests for style application system
  * 
- * Tests the complete style application system including property application
- * and style compatibility validation.
+ * Tests detailed implementation aspects of style application including
+ * XML generation, property resolution, inheritance chains, and
+ * integration with document structure and formatting systems.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

@@ -1,3 +1,14 @@
+/*!
+ * @file test_body_result_api.cpp
+ * @brief Unit tests for Body class Result<T> API functionality
+ * 
+ * Tests modern Result<T> error handling patterns for document body
+ * operations including paragraph and table creation, manipulation,
+ * and error condition validation with comprehensive safety checks.
+ * 
+ * @date 2025.07
+ */
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Body.hpp"

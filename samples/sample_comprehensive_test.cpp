@@ -1,11 +1,14 @@
-﻿/*
- * @file: sample_comprehensive_test.cpp
- * @brief: A comprehensive test demonstrating most of the library's features.
- *
- * @author: liuye
- * @date: 2025.06.14
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample_comprehensive_test.cpp
+ * @brief Comprehensive library functionality demonstration
+ * 
+ * Demonstrates the complete DuckX-PLusPlus feature set including
+ * document operations, styling, media handling, and error management.
+ * Serves as a comprehensive integration test and feature showcase.
+ * 
+ * @date 2025.07
  */
+
 #include <iostream>
 #include <locale>
 #include <string>

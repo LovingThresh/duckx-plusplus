@@ -1,9 +1,12 @@
-/*
- * @file: test_base_element.cpp
- * @brief: Test the functions of BaseElement related classes
- *
- * @author: liuye
- * @date: 2025.06.28
+/*!
+ * @file test_base_element.cpp
+ * @brief Unit tests for BaseElement classes and document structure
+ * 
+ * Tests core element hierarchy including paragraphs, runs, tables,
+ * rows, and cells with both modern Result<T> and legacy APIs.
+ * Validates element navigation, manipulation, and formatting capabilities.
+ * 
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

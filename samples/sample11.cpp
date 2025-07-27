@@ -1,10 +1,12 @@
-﻿/*
- * @file: sample11.cpp
- * @brief: A sample demonstrating how to add and manipulate all types of headers and footers.
- *
- * @author: liuye
- * @date: 2025.06.12
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample11.cpp
+ * @brief Headers and footers management demonstration
+ * 
+ * Demonstrates creating and managing document headers and footers
+ * with different types (default, first page, odd/even), content
+ * management, and comprehensive header/footer formatting options.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 #include <locale>

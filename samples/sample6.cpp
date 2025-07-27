@@ -1,10 +1,12 @@
-/*
- * @file: sample6_font_formatting.cpp
- * @brief: A sample demonstrating how to set font, size, and color for text runs.
- *
- * @author: liuye
- * @date: 2025.06.09
- * @copyright (c) 2013-2024 Honghu Yuntu Corporation
+/*!
+ * @file sample6.cpp
+ * @brief Font formatting and character styling demonstration
+ * 
+ * Demonstrates font family selection, size adjustment, color styling,
+ * and character formatting options including bold, italic, underline,
+ * and other text effects with comprehensive typography controls.
+ * 
+ * @date 2025.07
  */
 #include <iostream>
 #include "duckx.hpp"

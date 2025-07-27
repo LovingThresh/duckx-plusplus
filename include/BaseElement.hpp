@@ -4,6 +4,10 @@
  * 
  * Defines the core element hierarchy including paragraphs, runs, tables,
  * rows, and cells with both modern Result<T> and legacy exception-based APIs.
+ * Provides the foundation for all document content manipulation with
+ * comprehensive formatting capabilities.
+ * 
+ * @date 2025.07
  */
 #pragma once
 

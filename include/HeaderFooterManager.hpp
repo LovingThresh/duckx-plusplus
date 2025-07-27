@@ -4,6 +4,9 @@
  * 
  * Handles creation, management, and persistence of headers and footers
  * in DOCX documents with support for different header/footer types.
+ * Provides comprehensive header/footer functionality with XML serialization.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

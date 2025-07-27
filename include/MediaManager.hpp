@@ -4,6 +4,9 @@
  * 
  * Handles embedding of media files (images, textboxes) into DOCX documents
  * including file management, relationship creation, and XML generation.
+ * Provides comprehensive media integration with proper DOCX structure maintenance.
+ * 
+ * @date 2025.07
  */
 
 #pragma once

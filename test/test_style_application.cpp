@@ -1,13 +1,12 @@
 /*!
  * @file test_style_application.cpp
- * @brief Unit tests for style application functionality
+ * @brief Unit tests for style application to document elements
  * 
- * Tests the integration between StyleManager and document elements,
- * verifying that styles can be properly applied to paragraphs, runs,
- * and tables with correct XML output.
+ * Tests applying styles to paragraphs, runs, and tables with
+ * comprehensive validation of style properties, inheritance patterns,
+ * and Result<T> error handling for robust style operations.
  * 
- * @author DuckX-PLusPlus Development Team
- * @date 2025
+ * @date 2025.07
  */
 
 #include <gtest/gtest.h>

@@ -3,7 +3,10 @@
  * @brief Common constants and enumerations for DOCX formatting
  * 
  * Defines formatting flags, alignment options, list types, and other
- * constants used throughout the DuckX library.
+ * constants used throughout the DuckX library. Provides type-safe
+ * enumerations and bitwise flags for comprehensive document formatting.
+ * 
+ * @date 2025.07
  */
 #pragma once
 
