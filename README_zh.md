@@ -30,6 +30,8 @@
 ### 全面的文档支持
 - **完整 DOCX 支持**：读取、写入和编辑 Microsoft Word 文档
 - **高级表格格式化**：广泛的表格样式和布局选项
+- **样式系统**：完整的样式管理，支持内置和自定义样式
+- **XML 样式系统**：用户友好的基于 XML 的样式定义和管理
 - **媒体管理**：图像插入和处理
 - **页眉页脚支持**：完整的页眉和页脚管理
 - **超链接处理**：完整的超链接关系管理
@@ -113,6 +115,26 @@ if (table_result.ok()) {
         std::cerr << "表格格式化失败: " 
                   << format_result.error().to_string() << std::endl;
     }
+}
+```
+
+### XML 样式系统（新功能！）
+```cpp
+#include "XmlStyleParser.hpp"
+
+// 从 XML 文件加载样式
+XmlStyleParser parser;
+auto styles_result = parser.load_styles_from_file_safe("document_styles.xml");
+if (styles_result.ok()) {
+    auto& styles = styles_result.value();
+    std::cout << "从 XML 加载了 " << styles.size() << " 个样式" << std::endl;
+}
+
+// 加载样式集合用于主题化文档
+auto style_sets_result = parser.load_style_sets_from_file_safe("document_styles.xml");
+if (style_sets_result.ok()) {
+    auto& style_sets = style_sets_result.value();
+    // 应用协调的样式集合
 }
 ```
 
@@ -222,6 +244,7 @@ Result<Table&> add_table_safe(int rows, int cols);
 - `sample1.cpp`: 基础文档读取
 - `sample10.cpp`: 表格创建和格式化
 - `sample15.cpp`: 使用 Result<T> API 的高级表格格式化
+- `sample25_xml_style_parser.cpp`: 基于 XML 的样式定义系统
 - `sample_comprehensive_test.cpp`: 完整工作流演示
 
 ## 🧪 测试
@@ -251,6 +274,7 @@ DuckX-PLusPlus 具有全面的测试套件：
 - **v0.1.0**: 完整的 Result<T> API 覆盖和错误处理标准化
 - **v0.2.0 - v0.4.0**: 增强的表格格式化和文档属性管理
 - **v0.5.0 - v0.6.0**: 性能优化和样式系统实现 ✅ **已完成**
+- **v0.6.5**: XML 样式系统实现 ✅ **已完成**
 - **v0.7.0**: 测试和文档增强
 
 ### 主要里程碑

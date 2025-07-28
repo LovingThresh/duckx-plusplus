@@ -33,6 +33,7 @@ A modern C++ library for creating, reading, and writing Microsoft Word DOCX file
 - **Full DOCX Support**: Read, write, and edit Microsoft Word documents
 - **Advanced Table Formatting**: Extensive table styling and layout options
 - **Style System**: Complete style management with built-in and custom styles
+- **XML Style System**: User-friendly XML-based style definition and management
 - **Media Management**: Image insertion and handling
 - **Header/Footer Support**: Complete header and footer management
 - **Hyperlink Processing**: Full hyperlink relationship management
@@ -160,6 +161,26 @@ if (normal_para.ok()) {
 }
 ```
 
+### XML Style System (New!)
+```cpp
+#include "XmlStyleParser.hpp"
+
+// Load styles from XML file
+XmlStyleParser parser;
+auto styles_result = parser.load_styles_from_file_safe("document_styles.xml");
+if (styles_result.ok()) {
+    auto& styles = styles_result.value();
+    std::cout << "Loaded " << styles.size() << " styles from XML" << std::endl;
+}
+
+// Load style sets for themed documents
+auto style_sets_result = parser.load_style_sets_from_file_safe("document_styles.xml");
+if (style_sets_result.ok()) {
+    auto& style_sets = style_sets_result.value();
+    // Apply coordinated style collections
+}
+```
+
 ## 🔧 Building the Project
 
 ### Windows (Visual Studio)
@@ -269,6 +290,7 @@ Explore the comprehensive examples in the `samples/` directory:
 - `sample15.cpp`: Advanced table formatting with Result<T> API
 - `sample20_complete_style_system.cpp`: Complete style system demonstration
 - `sample21_style_priority_test.cpp`: Style vs direct formatting priority
+- `sample25_xml_style_parser.cpp`: XML-based style definition system
 - `sample_comprehensive_test.cpp`: Full workflow demonstration
 
 ## 🧪 Testing
@@ -298,6 +320,7 @@ See [ROADMAP.md](docs/ROADMAP.md) for detailed development plans:
 - **v0.1.0**: Complete Result<T> API coverage and error handling standardization
 - **v0.2.0 - v0.4.0**: Enhanced table formatting and document properties management
 - **v0.5.0 - v0.6.0**: Performance optimization and style system implementation ✅ **Completed**
+- **v0.6.5**: XML Style System implementation ✅ **Completed**
 - **v0.7.0**: Testing and documentation enhancement
 
 ### Major Milestones
