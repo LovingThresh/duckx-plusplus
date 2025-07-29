@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyleSheet xmlns="http://duckx.org/styles" version="1.0">
+    <!-- Modern Report Style Set -->
+    
+    <!-- Report Title -->
+    <Style name="Modern_Title" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>30pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="36pt"/>
+            <Color>#2563EB</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subtitle -->
+    <Style name="Modern_Subtitle" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>36pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="18pt"/>
+            <Color>#6B7280</Color>
+            <Format bold="false"/>
+        </Character>
+    </Style>
+    
+    <!-- Chapter Heading -->
+    <Style name="Modern_ChapterHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>36pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="24pt"/>
+            <Color>#1F2937</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Section Heading -->
+    <Style name="Modern_SectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>24pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="18pt"/>
+            <Color>#374151</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subsection Heading -->
+    <Style name="Modern_SubsectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>9pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="14pt"/>
+            <Color>#4B5563</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Body Text -->
+    <Style name="Modern_BodyText" type="paragraph">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.6</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Lead Paragraph -->
+    <Style name="Modern_LeadParagraph" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+            <LineSpacing>1.6</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="13pt"/>
+            <Color>#374151</Color>
+        </Character>
+    </Style>
+    
+    <!-- Executive Summary -->
+    <Style name="Modern_ExecutiveSummary" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+            <Indentation left="24pt" right="24pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="11pt"/>
+            <Color>#4B5563</Color>
+            <Highlight>lightGray</Highlight>
+        </Character>
+    </Style>
+    
+    <!-- Callout Box -->
+    <Style name="Modern_Callout" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+            <Indentation left="36pt" right="36pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="11pt"/>
+            <Color>#1E40AF</Color>
+            <Highlight>cyan</Highlight>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Key Points -->
+    <Style name="Modern_KeyPoint" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>6pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.4</LineSpacing>
+            <Indentation left="36pt" right="0pt" firstLine="-18pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="11pt"/>
+            <Color>#1F2937</Color>
+        </Character>
+    </Style>
+    
+    <!-- Statistics/Numbers -->
+    <Style name="Modern_Statistics" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Montserrat" size="32pt"/>
+            <Color>#2563EB</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Statistic Label -->
+    <Style name="Modern_StatisticLabel" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="10pt"/>
+            <Color>#6B7280</Color>
+            <Format bold="false"/>
+        </Character>
+    </Style>
+    
+    <!-- Quote -->
+    <Style name="Modern_Quote" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>24pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+            <LineSpacing>1.4</LineSpacing>
+            <Indentation left="72pt" right="72pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="16pt"/>
+            <Color>#374151</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Quote Attribution -->
+    <Style name="Modern_QuoteAttribution" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>24pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="11pt"/>
+            <Color>#6B7280</Color>
+        </Character>
+    </Style>
+    
+    <!-- Emphasis Text -->
+    <Style name="Modern_Emphasis" type="character">
+        <Character>
+            <Color>#2563EB</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Strong Emphasis -->
+    <Style name="Modern_StrongEmphasis" type="character">
+        <Character>
+            <Color>#DC2626</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subtle Text -->
+    <Style name="Modern_SubtleText" type="character">
+        <Character>
+            <Color>#9CA3AF</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Link Text -->
+    <Style name="Modern_Link" type="character">
+        <Character>
+            <Color>#2563EB</Color>
+            <Format underline="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Caption -->
+    <Style name="Modern_Caption" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>6pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+            <LineSpacing>1.3</LineSpacing>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="9pt"/>
+            <Color>#6B7280</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Modern Table -->
+    <Style name="Modern_Table" type="table">
+        <Table>
+            <Width>100%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="none" width="0pt" color="#E5E7EB"/>
+            <CellPadding>12pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Data Visualization Table -->
+    <Style name="Modern_DataTable" type="table">
+        <Table>
+            <Width>90%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="single" width="1pt" color="#E5E7EB"/>
+            <CellPadding>10pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Minimal Table -->
+    <Style name="Modern_MinimalTable" type="table">
+        <Table>
+            <Width>80%</Width>
+            <Alignment>left</Alignment>
+            <Borders style="none" width="0pt" color="#FFFFFF"/>
+            <CellPadding>8pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Footer -->
+    <Style name="Modern_Footer" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>0pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Inter" size="9pt"/>
+            <Color>#9CA3AF</Color>
+        </Character>
+    </Style>
+    
+    <!-- Modern Report Style Set -->
+    <StyleSet name="ModernReport" description="Clean, contemporary report design with modern typography and subtle colors">
+        <Include>Modern_Title</Include>
+        <Include>Modern_Subtitle</Include>
+        <Include>Modern_ChapterHeading</Include>
+        <Include>Modern_SectionHeading</Include>
+        <Include>Modern_SubsectionHeading</Include>
+        <Include>Modern_BodyText</Include>
+        <Include>Modern_LeadParagraph</Include>
+        <Include>Modern_ExecutiveSummary</Include>
+        <Include>Modern_Callout</Include>
+        <Include>Modern_KeyPoint</Include>
+        <Include>Modern_Statistics</Include>
+        <Include>Modern_StatisticLabel</Include>
+        <Include>Modern_Quote</Include>
+        <Include>Modern_QuoteAttribution</Include>
+        <Include>Modern_Emphasis</Include>
+        <Include>Modern_StrongEmphasis</Include>
+        <Include>Modern_SubtleText</Include>
+        <Include>Modern_Link</Include>
+        <Include>Modern_Caption</Include>
+        <Include>Modern_Table</Include>
+        <Include>Modern_DataTable</Include>
+        <Include>Modern_MinimalTable</Include>
+        <Include>Modern_Footer</Include>
+    </StyleSet>
+    
+</StyleSheet>

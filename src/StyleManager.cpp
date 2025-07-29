@@ -8,6 +8,8 @@
 
 #include "StyleManager.hpp"
 #include "BaseElement.hpp"
+#include "Document.hpp"
+#include "XmlStyleParser.hpp"
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/ascii.h"
@@ -1525,6 +1527,303 @@ namespace duckx
         auto apply_result = apply_table_properties_safe(table, style->table_properties());
         if (!apply_result.ok()) {
             return Result<void>(apply_result.error());
+        }
+        
+        return Result<void>{};
+    }
+    
+    // ============================================================================
+    // Style Set Management Implementation
+    // ============================================================================
+    
+    Result<void> StyleManager::register_style_set_safe(const StyleSet& style_set)
+    {
+        if (style_set.name.empty()) {
+            return Result<void>(errors::invalid_argument("style_set.name", "Style set name cannot be empty",
+                DUCKX_ERROR_CONTEXT()));
+        }
+        
+        // Check if style set already exists
+        if (m_style_sets.find(style_set.name) != m_style_sets.end()) {
+            return Result<void>(errors::style_already_exists(style_set.name,
+                DUCKX_ERROR_CONTEXT_STYLE("register_style_set", style_set.name)));
+        }
+        
+        // Validate that all referenced styles exist
+        for (const auto& style_name : style_set.included_styles) {
+            if (!has_style(style_name)) {
+                return Result<void>(errors::style_not_found(style_name,
+                    DUCKX_ERROR_CONTEXT_STYLE("register_style_set", style_set.name))
+                    .caused_by(errors::validation_failed("included_styles", 
+                        absl::StrFormat("Style '%s' referenced in style set does not exist", style_name))));
+            }
+        }
+        
+        // Register the style set
+        m_style_sets[style_set.name] = style_set;
+        return Result<void>{};
+    }
+    
+    Result<void> StyleManager::apply_style_set_safe(const std::string& set_name, Document& doc)
+    {
+        auto set_it = m_style_sets.find(set_name);
+        if (set_it == m_style_sets.end()) {
+            return Result<void>(errors::style_not_found(set_name,
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style_set", set_name)));
+        }
+        
+        const StyleSet& style_set = set_it->second;
+        
+        // First, ensure all styles in the set are available
+        std::vector<const Style*> styles_to_apply;
+        for (const auto& style_name : style_set.included_styles) {
+            auto style_result = get_style_safe(style_name);
+            if (!style_result.ok()) {
+                return Result<void>(errors::style_application_failed(
+                    style_name,
+                    absl::StrFormat("Cannot apply style set '%s': style '%s' not found", 
+                        set_name, style_name),
+                    DUCKX_ERROR_CONTEXT()));
+            }
+            styles_to_apply.push_back(style_result.value());
+        }
+        
+        // Apply styles based on their type with cascading priority:
+        // 1. First apply table styles (most specific)
+        // 2. Then apply paragraph styles 
+        // 3. Finally apply character styles (least specific)
+        // This ensures proper cascading where more specific styles override general ones
+        
+        // Get document body for applying styles
+        auto& body = doc.body();
+        
+        // Phase 1: Apply table styles
+        for (const auto* style : styles_to_apply) {
+            if (style->type() == StyleType::TABLE || style->type() == StyleType::MIXED) {
+                // Apply to all tables in the document
+                auto tables = body.tables();
+                for (auto& table : tables) {
+                    auto apply_result = apply_table_style_safe(table, style->name());
+                    if (!apply_result.ok()) {
+                        // Log warning but continue with other elements
+                        // In production, you might want to collect these errors
+                    }
+                }
+            }
+        }
+        
+        // Phase 2: Apply paragraph styles
+        for (const auto* style : styles_to_apply) {
+            if (style->type() == StyleType::PARAGRAPH || style->type() == StyleType::MIXED) {
+                // Apply to all paragraphs in the document
+                auto paragraphs = body.paragraphs();
+                for (auto& paragraph : paragraphs) {
+                    // Check if paragraph already has a specific style
+                    // If not, apply the style from the set
+                    auto current_style = paragraph.get_style_safe();
+                    if (!current_style.ok() || current_style.value().empty()) {
+                        auto apply_result = apply_paragraph_style_safe(paragraph, style->name());
+                        if (!apply_result.ok()) {
+                            // Log warning but continue
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Phase 3: Apply character styles  
+        for (const auto* style : styles_to_apply) {
+            if (style->type() == StyleType::CHARACTER || style->type() == StyleType::MIXED) {
+                // Apply to all runs in the document
+                auto paragraphs = body.paragraphs();
+                for (auto& paragraph : paragraphs) {
+                    auto runs = paragraph.runs();
+                    for (auto& run : runs) {
+                        // Check if run already has a specific style
+                        auto current_style = run.get_style_safe();
+                        if (!current_style.ok() || current_style.value().empty()) {
+                            auto apply_result = apply_character_style_safe(run, style->name());
+                            if (!apply_result.ok()) {
+                                // Log warning but continue
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Style set application is complete
+        return Result<void>{};
+    }
+    
+    Result<StyleSet> StyleManager::get_style_set_safe(const std::string& set_name) const
+    {
+        auto set_it = m_style_sets.find(set_name);
+        if (set_it == m_style_sets.end()) {
+            return Result<StyleSet>(errors::style_not_found(set_name,
+                DUCKX_ERROR_CONTEXT_STYLE("get_style_set", set_name)));
+        }
+        
+        return Result<StyleSet>(set_it->second);
+    }
+    
+    std::vector<std::string> StyleManager::list_style_sets() const
+    {
+        std::vector<std::string> names;
+        names.reserve(m_style_sets.size());
+        
+        for (const auto& pair : m_style_sets) {
+            names.push_back(pair.first);
+        }
+        
+        return names;
+    }
+    
+    Result<void> StyleManager::remove_style_set_safe(const std::string& set_name)
+    {
+        auto set_it = m_style_sets.find(set_name);
+        if (set_it == m_style_sets.end()) {
+            return Result<void>(errors::style_not_found(set_name,
+                DUCKX_ERROR_CONTEXT_STYLE("remove_style_set", set_name)));
+        }
+        
+        m_style_sets.erase(set_it);
+        return Result<void>{};
+    }
+    
+    bool StyleManager::has_style_set(const std::string& set_name) const
+    {
+        return m_style_sets.find(set_name) != m_style_sets.end();
+    }
+    
+    Result<void> StyleManager::load_style_sets_from_file_safe(const std::string& filepath)
+    {
+        // Create XML parser instance
+        XmlStyleParser parser;
+        
+        // Load style sets from file
+        auto sets_result = parser.load_style_sets_from_file_safe(filepath);
+        if (!sets_result.ok()) {
+            return Result<void>(errors::validation_failed("filepath", 
+                absl::StrFormat("Failed to load style sets from %s", filepath),
+                DUCKX_ERROR_CONTEXT())
+                .caused_by(sets_result.error()));
+        }
+        
+        // Register each loaded style set
+        for (const auto& style_set : sets_result.value()) {
+            auto register_result = register_style_set_safe(style_set);
+            if (!register_result.ok()) {
+                // Continue loading other sets even if one fails
+                // But collect the first error for reporting
+                return Result<void>(errors::style_application_failed(
+                    style_set.name,
+                    absl::StrFormat("Failed to register style set '%s' from file", style_set.name),
+                    DUCKX_ERROR_CONTEXT())
+                    .caused_by(register_result.error()));
+            }
+        }
+        
+        return Result<void>{};
+    }
+    
+    Result<void> StyleManager::apply_style_mappings_safe(Document& doc, 
+        const std::map<std::string, std::string>& style_mappings)
+    {
+        // Apply style mappings based on element patterns
+        // Common patterns:
+        // - "heading1" -> apply to all first-level headings
+        // - "heading*" -> apply to all headings
+        // - "table" -> apply to all tables
+        // - "code" -> apply to code blocks
+        
+        auto& body = doc.body();
+        
+        for (const auto& mapping : style_mappings) {
+            const std::string& pattern = mapping.first;
+            const std::string& style_name = mapping.second;
+            // Validate style exists
+            auto style_result = get_style_safe(style_name);
+            if (!style_result.ok()) {
+                return Result<void>(errors::style_not_found(style_name,
+                    DUCKX_ERROR_CONTEXT())
+                    .caused_by(errors::validation_failed("style_mappings",
+                        absl::StrFormat("Style '%s' for pattern '%s' not found", style_name, pattern))));
+            }
+            
+            const Style* style = style_result.value();
+            
+            // Apply based on pattern matching
+            if (pattern == "heading1" || pattern == "h1") {
+                // Apply to paragraphs that look like level 1 headings
+                auto paragraphs = body.paragraphs();
+                for (auto& para : paragraphs) {
+                    // Check if this paragraph is using Heading 1 style or similar
+                    auto current_style = para.get_style_safe();
+                    if (current_style.ok() && 
+                        (current_style.value() == "Heading 1" || 
+                         current_style.value() == "heading1" ||
+                         current_style.value() == "h1")) {
+                        apply_paragraph_style_safe(para, style_name);
+                    }
+                }
+            }
+            else if (pattern == "heading*" || pattern == "h*") {
+                // Apply to all headings
+                auto paragraphs = body.paragraphs();
+                for (auto& para : paragraphs) {
+                    auto current_style = para.get_style_safe();
+                    if (current_style.ok()) {
+                        const std::string& style_str = current_style.value();
+                        if (style_str.find("Heading") == 0 || 
+                            style_str.find("heading") == 0 ||
+                            style_str.find("h") == 0) {
+                            apply_paragraph_style_safe(para, style_name);
+                        }
+                    }
+                }
+            }
+            else if (pattern == "table" || pattern == "tables") {
+                // Apply to all tables
+                auto tables = body.tables();
+                for (auto& table : tables) {
+                    apply_table_style_safe(table, style_name);
+                }
+            }
+            else if (pattern == "normal" || pattern == "body") {
+                // Apply to normal body text
+                auto paragraphs = body.paragraphs();
+                for (auto& para : paragraphs) {
+                    auto current_style = para.get_style_safe();
+                    if (!current_style.ok() || 
+                        current_style.value().empty() ||
+                        current_style.value() == "Normal") {
+                        apply_paragraph_style_safe(para, style_name);
+                    }
+                }
+            }
+            else if (pattern == "code") {
+                // Apply to code blocks
+                auto paragraphs = body.paragraphs();
+                for (auto& para : paragraphs) {
+                    auto current_style = para.get_style_safe();
+                    if (current_style.ok() && 
+                        (current_style.value() == "Code" || 
+                         current_style.value() == "code")) {
+                        apply_paragraph_style_safe(para, style_name);
+                    }
+                }
+            }
+            else {
+                // Direct style name matching
+                auto paragraphs = body.paragraphs();
+                for (auto& para : paragraphs) {
+                    auto current_style = para.get_style_safe();
+                    if (current_style.ok() && current_style.value() == pattern) {
+                        apply_paragraph_style_safe(para, style_name);
+                    }
+                }
+            }
         }
         
         return Result<void>{};

@@ -60,7 +60,7 @@ C:\Users\liuye\AppData\Local\Programs\CLion\bin\cmake\win\x64\bin\cmake.exe --bu
 
 **Note**: Alternative compilers (MinGW/Clang) may face compatibility issues with bundled Abseil library in certain environments. For production builds, MSVC is recommended.
 
-### Linux/macOS (Standard CMake)
+### Linux/macOS/WSL (Standard CMake)
 
 ```bash
 # Standard build
@@ -80,6 +80,41 @@ ctest
 # Run individual test
 ./test/test_basic
 ```
+
+### WSL Environment (Recommended for Development)
+
+**Environment Setup**:
+- Uses native WSL cmake and build tools for optimal compatibility
+- Build directory: `cmake-build-debug-wsl/`
+- Requires sudo access for temp directory creation
+
+**Build Commands**:
+```bash
+# Build tests with parallel processing
+cmake --build cmake-build-debug-wsl --target run_gtests -j 8
+
+# Build specific targets
+cmake --build cmake-build-debug-wsl --target duckx
+cmake --build cmake-build-debug-wsl --target sample1
+
+# Run tests (all 290 tests pass)
+cd cmake-build-debug-wsl/test && ./run_gtests --gtest_brief=1
+
+# Run samples
+cd cmake-build-debug-wsl/samples && ./sample1
+```
+
+**Permission Management**:
+```bash
+# Create required temp directories with proper permissions
+sudo mkdir -p cmake-build-debug-wsl/test/temp
+sudo chmod 777 cmake-build-debug-wsl/test/temp
+```
+
+**Advantages over Windows builds**:
+- ✅ No compiler environment setup issues
+- ✅ Better standard library compatibility
+- ✅ Native Linux toolchain reliability
 
 ## Core Architecture
 

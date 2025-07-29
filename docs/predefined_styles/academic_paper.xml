@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyleSheet xmlns="http://duckx.org/styles" version="1.0">
+    <!-- Academic Paper Style Set -->
+    
+    <!-- Paper Title -->
+    <Style name="Academic_Title" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>24pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="16pt"/>
+            <Color>#000000</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Author Information -->
+    <Style name="Academic_Author" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="12pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Affiliation -->
+    <Style name="Academic_Affiliation" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#333333</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Abstract Heading -->
+    <Style name="Academic_AbstractHeading" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="12pt"/>
+            <Color>#000000</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Abstract Text -->
+    <Style name="Academic_Abstract" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>18pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+            <Indentation left="36pt" right="36pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="11pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Keywords -->
+    <Style name="Academic_Keywords" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>24pt</SpaceAfter>
+            <LineSpacing>1.0</LineSpacing>
+            <Indentation left="36pt" right="36pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#000000</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Section Heading (numbered) -->
+    <Style name="Academic_SectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>9pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="14pt"/>
+            <Color>#000000</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subsection Heading -->
+    <Style name="Academic_SubsectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="12pt"/>
+            <Color>#000000</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subsubsection Heading -->
+    <Style name="Academic_SubsubsectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>9pt</SpaceBefore>
+            <SpaceAfter>3pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="12pt"/>
+            <Color>#000000</Color>
+            <Format bold="true" italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Body Text -->
+    <Style name="Academic_BodyText" type="paragraph">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>0pt</SpaceAfter>
+            <LineSpacing>2.0</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="36pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Figure Caption -->
+    <Style name="Academic_FigureCaption" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>6pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Table Caption -->
+    <Style name="Academic_TableCaption" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Equation -->
+    <Style name="Academic_Equation" type="paragraph">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+        </Paragraph>
+    </Style>
+    
+    <!-- Block Quote -->
+    <Style name="Academic_BlockQuote" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+            <Indentation left="72pt" right="36pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="11pt"/>
+            <Color>#333333</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Citation -->
+    <Style name="Academic_Citation" type="character">
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Emphasis -->
+    <Style name="Academic_Emphasis" type="character">
+        <Character>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Strong Emphasis -->
+    <Style name="Academic_StrongEmphasis" type="character">
+        <Character>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Technical Term -->
+    <Style name="Academic_TechnicalTerm" type="character">
+        <Character>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Footnote -->
+    <Style name="Academic_Footnote" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>3pt</SpaceBefore>
+            <SpaceAfter>3pt</SpaceAfter>
+            <LineSpacing>1.0</LineSpacing>
+            <Indentation left="18pt" right="0pt" firstLine="-18pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="9pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Reference List Item -->
+    <Style name="Academic_Reference" type="mixed">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.5</LineSpacing>
+            <Indentation left="36pt" right="0pt" firstLine="-36pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="11pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Academic Table -->
+    <Style name="Academic_Table" type="table">
+        <Table>
+            <Width>90%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="single" width="1pt" color="#000000"/>
+            <CellPadding>6pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Data Table (no borders) -->
+    <Style name="Academic_DataTable" type="table">
+        <Table>
+            <Width>80%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="none" width="0pt" color="#000000"/>
+            <CellPadding>4pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Header/Footer -->
+    <Style name="Academic_HeaderFooter" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>0pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Times New Roman" size="10pt"/>
+            <Color>#000000</Color>
+        </Character>
+    </Style>
+    
+    <!-- Academic Paper Style Set -->
+    <StyleSet name="AcademicPaper" description="IEEE/ACM style academic paper formatting with proper typography">
+        <Include>Academic_Title</Include>
+        <Include>Academic_Author</Include>
+        <Include>Academic_Affiliation</Include>
+        <Include>Academic_AbstractHeading</Include>
+        <Include>Academic_Abstract</Include>
+        <Include>Academic_Keywords</Include>
+        <Include>Academic_SectionHeading</Include>
+        <Include>Academic_SubsectionHeading</Include>
+        <Include>Academic_SubsubsectionHeading</Include>
+        <Include>Academic_BodyText</Include>
+        <Include>Academic_FigureCaption</Include>
+        <Include>Academic_TableCaption</Include>
+        <Include>Academic_Equation</Include>
+        <Include>Academic_BlockQuote</Include>
+        <Include>Academic_Citation</Include>
+        <Include>Academic_Emphasis</Include>
+        <Include>Academic_StrongEmphasis</Include>
+        <Include>Academic_TechnicalTerm</Include>
+        <Include>Academic_Footnote</Include>
+        <Include>Academic_Reference</Include>
+        <Include>Academic_Table</Include>
+        <Include>Academic_DataTable</Include>
+        <Include>Academic_HeaderFooter</Include>
+    </StyleSet>
+    
+</StyleSheet>

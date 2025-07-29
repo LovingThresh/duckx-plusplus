@@ -7,6 +7,7 @@
  * @copyright (c) 2013-2024 Honghu Yuntu Corporation
  */
 #include "Document.hpp"
+#include "XmlStyleParser.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -272,4 +273,128 @@ namespace duckx
     {
         return m_hf_manager->get_footer(type);
     }
+    
+    // ============================================================================
+    // Style Set Operations Implementation
+    // ============================================================================
+    
+    Result<void> Document::apply_style_set_safe(const std::string& set_name)
+    {
+        if (!m_style_manager) {
+            return Result<void>(errors::validation_failed("style_manager", 
+                "Style manager not initialized",
+                DUCKX_ERROR_CONTEXT()));
+        }
+        
+        return m_style_manager->apply_style_set_safe(set_name, *this);
+    }
+    
+    Result<void> Document::load_style_definitions_safe(const std::string& xml_file)
+    {
+        if (!m_style_manager) {
+            return Result<void>(errors::validation_failed("style_manager", 
+                "Style manager not initialized",
+                DUCKX_ERROR_CONTEXT()));
+        }
+        
+        // First load styles from the XML file
+        XmlStyleParser parser;
+        auto styles_result = parser.load_styles_from_file_safe(xml_file);
+        if (!styles_result.ok()) {
+            return Result<void>(errors::validation_failed("xml_file", 
+                absl::StrFormat("Failed to load style definitions from %s", xml_file),
+                DUCKX_ERROR_CONTEXT())
+                .caused_by(styles_result.error()));
+        }
+        
+        // Register each loaded style with the style manager
+        for (auto& style : styles_result.value()) {
+            const std::string style_name = style->name();
+            const StyleType style_type = style->type();
+            
+            // Create appropriate style in manager based on type
+            Result<Style*> created_style = Result<Style*>(errors::invalid_argument("style_type", "Invalid initial value"));
+            switch (style_type) {
+                case StyleType::PARAGRAPH:
+                    created_style = m_style_manager->create_paragraph_style_safe(style_name);
+                    break;
+                case StyleType::CHARACTER:
+                    created_style = m_style_manager->create_character_style_safe(style_name);
+                    break;
+                case StyleType::TABLE:
+                    created_style = m_style_manager->create_table_style_safe(style_name);
+                    break;
+                case StyleType::MIXED:
+                    created_style = m_style_manager->create_mixed_style_safe(style_name);
+                    break;
+                default:
+                    continue; // Skip unsupported types
+            }
+            
+            if (!created_style.ok()) {
+                // Style might already exist, try to get it
+                auto existing_style = m_style_manager->get_style_safe(style_name);
+                if (!existing_style.ok()) {
+                    return Result<void>(errors::style_application_failed(
+                        style_name,
+                        absl::StrFormat("Failed to create or find style '%s'", style_name),
+                        DUCKX_ERROR_CONTEXT())
+                        .caused_by(created_style.error()));
+                }
+                created_style = existing_style;
+            }
+            
+            // Copy properties from loaded style to created style
+            Style* target_style = created_style.value();
+            
+            // Set base style if present
+            if (style->base_style().has_value()) {
+                target_style->set_base_style_safe(style->base_style().value());
+            }
+            
+            // Copy properties based on type
+            if (style_type == StyleType::PARAGRAPH || style_type == StyleType::MIXED) {
+                target_style->set_paragraph_properties_safe(style->paragraph_properties());
+            }
+            if (style_type == StyleType::CHARACTER || style_type == StyleType::MIXED) {
+                target_style->set_character_properties_safe(style->character_properties());
+            }
+            if (style_type == StyleType::TABLE) {
+                target_style->set_table_properties_safe(style->table_properties());
+            }
+        }
+        
+        // Also load any style sets defined in the file
+        auto sets_result = parser.load_style_sets_from_file_safe(xml_file);
+        if (sets_result.ok()) {
+            for (const auto& style_set : sets_result.value()) {
+                m_style_manager->register_style_set_safe(style_set);
+            }
+        }
+        
+        return Result<void>{};
+    }
+    
+    Result<void> Document::apply_style_mappings_safe(const std::map<std::string, std::string>& style_mappings)
+    {
+        if (!m_style_manager) {
+            return Result<void>(errors::validation_failed("style_manager", 
+                "Style manager not initialized",
+                DUCKX_ERROR_CONTEXT()));
+        }
+        
+        return m_style_manager->apply_style_mappings_safe(*this, style_mappings);
+    }
+    
+    Result<void> Document::register_style_set_safe(const StyleSet& style_set)
+    {
+        if (!m_style_manager) {
+            return Result<void>(errors::validation_failed("style_manager", 
+                "Style manager not initialized",
+                DUCKX_ERROR_CONTEXT()));
+        }
+        
+        return m_style_manager->register_style_set_safe(style_set);
+    }
+    
 } // namespace duckx

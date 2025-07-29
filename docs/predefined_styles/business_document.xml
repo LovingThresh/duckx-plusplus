@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyleSheet xmlns="http://duckx.org/styles" version="1.0">
+    <!-- Business Document Style Set -->
+    
+    <!-- Document Title Style -->
+    <Style name="Business_Title" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>36pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="28pt"/>
+            <Color>#1F4E79</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Executive Summary Heading -->
+    <Style name="Business_ExecutiveSummary" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>24pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="18pt"/>
+            <Color>#1F4E79</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Section Heading Style -->
+    <Style name="Business_SectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>9pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="16pt"/>
+            <Color>#1F4E79</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Subsection Heading Style -->
+    <Style name="Business_SubsectionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="14pt"/>
+            <Color>#2E5984</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Body Text Style -->
+    <Style name="Business_BodyText" type="paragraph">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.15</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Indented Body Text -->
+    <Style name="Business_IndentedText" type="paragraph">
+        <Paragraph>
+            <Alignment>justify</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.15</LineSpacing>
+            <Indentation left="36pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Bullet List Style -->
+    <Style name="Business_BulletList" type="paragraph">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>3pt</SpaceAfter>
+            <LineSpacing>1.15</LineSpacing>
+            <Indentation left="36pt" right="0pt" firstLine="-18pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Numbered List Style -->
+    <Style name="Business_NumberedList" type="paragraph">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>3pt</SpaceAfter>
+            <LineSpacing>1.15</LineSpacing>
+            <Indentation left="36pt" right="0pt" firstLine="-18pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Quote Style -->
+    <Style name="Business_Quote" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.15</LineSpacing>
+            <Indentation left="36pt" right="36pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="11pt"/>
+            <Color>#595959</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Emphasis Text -->
+    <Style name="Business_Emphasis" type="character">
+        <Character>
+            <Format bold="true"/>
+            <Color>#1F4E79</Color>
+        </Character>
+    </Style>
+    
+    <!-- Strong Emphasis -->
+    <Style name="Business_StrongEmphasis" type="character">
+        <Character>
+            <Format bold="true"/>
+            <Color>#C5504B</Color>
+        </Character>
+    </Style>
+    
+    <!-- Highlight Text -->
+    <Style name="Business_Highlight" type="character">
+        <Character>
+            <Highlight>yellow</Highlight>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Professional Table Style -->
+    <Style name="Business_Table" type="table">
+        <Table>
+            <Width>100%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="single" width="1pt" color="#1F4E79"/>
+            <CellPadding>8pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Financial Table Style -->
+    <Style name="Business_FinancialTable" type="table">
+        <Table>
+            <Width>90%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="single" width="1.5pt" color="#1F4E79"/>
+            <CellPadding>10pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Footer Style -->
+    <Style name="Business_Footer" type="mixed">
+        <Paragraph>
+            <Alignment>center</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>0pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Calibri" size="9pt"/>
+            <Color>#595959</Color>
+        </Character>
+    </Style>
+    
+    <!-- Business Document Style Set -->
+    <StyleSet name="BusinessDocument" description="Professional business document formatting with corporate blue theme">
+        <Include>Business_Title</Include>
+        <Include>Business_ExecutiveSummary</Include>
+        <Include>Business_SectionHeading</Include>
+        <Include>Business_SubsectionHeading</Include>
+        <Include>Business_BodyText</Include>
+        <Include>Business_IndentedText</Include>
+        <Include>Business_BulletList</Include>
+        <Include>Business_NumberedList</Include>
+        <Include>Business_Quote</Include>
+        <Include>Business_Emphasis</Include>
+        <Include>Business_StrongEmphasis</Include>
+        <Include>Business_Highlight</Include>
+        <Include>Business_Table</Include>
+        <Include>Business_FinancialTable</Include>
+        <Include>Business_Footer</Include>
+    </StyleSet>
+    
+</StyleSheet>

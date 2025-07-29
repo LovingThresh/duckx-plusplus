@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyleSheet xmlns="http://duckx.org/styles" version="1.0">
+    <!-- Technical Documentation Style Set -->
+    
+    <!-- API Reference Title -->
+    <Style name="Tech_Title" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>24pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="32pt"/>
+            <Color>#0F172A</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Module/Class Heading -->
+    <Style name="Tech_ModuleHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>24pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="20pt"/>
+            <Color>#1E293B</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Function/Method Heading -->
+    <Style name="Tech_FunctionHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>18pt</SpaceBefore>
+            <SpaceAfter>9pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="16pt"/>
+            <Color>#334155</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Parameter/Property Heading -->
+    <Style name="Tech_ParameterHeading" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="14pt"/>
+            <Color>#475569</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Body Text -->
+    <Style name="Tech_BodyText" type="paragraph">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>8pt</SpaceAfter>
+            <LineSpacing>1.4</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Description Text -->
+    <Style name="Tech_Description" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>0pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.4</LineSpacing>
+            <Indentation left="0pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="11pt"/>
+            <Color>#475569</Color>
+        </Character>
+    </Style>
+    
+    <!-- Code Block -->
+    <Style name="Tech_CodeBlock" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>8pt</SpaceBefore>
+            <SpaceAfter>8pt</SpaceAfter>
+            <LineSpacing>1.2</LineSpacing>
+            <Indentation left="24pt" right="24pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Fira Code" size="9pt"/>
+            <Color>#1F2937</Color>
+            <Highlight>lightGray</Highlight>
+        </Character>
+    </Style>
+    
+    <!-- Inline Code -->
+    <Style name="Tech_InlineCode" type="character">
+        <Character>
+            <Font name="Fira Code" size="10pt"/>
+            <Color>#DC2626</Color>
+            <Highlight>lightGray</Highlight>
+        </Character>
+    </Style>
+    
+    <!-- Function Signature -->
+    <Style name="Tech_FunctionSignature" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>6pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.1</LineSpacing>
+            <Indentation left="12pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Fira Code" size="11pt"/>
+            <Color>#059669</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Parameter List -->
+    <Style name="Tech_ParameterList" type="paragraph">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>3pt</SpaceBefore>
+            <SpaceAfter>3pt</SpaceAfter>
+            <LineSpacing>1.2</LineSpacing>
+            <Indentation left="48pt" right="0pt" firstLine="-24pt"/>
+        </Paragraph>
+    </Style>
+    
+    <!-- Return Value -->
+    <Style name="Tech_ReturnValue" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>6pt</SpaceBefore>
+            <SpaceAfter>6pt</SpaceAfter>
+            <LineSpacing>1.3</LineSpacing>
+            <Indentation left="24pt" right="0pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="11pt"/>
+            <Color>#374151</Color>
+        </Character>
+    </Style>
+    
+    <!-- Warning/Note -->
+    <Style name="Tech_Warning" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.3</LineSpacing>
+            <Indentation left="24pt" right="24pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="11pt"/>
+            <Color>#DC2626</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Note/Tip -->
+    <Style name="Tech_Note" type="mixed">
+        <Paragraph>
+            <Alignment>left</Alignment>
+            <SpaceBefore>12pt</SpaceBefore>
+            <SpaceAfter>12pt</SpaceAfter>
+            <LineSpacing>1.3</LineSpacing>
+            <Indentation left="24pt" right="24pt" firstLine="0pt"/>
+        </Paragraph>
+        <Character>
+            <Font name="Segoe UI" size="11pt"/>
+            <Color>#059669</Color>
+            <Format italic="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Type Name -->
+    <Style name="Tech_TypeName" type="character">
+        <Character>
+            <Font name="Fira Code" size="10pt"/>
+            <Color>#7C2D12</Color>
+            <Format bold="true"/>
+        </Character>
+    </Style>
+    
+    <!-- Variable Name -->
+    <Style name="Tech_VariableName" type="character">
+        <Character>
+            <Font name="Fira Code" size="10pt"/>
+            <Color>#1D4ED8</Color>
+        </Character>
+    </Style>
+    
+    <!-- API Table -->
+    <Style name="Tech_APITable" type="table">
+        <Table>
+            <Width>100%</Width>
+            <Alignment>left</Alignment>
+            <Borders style="single" width="1pt" color="#D1D5DB"/>
+            <CellPadding>6pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Reference Table -->
+    <Style name="Tech_ReferenceTable" type="table">
+        <Table>
+            <Width>90%</Width>
+            <Alignment>center</Alignment>
+            <Borders style="single" width="1pt" color="#6B7280"/>
+            <CellPadding>8pt</CellPadding>
+        </Table>
+    </Style>
+    
+    <!-- Technical Documentation Style Set -->
+    <StyleSet name="TechnicalDocumentation" description="Comprehensive technical documentation with code syntax highlighting">
+        <Include>Tech_Title</Include>
+        <Include>Tech_ModuleHeading</Include>
+        <Include>Tech_FunctionHeading</Include>
+        <Include>Tech_ParameterHeading</Include>
+        <Include>Tech_BodyText</Include>
+        <Include>Tech_Description</Include>
+        <Include>Tech_CodeBlock</Include>
+        <Include>Tech_InlineCode</Include>
+        <Include>Tech_FunctionSignature</Include>
+        <Include>Tech_ParameterList</Include>
+        <Include>Tech_ReturnValue</Include>
+        <Include>Tech_Warning</Include>
+        <Include>Tech_Note</Include>
+        <Include>Tech_TypeName</Include>
+        <Include>Tech_VariableName</Include>
+        <Include>Tech_APITable</Include>
+        <Include>Tech_ReferenceTable</Include>
+    </StyleSet>
+    
+</StyleSheet>

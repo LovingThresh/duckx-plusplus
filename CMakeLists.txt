@@ -21,6 +21,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(DUCKX_RESOURCE_FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/test/my_test.docx"
         "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/predefined_styles/technical_documentation.xml"
 )
 
 # Simple function to copy resource files using configure_file only

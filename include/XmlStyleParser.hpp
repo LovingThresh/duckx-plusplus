@@ -17,9 +17,10 @@
 #include <map>
 
 #include "Error.hpp"
-#include "StyleManager.hpp"
 #include "duckx_export.h"
 #include "pugixml.hpp"
+
+#include "StyleManager.hpp"
 
 namespace duckx
 {
@@ -28,26 +29,6 @@ namespace duckx
     struct ParagraphStyleProperties;
     struct CharacterStyleProperties;
     struct TableStyleProperties;
-    
-    // ============================================================================
-    // Style Set Definition
-    // ============================================================================
-    
-    /*!
-     * @brief Represents a collection of related styles
-     * 
-     * StyleSet allows organizing related styles into named collections
-     * for easy management and application to documents.
-     */
-    struct DUCKX_API StyleSet
-    {
-        std::string name;                           //!< Name of the style set
-        std::string description;                    //!< Optional description
-        std::vector<std::string> included_styles;   //!< Names of styles in this set
-        
-        StyleSet() = default;
-        StyleSet(const std::string& set_name) : name(set_name) {}
-    };
     
     // ============================================================================
     // Unit Conversion Utilities

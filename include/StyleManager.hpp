@@ -30,6 +30,17 @@ namespace duckx
     class Run;
     class Table;
     
+    // StyleSet definition (needed for member variable)
+    struct StyleSet
+    {
+        std::string name;
+        std::string description;
+        std::vector<std::string> included_styles;
+        
+        StyleSet() = default;
+        StyleSet(const std::string& set_name) : name(set_name) {}
+    };
+    
     // ============================================================================
     // Style Type Definitions
     // ============================================================================
@@ -449,10 +460,73 @@ namespace duckx
          */
         Result<void> validate_all_styles_safe() const;
         
+        // ---- Style Set Management ----
+        
+        /*!
+         * @brief Register a style set for batch application
+         * @param style_set Style set to register
+         * @return Result indicating success or error
+         */
+        Result<void> register_style_set_safe(const StyleSet& style_set);
+        
+        /*!
+         * @brief Apply all styles in a style set
+         * @param set_name Name of the style set to apply
+         * @param doc Document to apply styles to (for initialization)
+         * @return Result indicating success or error
+         */
+        Result<void> apply_style_set_safe(const std::string& set_name, class Document& doc);
+        
+        /*!
+         * @brief Get a registered style set by name
+         * @param set_name Name of the style set
+         * @return Result containing style set or error
+         */
+        Result<StyleSet> get_style_set_safe(const std::string& set_name) const;
+        
+        /*!
+         * @brief List all registered style set names
+         * @return Vector of style set names
+         */
+        std::vector<std::string> list_style_sets() const;
+        
+        /*!
+         * @brief Remove a style set from the manager
+         * @param set_name Name of the style set to remove
+         * @return Result indicating success or error
+         */
+        Result<void> remove_style_set_safe(const std::string& set_name);
+        
+        /*!
+         * @brief Check if a style set exists
+         * @param set_name Name of the style set
+         * @return true if style set exists, false otherwise
+         */
+        bool has_style_set(const std::string& set_name) const;
+        
+        /*!
+         * @brief Load style sets from XML file
+         * @param filepath Path to XML file containing style sets
+         * @return Result indicating success or error
+         */
+        Result<void> load_style_sets_from_file_safe(const std::string& filepath);
+        
+        /*!
+         * @brief Apply styles to specific element types based on style names
+         * @param doc Document to apply styles to
+         * @param style_mappings Map of element type patterns to style names
+         * @return Result indicating success or error
+         */
+        Result<void> apply_style_mappings_safe(class Document& doc, 
+            const std::map<std::string, std::string>& style_mappings);
+        
     private:
         // Style storage
         std::map<std::string, std::unique_ptr<Style>> m_styles;
         std::unordered_set<std::string> m_built_in_loaded_categories;
+        
+        // Style set storage
+        std::map<std::string, StyleSet> m_style_sets;
         
         // Helper methods
         Result<void> create_built_in_heading_styles_safe();

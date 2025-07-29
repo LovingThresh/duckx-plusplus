@@ -576,69 +576,24 @@ namespace duckx
         // Parse highlight
         pugi::xml_node highlight_node = char_node.child("Highlight");
         if (highlight_node) {
-            // For now, just store the highlight color name
-            // TODO: Implement parse_highlight_color_safe when needed
             std::string highlight_str = highlight_node.child_value();
             if (!highlight_str.empty()) {
-                // Simple mapping for common highlight colors
-                std::string highlight_lower = absl::AsciiStrToLower(highlight_str);
-                if (highlight_lower == "yellow") {
-                    props.highlight_color = HighlightColor::YELLOW;
-                } else if (highlight_lower == "lightgray" || highlight_lower == "lightgrey") {
-                    props.highlight_color = HighlightColor::LIGHT_GRAY;
-                } else if (highlight_lower == "green") {
-                    props.highlight_color = HighlightColor::GREEN;
-                } else if (highlight_lower == "cyan") {
-                    props.highlight_color = HighlightColor::CYAN;
-                } else if (highlight_lower == "magenta") {
-                    props.highlight_color = HighlightColor::MAGENTA;
-                } else if (highlight_lower == "blue") {
-                    props.highlight_color = HighlightColor::BLUE;
-                } else if (highlight_lower == "red") {
-                    props.highlight_color = HighlightColor::RED;
+                auto highlight_result = parse_highlight_color_safe(highlight_str);
+                if (highlight_result.ok()) {
+                    props.highlight_color = highlight_result.value();
                 }
-                // If color not recognized, leave as nullopt
+                // If parsing fails, we ignore the highlight (could log warning in production)
             }
         }
         
         // Parse formatting flags
         pugi::xml_node format_node = char_node.child("Format");
         if (format_node) {
-            formatting_flag flags = none;
-            
-            // Parse bold
-            pugi::xml_attribute bold_attr = format_node.attribute("bold");
-            if (bold_attr && std::string(bold_attr.value()) == "true") {
-                flags |= bold;
+            auto flags_result = parse_formatting_flags_safe(format_node);
+            if (flags_result.ok() && flags_result.value() != none) {
+                props.formatting_flags = flags_result.value();
             }
-            
-            // Parse italic
-            pugi::xml_attribute italic_attr = format_node.attribute("italic");
-            if (italic_attr && std::string(italic_attr.value()) == "true") {
-                flags |= italic;
-            }
-            
-            // Parse underline
-            pugi::xml_attribute underline_attr = format_node.attribute("underline");
-            if (underline_attr && std::string(underline_attr.value()) == "true") {
-                flags |= underline;
-            }
-            
-            // Parse strikethrough
-            pugi::xml_attribute strike_attr = format_node.attribute("strikethrough");
-            if (strike_attr && std::string(strike_attr.value()) == "true") {
-                flags |= strikethrough;
-            }
-            
-            // Parse small caps
-            pugi::xml_attribute smallcaps_attr = format_node.attribute("smallCaps");
-            if (smallcaps_attr && std::string(smallcaps_attr.value()) == "true") {
-                flags |= smallcaps;
-            }
-            
-            if (flags != none) {
-                props.formatting_flags = flags;
-            }
+            // If parsing fails, we ignore the formatting flags (could log warning in production)
         }
         
         return Result<CharacterStyleProperties>{props};
@@ -751,23 +706,165 @@ namespace duckx
     // Additional helper method placeholders - will implement as needed
     Result<ListType> XmlStyleParser::parse_list_type_safe(const std::string& list_type_str)
     {
-        // TODO: Implement when needed
-        return Result<ListType>(Error(ErrorCategory::GENERAL, ErrorCode::NOT_IMPLEMENTED,
-            "List type parsing not yet implemented", DUCKX_ERROR_CONTEXT()));
+        std::string type_lower = absl::AsciiStrToLower(list_type_str);
+        
+        if (type_lower == "bullet" || type_lower == "unordered") {
+            return Result<ListType>{ListType::BULLET};
+        }
+        if (type_lower == "numbered" || type_lower == "ordered" || type_lower == "decimal" || type_lower == "number") {
+            return Result<ListType>{ListType::NUMBER};
+        }
+        if (type_lower == "none") {
+            return Result<ListType>{ListType::NONE};
+        }
+        
+        return Result<ListType>(errors::invalid_argument("list_type_str",
+            absl::StrFormat("Invalid list type: '%s'. Supported: none, bullet, number/numbered", 
+                list_type_str), DUCKX_ERROR_CONTEXT()));
     }
     
     Result<HighlightColor> XmlStyleParser::parse_highlight_color_safe(const std::string& highlight_str)
     {
-        // TODO: Implement when needed
-        return Result<HighlightColor>(Error(ErrorCategory::GENERAL, ErrorCode::NOT_IMPLEMENTED,
-            "Highlight color parsing not yet implemented", DUCKX_ERROR_CONTEXT()));
+        if (highlight_str.empty()) {
+            return Result<HighlightColor>(errors::invalid_argument("highlight_str",
+                "Highlight color string cannot be empty", DUCKX_ERROR_CONTEXT()));
+        }
+        
+        std::string color_lower = absl::AsciiStrToLower(highlight_str);
+        
+        if (color_lower == "yellow") {
+            return Result<HighlightColor>{HighlightColor::YELLOW};
+        }
+        if (color_lower == "lightgray" || color_lower == "lightgrey" || color_lower == "light-gray") {
+            return Result<HighlightColor>{HighlightColor::LIGHT_GRAY};
+        }
+        if (color_lower == "green") {
+            return Result<HighlightColor>{HighlightColor::GREEN};
+        }
+        if (color_lower == "cyan") {
+            return Result<HighlightColor>{HighlightColor::CYAN};
+        }
+        if (color_lower == "magenta") {
+            return Result<HighlightColor>{HighlightColor::MAGENTA};
+        }
+        if (color_lower == "blue") {
+            return Result<HighlightColor>{HighlightColor::BLUE};
+        }
+        if (color_lower == "red") {
+            return Result<HighlightColor>{HighlightColor::RED};
+        }
+        if (color_lower == "darkblue" || color_lower == "dark-blue") {
+            return Result<HighlightColor>{HighlightColor::DARK_BLUE};
+        }
+        if (color_lower == "darkcyan" || color_lower == "dark-cyan") {
+            return Result<HighlightColor>{HighlightColor::DARK_CYAN};
+        }
+        if (color_lower == "darkgreen" || color_lower == "dark-green") {
+            return Result<HighlightColor>{HighlightColor::DARK_GREEN};
+        }
+        if (color_lower == "darkmagenta" || color_lower == "dark-magenta") {
+            return Result<HighlightColor>{HighlightColor::DARK_MAGENTA};
+        }
+        if (color_lower == "darkred" || color_lower == "dark-red") {
+            return Result<HighlightColor>{HighlightColor::DARK_RED};
+        }
+        if (color_lower == "darkyellow" || color_lower == "dark-yellow") {
+            return Result<HighlightColor>{HighlightColor::DARK_YELLOW};
+        }
+        if (color_lower == "white") {
+            return Result<HighlightColor>{HighlightColor::WHITE};
+        }
+        if (color_lower == "black") {
+            return Result<HighlightColor>{HighlightColor::BLACK};
+        }
+        
+        return Result<HighlightColor>(errors::invalid_argument("highlight_str",
+            absl::StrFormat("Invalid highlight color: '%s'. Supported colors: yellow, lightgray, green, cyan, magenta, blue, red, darkblue, darkcyan, darkgreen, darkmagenta, darkred, darkyellow, darkgray, black", 
+                highlight_str), DUCKX_ERROR_CONTEXT()));
     }
     
     Result<formatting_flag> XmlStyleParser::parse_formatting_flags_safe(const pugi::xml_node& format_node)
     {
-        // TODO: Implement when needed
-        return Result<formatting_flag>(Error(ErrorCategory::GENERAL, ErrorCode::NOT_IMPLEMENTED,
-            "Formatting flags parsing not yet implemented", DUCKX_ERROR_CONTEXT()));
+        if (!format_node) {
+            return Result<formatting_flag>(errors::invalid_argument("format_node",
+                "Format node cannot be null", DUCKX_ERROR_CONTEXT()));
+        }
+        
+        formatting_flag flags = none;
+        
+        // Parse bold
+        pugi::xml_attribute bold_attr = format_node.attribute("bold");
+        if (bold_attr) {
+            std::string bold_value = absl::AsciiStrToLower(bold_attr.value());
+            if (bold_value == "true" || bold_value == "1" || bold_value == "yes") {
+                flags |= bold;
+            }
+        }
+        
+        // Parse italic
+        pugi::xml_attribute italic_attr = format_node.attribute("italic");
+        if (italic_attr) {
+            std::string italic_value = absl::AsciiStrToLower(italic_attr.value());
+            if (italic_value == "true" || italic_value == "1" || italic_value == "yes") {
+                flags |= italic;
+            }
+        }
+        
+        // Parse underline
+        pugi::xml_attribute underline_attr = format_node.attribute("underline");
+        if (underline_attr) {
+            std::string underline_value = absl::AsciiStrToLower(underline_attr.value());
+            if (underline_value == "true" || underline_value == "1" || underline_value == "yes") {
+                flags |= underline;
+            }
+        }
+        
+        // Parse strikethrough
+        pugi::xml_attribute strike_attr = format_node.attribute("strikethrough");
+        if (strike_attr) {
+            std::string strike_value = absl::AsciiStrToLower(strike_attr.value());
+            if (strike_value == "true" || strike_value == "1" || strike_value == "yes") {
+                flags |= strikethrough;
+            }
+        }
+        
+        // Parse small caps
+        pugi::xml_attribute smallcaps_attr = format_node.attribute("smallCaps");
+        if (smallcaps_attr) {
+            std::string smallcaps_value = absl::AsciiStrToLower(smallcaps_attr.value());
+            if (smallcaps_value == "true" || smallcaps_value == "1" || smallcaps_value == "yes") {
+                flags |= smallcaps;
+            }
+        }
+        
+        // Parse shadow effect
+        pugi::xml_attribute shadow_attr = format_node.attribute("shadow");
+        if (shadow_attr) {
+            std::string shadow_value = absl::AsciiStrToLower(shadow_attr.value());
+            if (shadow_value == "true" || shadow_value == "1" || shadow_value == "yes") {
+                flags |= shadow;
+            }
+        }
+        
+        // Parse subscript
+        pugi::xml_attribute subscript_attr = format_node.attribute("subscript");
+        if (subscript_attr) {
+            std::string subscript_value = absl::AsciiStrToLower(subscript_attr.value());
+            if (subscript_value == "true" || subscript_value == "1" || subscript_value == "yes") {
+                flags |= subscript;
+            }
+        }
+        
+        // Parse superscript
+        pugi::xml_attribute superscript_attr = format_node.attribute("superscript");
+        if (superscript_attr) {
+            std::string superscript_value = absl::AsciiStrToLower(superscript_attr.value());
+            if (superscript_value == "true" || superscript_value == "1" || superscript_value == "yes") {
+                flags |= superscript;
+            }
+        }
+        
+        return Result<formatting_flag>{flags};
     }
     
 } // namespace duckx

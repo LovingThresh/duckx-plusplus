@@ -80,7 +80,7 @@ inline std::string get_temp_path(const std::string& filename) {
     };
     
     // For known input resources (copied by CMake), require existence
-    std::vector<std::string> known_inputs = {"my_test.docx", "logo.png"};
+    std::vector<std::string> known_inputs = {"my_test.docx", "logo.png", "technical_documentation.xml"};
     bool is_input_resource = false;
     for (const auto& input : known_inputs) {
         if (filename == input) {

@@ -95,6 +95,36 @@ namespace duckx
 
         Header& get_header(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
         Footer& get_footer(HeaderFooterType type = HeaderFooterType::DEFAULT) const;
+        
+        // Style Set operations
+        
+        /*!
+         * @brief Apply a style set to the document
+         * @param set_name Name of the style set to apply
+         * @return Result indicating success or error
+         */
+        Result<void> apply_style_set_safe(const std::string& set_name);
+        
+        /*!
+         * @brief Load style definitions from an XML file
+         * @param xml_file Path to XML file containing style definitions
+         * @return Result indicating success or error
+         */
+        Result<void> load_style_definitions_safe(const std::string& xml_file);
+        
+        /*!
+         * @brief Apply style mappings to document elements
+         * @param style_mappings Map of element patterns to style names
+         * @return Result indicating success or error
+         */
+        Result<void> apply_style_mappings_safe(const std::map<std::string, std::string>& style_mappings);
+        
+        /*!
+         * @brief Register a new style set
+         * @param style_set Style set to register
+         * @return Result indicating success or error
+         */
+        Result<void> register_style_set_safe(const StyleSet& style_set);
 
     private:
         explicit Document(std::unique_ptr<DocxFile> file);
