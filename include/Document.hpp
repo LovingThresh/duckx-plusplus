@@ -38,7 +38,7 @@ namespace duckx
      * Provides factory methods for creating/opening documents and access to
      * document components like body, media, and headers/footers.
      * 
-     * @example Basic usage:
+     * **Example - Basic usage:**
      * @code
      * auto doc = Document::create_safe("output.docx");
      * if (doc.ok()) {
@@ -46,6 +46,12 @@ namespace duckx
      *     doc.value().save_safe();
      * }
      * @endcode
+     * 
+     * **See Also:**
+     * - @ref sample1.cpp "Basic document reading example"
+     * - @ref sample2.cpp "Document creation and writing"
+     * - @ref sample16_body_result_api.cpp "Modern Result<T> API usage"
+     * - @ref sample_comprehensive_test.cpp "Complete workflow demonstration"
      */
     class DUCKX_API Document
     {

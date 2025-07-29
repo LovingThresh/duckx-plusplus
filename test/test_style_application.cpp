@@ -18,9 +18,6 @@
 
 using namespace duckx;
 
-namespace duckx {
-namespace test {
-
 class StyleApplicationTest : public ::testing::Test
 {
 protected:
@@ -428,5 +425,3 @@ TEST_F(StyleApplicationTest, CompleteStyleWorkflow)
     EXPECT_TRUE(save_result.ok()) << "Failed to save document: " << save_result.error().to_string();
 }
 
-} // namespace test
-} // namespace duckx

@@ -12,9 +12,9 @@
 #include <gtest/gtest.h>
 #include "StyleManager.hpp"
 
-namespace duckx {
-namespace test {
-    class StyleManagerTest : public ::testing::Test
+using namespace duckx;
+
+class StyleManagerTest : public ::testing::Test
     {
     protected:
         void SetUp() override
@@ -473,6 +473,3 @@ namespace test {
         EXPECT_TRUE(result.ok());
         EXPECT_EQ(style_manager->style_count(), 0);
     }
-
-} // namespace test
-} // namespace duckx

@@ -203,6 +203,15 @@ namespace duckx
      * StyleManager provides a comprehensive style management system with support
      * for creating, managing, and applying styles to document elements. Includes
      * built-in style libraries and inheritance support.
+     * 
+     * **See Also:**
+     * - @ref sample20_complete_style_system.cpp "Complete style system demonstration"
+     * - @ref sample21_style_priority_test.cpp "Style priority and inheritance testing"
+     * - @ref sample22_style_reading_system.cpp "Style reading and extraction"
+     * - @ref sample23_complete_style_system.cpp "Advanced style system usage"
+     * - @ref sample24_style_system_test.cpp "Style system comprehensive testing"
+     * - @ref sample25_xml_style_parser.cpp "XML style parsing integration"
+     * - @ref sample26_style_set_usage.cpp "StyleSet usage and management"
      */
     class DUCKX_API StyleManager
     {

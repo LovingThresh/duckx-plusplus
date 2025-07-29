@@ -15,10 +15,9 @@
 #include "XmlStyleParser.hpp"
 #include "StyleManager.hpp"
 
-namespace duckx {
-namespace test {
-    
-    class XmlStyleParserTest : public ::testing::Test
+using namespace duckx;
+
+class XmlStyleParserTest : public ::testing::Test
     {
     protected:
         void SetUp() override
@@ -440,6 +439,3 @@ namespace test {
         auto result = parser->load_styles_from_string_safe(xml_invalid_type);
         EXPECT_FALSE(result.ok()) << "Should fail on invalid style type";
     }
-
-} // namespace test
-} // namespace duckx

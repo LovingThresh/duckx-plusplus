@@ -21,12 +21,18 @@ namespace duckx
      * Manages the main content area of DOCX documents. Provides access to
      * existing content and methods for adding new paragraphs and tables.
      * 
-     * @example Adding content:
+     * 
+     * **Example - Adding content:**
      * @code
      * Body& body = document.body();
      * auto para = body.add_paragraph_safe("Hello World");
      * auto table = body.add_table_safe(3, 2);
      * @endcode
+     * 
+     * **See Also:**
+     * - @ref sample16_body_result_api.cpp "Body Result<T> API comprehensive demonstration"
+     * - @ref sample10.cpp "Table creation and manipulation"
+     * - @ref sample5.cpp "Text alignment and paragraph layout"
      */
     class DUCKX_API Body
     {

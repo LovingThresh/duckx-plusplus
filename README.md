@@ -22,6 +22,16 @@ A modern C++ library for creating, reading, and writing Microsoft Word DOCX file
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![C++](https://img.shields.io/badge/C%2B%2B-14%2B-blue.svg)]()
 
+---
+
+## 📋 快速导航
+
+| 📚 [**示例程序**](@ref samples_page) | 🧪 [**测试程序**](@ref tests_page) | 🔧 [**API 文档**](@ref annotated) | 🗂️ [**导航总览**](@ref navigation_page) |
+|:---:|:---:|:---:|:---:|
+| 27个实际应用示例 | 完整测试套件说明 | 类和函数参考 | 快速访问指南 |
+
+---
+
 ## 🚀 Key Features
 
 ### Modern Error Handling
