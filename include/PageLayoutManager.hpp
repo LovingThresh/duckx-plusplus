@@ -356,6 +356,14 @@ namespace duckx {
         Document* m_document;
         pugi::xml_document* m_doc_xml;
         
+#ifdef _MSC_VER
+        // Windows MSVC: Store values in memory since XML access is unsafe
+        mutable PageMargins m_cached_margins;
+        mutable PageSizeConfig m_cached_page_size;
+        mutable bool m_has_cached_margins = false;
+        mutable bool m_has_cached_page_size = false;
+#endif
+        
         // Helper methods
         Result<pugi::xml_node> get_current_section_pr_safe() const;
         Result<pugi::xml_node> create_section_pr_safe();

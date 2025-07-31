@@ -137,6 +137,9 @@ else ()
 endif ()
 set_target_properties(duckx PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
 
+# Add debug compile definitions for Debug builds
+target_compile_definitions(duckx PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
+
 # Create an alias for modern CMake usage (duckx::duckx)
 add_library(duckx::duckx ALIAS duckx)
 

@@ -260,11 +260,30 @@ namespace duckx
             rFonts_node = rPr_node.append_child("w:rFonts");
         }
 
-        // 设置所有字体类型，以确保在各种情况下都能正确显示
-        rFonts_node.append_attribute("w:ascii").set_value(font_name.c_str());
-        rFonts_node.append_attribute("w:hAnsi").set_value(font_name.c_str());
-        rFonts_node.append_attribute("w:eastAsia").set_value(font_name.c_str());
-        rFonts_node.append_attribute("w:cs").set_value(font_name.c_str());
+        // 设置所有字体类型，确保更新现有属性而不是重复添加
+        pugi::xml_attribute ascii_attr = rFonts_node.attribute("w:ascii");
+        if (!ascii_attr) {
+            ascii_attr = rFonts_node.append_attribute("w:ascii");
+        }
+        ascii_attr.set_value(font_name.c_str());
+        
+        pugi::xml_attribute hAnsi_attr = rFonts_node.attribute("w:hAnsi");
+        if (!hAnsi_attr) {
+            hAnsi_attr = rFonts_node.append_attribute("w:hAnsi");
+        }
+        hAnsi_attr.set_value(font_name.c_str());
+        
+        pugi::xml_attribute eastAsia_attr = rFonts_node.attribute("w:eastAsia");
+        if (!eastAsia_attr) {
+            eastAsia_attr = rFonts_node.append_attribute("w:eastAsia");
+        }
+        eastAsia_attr.set_value(font_name.c_str());
+        
+        pugi::xml_attribute cs_attr = rFonts_node.attribute("w:cs");
+        if (!cs_attr) {
+            cs_attr = rFonts_node.append_attribute("w:cs");
+        }
+        cs_attr.set_value(font_name.c_str());
 
         return *this;
     }
@@ -280,7 +299,13 @@ namespace duckx
 
         // 字号单位是 "half-points"，所以需要乘以2
         const int half_points = static_cast<int>(std::round(size * 2.0));
-        sz_node.append_attribute("w:val").set_value(std::to_string(half_points).c_str());
+        
+        // 更新现有属性而不是重复添加
+        pugi::xml_attribute sz_val_attr = sz_node.attribute("w:val");
+        if (!sz_val_attr) {
+            sz_val_attr = sz_node.append_attribute("w:val");
+        }
+        sz_val_attr.set_value(std::to_string(half_points).c_str());
 
         // 还有一个 <w:szCs> 节点用于复杂字符（如亚洲语言），最好也设置一下
         pugi::xml_node szCs_node = rPr_node.child("w:szCs");
@@ -288,7 +313,12 @@ namespace duckx
         {
             szCs_node = rPr_node.append_child("w:szCs");
         }
-        szCs_node.append_attribute("w:val").set_value(std::to_string(half_points).c_str());
+        
+        pugi::xml_attribute szCs_val_attr = szCs_node.attribute("w:val");
+        if (!szCs_val_attr) {
+            szCs_val_attr = szCs_node.append_attribute("w:val");
+        }
+        szCs_val_attr.set_value(std::to_string(half_points).c_str());
 
         return *this;
     }
@@ -302,7 +332,12 @@ namespace duckx
             color_node = rPr_node.append_child("w:color");
         }
 
-        color_node.append_attribute("w:val").set_value(color.c_str());
+        // 更新现有属性而不是重复添加
+        pugi::xml_attribute color_val_attr = color_node.attribute("w:val");
+        if (!color_val_attr) {
+            color_val_attr = color_node.append_attribute("w:val");
+        }
+        color_val_attr.set_value(color.c_str());
 
         return *this;
     }

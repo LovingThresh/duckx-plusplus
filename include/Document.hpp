@@ -90,8 +90,8 @@ namespace duckx
         static Document create(const std::string& path);
         void save() const;
 
-        Document(Document&& other) noexcept = default;
-        Document& operator=(Document&& other) noexcept = default;
+        Document(Document&& other) noexcept;
+        Document& operator=(Document&& other) noexcept;
         ~Document() = default;
 
         Body& body();
@@ -101,6 +101,12 @@ namespace duckx
         StyleManager& styles() const;
         OutlineManager& outline() const;
         PageLayoutManager& page_layout() const;
+        
+        /*!
+         * @brief Get page layout manager with safety check
+         * @return Result containing PageLayoutManager pointer or error
+         */
+        Result<PageLayoutManager*> page_layout_safe() const;
 
         std::string get_next_relationship_id();
         unsigned int get_unique_rid();
