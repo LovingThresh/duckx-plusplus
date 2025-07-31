@@ -401,11 +401,20 @@ namespace duckx
 
         if (before_pts >= 0)
         {
-            spacing_node.append_attribute("w:before").set_value(points_to_twips(before_pts));
+            // 更新现有属性而不是重复添加
+            pugi::xml_attribute before_attr = spacing_node.attribute("w:before");
+            if (!before_attr) {
+                before_attr = spacing_node.append_attribute("w:before");
+            }
+            before_attr.set_value(points_to_twips(before_pts));
         }
         if (after_pts >= 0)
         {
-            spacing_node.append_attribute("w:after").set_value(points_to_twips(after_pts));
+            pugi::xml_attribute after_attr = spacing_node.attribute("w:after");
+            if (!after_attr) {
+                after_attr = spacing_node.append_attribute("w:after");
+            }
+            after_attr.set_value(points_to_twips(after_pts));
         }
 
         return *this;
@@ -419,7 +428,12 @@ namespace duckx
         {
             spacing_node = pPr_node.append_child("w:spacing");
         }
-        spacing_node.append_attribute("w:line").set_value(line_spacing_to_ooxml(line_spacing));
+        // 更新现有属性而不是重复添加
+        pugi::xml_attribute line_attr = spacing_node.attribute("w:line");
+        if (!line_attr) {
+            line_attr = spacing_node.append_attribute("w:line");
+        }
+        line_attr.set_value(line_spacing_to_ooxml(line_spacing));
         return *this;
     }
 

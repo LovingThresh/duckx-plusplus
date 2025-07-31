@@ -20,17 +20,26 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
         
     - name: Setup Visual Studio
       uses: microsoft/setup-msbuild@v2
       
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON -DDUCKX_USE_SYSTEM_ABSL=OFF -DDUCKX_ENABLE_ABSL=ON
         
-    - name: Build
+    - name: Build with Verbose Output
       run: |
-        cmake --build build --config ${{ matrix.build_type }} --parallel
+        cmake --build build --config ${{ matrix.build_type }} --parallel --verbose
+        
+    - name: Check Build Artifacts (Windows)
+      run: |
+        echo "=== Checking build directory structure ==="
+        Get-ChildItem -Recurse build -Include "*.exe", "*.lib", "*.dll" | Select-Object FullName -First 20
+        echo "=== Checking for test executable ==="
+        Get-ChildItem -Recurse build\test -Include "run_gtests*" | Select-Object FullName
+      shell: powershell
         
     - name: Run Tests
       run: |
@@ -75,6 +84,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
         
     - name: Cache APT packages
       uses: actions/cache@v4
@@ -89,7 +99,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential
+        sudo apt-get install -y cmake build-essential ninja-build
         
     - name: Setup Compiler
       run: |
@@ -102,13 +112,32 @@ jobs:
           echo "CXX=clang++" >> $GITHUB_ENV
         fi
         
-    - name: Configure CMake
+    - name: Configure CMake with Abseil
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_SAMPLES=ON \
+          -DBUILD_TESTING=ON \
+          -DDUCKX_USE_SYSTEM_ABSL=OFF \
+          -DDUCKX_ENABLE_ABSL=ON \
+          -G Ninja
         
-    - name: Build
+    - name: Build with Verbose Output
       run: |
-        cmake --build build --parallel
+        cmake --build build --parallel --verbose
+        
+    - name: Check Abseil Integration
+      run: |
+        echo "=== Checking Abseil libraries ==="
+        find build -name "*absl*" -type f | head -10
+        echo "=== Checking duckx library ==="
+        find build -name "*duckx*" -type f
+        echo "=== Checking test executable ==="
+        ls -la build/test/run_gtests || echo "Test executable not found"
+        if [ -f "build/test/run_gtests" ]; then
+          echo "=== Checking test executable dependencies ==="
+          ldd build/test/run_gtests | head -20 || echo "ldd not available"
+        fi
         
     - name: Run Tests
       run: |
@@ -141,18 +170,32 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
         
     - name: Install dependencies
       run: |
-        brew install cmake
+        brew install cmake ninja
         
-    - name: Configure CMake
+    - name: Configure CMake with Abseil
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_SAMPLES=ON \
+          -DBUILD_TESTING=ON \
+          -DDUCKX_USE_SYSTEM_ABSL=OFF \
+          -DDUCKX_ENABLE_ABSL=ON \
+          -G Ninja
         
-    - name: Build
+    - name: Build with Verbose Output
       run: |
-        cmake --build build --parallel
+        cmake --build build --parallel --verbose
+        
+    - name: Check Build Artifacts (macOS)
+      run: |
+        echo "=== Checking build directory structure ==="
+        find build -name "*absl*" -o -name "*duckx*" -o -name "run_gtests*" | head -20
+        echo "=== Checking test executable ==="
+        ls -la build/test/run_gtests || echo "Test executable not found"
         
     - name: Run Tests
       run: |
@@ -182,6 +225,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
         
     - name: Install dependencies
       run: |
@@ -190,7 +234,7 @@ jobs:
         
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON -DDUCKX_USE_SYSTEM_ABSL=OFF -DDUCKX_ENABLE_ABSL=ON
         
     - name: Build for Analysis
       run: |
@@ -259,6 +303,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+        fetch-depth: 0
         
     - name: Install dependencies
       run: |
@@ -267,7 +312,7 @@ jobs:
         
     - name: Configure CMake with Samples
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=OFF
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SAMPLES=ON -DBUILD_TESTING=OFF -DDUCKX_USE_SYSTEM_ABSL=OFF -DDUCKX_ENABLE_ABSL=ON
         
     - name: Build Samples
       run: |

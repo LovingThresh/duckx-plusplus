@@ -13,11 +13,11 @@ function(copy_test_resources_simple target_dir)
     # Define test resources with their actual source locations
     set(TEST_RESOURCE_MAPPINGS
             "${CMAKE_CURRENT_SOURCE_DIR}/my_test.docx"     # Test document in test directory
-            "${CMAKE_SOURCE_DIR}/img/logo.png"             # Logo image in img directory  
+            "${CMAKE_SOURCE_DIR}/img/logo.png"             # Logo image in img directory
     )
 
-    foreach(resource_file ${TEST_RESOURCE_MAPPINGS})
-        if(EXISTS ${resource_file})
+    foreach (resource_file ${TEST_RESOURCE_MAPPINGS})
+        if (EXISTS ${resource_file})
             get_filename_component(resource_filename ${resource_file} NAME)
             # Use only configure_file - no custom commands to avoid conflicts
             configure_file(
@@ -26,10 +26,10 @@ function(copy_test_resources_simple target_dir)
                     COPYONLY
             )
             message(STATUS "Copied test resource: ${resource_file} -> ${target_dir}/${resource_filename}")
-        else()
+        else ()
             message(WARNING "Test resource file not found: ${resource_file}")
-        endif()
-    endforeach()
+        endif ()
+    endforeach ()
 endfunction()
 
 # ====== Test Sources ======
@@ -55,6 +55,9 @@ target_link_libraries(
         gtest_main
         gmock_main
 )
+
+# Add debug compile definitions for Debug builds (same as main library)
+target_compile_definitions(run_gtests PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 
 # ====== Copy Resources to Test Binary Directory ======
 # Copy resources to the test binary directory
@@ -84,17 +87,17 @@ set(RESOURCE_FILES_FOR_IDE
 
 # Only add resources that exist to avoid CMake errors
 set(EXISTING_RESOURCES "")
-foreach(resource_file ${RESOURCE_FILES_FOR_IDE})
-    if(EXISTS ${resource_file})
+foreach (resource_file ${RESOURCE_FILES_FOR_IDE})
+    if (EXISTS ${resource_file})
         list(APPEND EXISTING_RESOURCES ${resource_file})
-    endif()
-endforeach()
+    endif ()
+endforeach ()
 
-if(EXISTING_RESOURCES)
+if (EXISTING_RESOURCES)
     source_group("Test Resources" FILES ${EXISTING_RESOURCES})
     # Note: Cannot add non-source files to target_sources in CMake
     # Resources are copied via copy_test_resources_simple() function
-endif()
+endif ()
 
 # ====== Resource Management Note ======
 # Test resources are copied from their source locations:

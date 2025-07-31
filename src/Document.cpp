@@ -264,12 +264,30 @@ namespace duckx
 
     OutlineManager& Document::outline() const
     {
+        if (!m_outline_manager) {
+            // Try to reinitialize if it's null (defensive programming)
+            const_cast<Document*>(this)->m_outline_manager = std::make_unique<OutlineManager>(
+                const_cast<Document*>(this), m_style_manager.get());
+        }
+        
         return *m_outline_manager;
     }
 
     PageLayoutManager& Document::page_layout() const
     {
+        if (!m_page_layout_manager) {
+            throw std::runtime_error("PageLayoutManager not initialized. Call initialize_page_layout_structure_safe() first.");
+        }
         return *m_page_layout_manager;
+    }
+
+    Result<PageLayoutManager*> Document::page_layout_safe() const
+    {
+        if (!m_page_layout_manager) {
+            return Result<PageLayoutManager*>(
+                errors::validation_failed("page_layout", "PageLayoutManager not initialized. Call initialize_page_layout_structure_safe() first."));
+        }
+        return Result<PageLayoutManager*>(m_page_layout_manager.get());
     }
 
     std::string Document::get_next_relationship_id()
@@ -499,6 +517,63 @@ namespace duckx
             return Result<void>(errors::xml_parse_error(
                 absl::StrFormat("Failed to initialize page layout structure: %s", e.what())));
         }
+    }
+    
+    Document::Document(Document&& other) noexcept
+        : m_file(std::move(other.m_file)),
+          m_document_xml(std::move(other.m_document_xml)),
+          m_rels_xml(std::move(other.m_rels_xml)),
+          m_content_types_xml(std::move(other.m_content_types_xml)),
+          m_body(std::move(other.m_body)),
+          m_media_manager(std::move(other.m_media_manager)),
+          m_hf_manager(std::move(other.m_hf_manager)),
+          m_link_manager(std::move(other.m_link_manager)),
+          m_style_manager(std::move(other.m_style_manager)),
+          m_outline_manager(std::move(other.m_outline_manager)),
+          m_page_layout_manager(nullptr),  // Don't move, will recreate if needed
+          m_rid_counter(other.m_rid_counter)
+    {
+        // Critical: PageLayoutManager cannot be safely moved because it stores raw pointers
+        // to Document and xml_document. We need to recreate it if it existed.
+        if (other.m_page_layout_manager) {
+            // Clear the source to prevent double-delete issues
+            other.m_page_layout_manager.reset();
+            
+            // Recreate with correct pointers to this Document instance
+            m_page_layout_manager = std::make_unique<PageLayoutManager>(this, &m_document_xml);
+        }
+        
+        // Note: Other managers may need similar updates if they store Document pointers
+    }
+    
+    Document& Document::operator=(Document&& other) noexcept
+    {
+        if (this != &other) {
+            // Move all members
+            m_file = std::move(other.m_file);
+            m_document_xml = std::move(other.m_document_xml);
+            m_rels_xml = std::move(other.m_rels_xml);
+            m_content_types_xml = std::move(other.m_content_types_xml);
+            m_body = std::move(other.m_body);
+            m_media_manager = std::move(other.m_media_manager);
+            m_hf_manager = std::move(other.m_hf_manager);
+            m_link_manager = std::move(other.m_link_manager);
+            m_style_manager = std::move(other.m_style_manager);
+            m_outline_manager = std::move(other.m_outline_manager);
+            m_rid_counter = other.m_rid_counter;
+            
+            // Critical: PageLayoutManager cannot be safely moved because it stores raw pointers
+            // Handle PageLayoutManager specially
+            if (other.m_page_layout_manager) {
+                other.m_page_layout_manager.reset();  // Clear source
+                m_page_layout_manager = std::make_unique<PageLayoutManager>(this, &m_document_xml);
+            } else {
+                m_page_layout_manager.reset();
+            }
+            
+            // Note: Other managers may need similar updates if they store Document pointers
+        }
+        return *this;
     }
     
 } // namespace duckx
