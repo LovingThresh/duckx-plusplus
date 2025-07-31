@@ -75,8 +75,9 @@ inline std::string get_project_root() {
 inline std::string get_temp_path(const std::string& filename) {
     // Standard temp directory paths for different execution contexts:
     std::vector<std::string> temp_paths = {
-        "temp/" + filename,        // From project root (samples)
-        "../temp/" + filename      // From build/test (tests)
+        "temp/" + filename,        // From project root
+        "../temp/" + filename,     // From build/test (tests)
+        "../../temp/" + filename   // From build/samples (samples)
     };
     
     // For known input resources (copied by CMake), require existence

@@ -47,6 +47,8 @@ A modern C++ library for creating, reading, and writing Microsoft Word DOCX file
 - **Media Management**: Image insertion and handling
 - **Header/Footer Support**: Complete header and footer management
 - **Hyperlink Processing**: Full hyperlink relationship management
+- **Document Outline & TOC**: Automatic outline generation and field-based table of contents
+- **Advanced Navigation**: Bookmark-based document navigation with Word-compatible TOC fields
 
 ### Developer-Friendly API
 - **Fluent Interface**: Method chaining for intuitive document construction
@@ -188,6 +190,59 @@ auto style_sets_result = parser.load_style_sets_from_file_safe("document_styles.
 if (style_sets_result.ok()) {
     auto& style_sets = style_sets_result.value();
     // Apply coordinated style collections
+}
+```
+
+### Document Outline & Table of Contents (New!)
+```cpp
+#include "OutlineManager.hpp"
+
+// Create document with heading structure
+auto doc_result = duckx::Document::create_safe("document.docx");
+if (doc_result.ok()) {
+    auto& doc = doc_result.value();
+    auto& body = doc.body();
+    auto& styles = doc.styles();
+    
+    // Initialize OutlineManager
+    OutlineManager outline(&doc, &styles);
+    
+    // Add structured content with heading styles
+    auto title = body.add_paragraph_safe("Document Title");
+    title.value().apply_style_safe(styles, "Title");
+    
+    auto h1 = body.add_paragraph_safe("1. Introduction");
+    h1.value().apply_style_safe(styles, "Heading 1");
+    
+    auto h2 = body.add_paragraph_safe("1.1 Purpose");
+    h2.value().apply_style_safe(styles, "Heading 2");
+    
+    // Add placeholder for TOC at beginning
+    body.add_paragraph_safe("[Table of Contents will be inserted here]");
+    
+    // Generate field-based TOC after content creation
+    TocOptions toc_options;
+    toc_options.toc_title = "Table of Contents";
+    toc_options.max_level = 3;
+    toc_options.show_page_numbers = true;
+    toc_options.use_hyperlinks = true;
+    
+    // Create real Word-compatible TOC with bookmarks
+    auto toc_result = outline.create_field_toc_at_placeholder_safe(
+        "[Table of Contents will be inserted here]", toc_options);
+    
+    if (toc_result.ok()) {
+        std::cout << "✓ Created updateable TOC with hyperlinks!" << std::endl;
+        // TOC will be automatically updated in Word
+    }
+    
+    // Generate document outline
+    auto outline_result = outline.generate_outline_safe();
+    if (outline_result.ok()) {
+        for (const auto& entry : outline_result.value()) {
+            std::cout << "Level " << entry.level << ": " << entry.text << std::endl;
+        }
+    }
 }
 ```
 

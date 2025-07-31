@@ -237,7 +237,9 @@ namespace duckx
                     xml += absl::StrFormat("    <w:jc w:val=\"%s\"/>\n", align_val);
                 }
                 
-                if (m_paragraph_props.space_before_pts.has_value() || m_paragraph_props.space_after_pts.has_value()) {
+                if (m_paragraph_props.space_before_pts.has_value() || 
+                    m_paragraph_props.space_after_pts.has_value() || 
+                    m_paragraph_props.line_spacing.has_value()) {
                     xml += "    <w:spacing";
                     if (m_paragraph_props.space_before_pts.has_value()) {
                         int before_twips = static_cast<int>(m_paragraph_props.space_before_pts.value() * 20);
@@ -246,6 +248,11 @@ namespace duckx
                     if (m_paragraph_props.space_after_pts.has_value()) {
                         int after_twips = static_cast<int>(m_paragraph_props.space_after_pts.value() * 20);
                         xml += absl::StrFormat(" w:after=\"%d\"", after_twips);
+                    }
+                    if (m_paragraph_props.line_spacing.has_value()) {
+                        // Convert line spacing to OOXML format (240 = single spacing)
+                        int line_twips = static_cast<int>(m_paragraph_props.line_spacing.value() * 240);
+                        xml += absl::StrFormat(" w:line=\"%d\" w:lineRule=\"auto\"", line_twips);
                     }
                     xml += "/>\n";
                 }

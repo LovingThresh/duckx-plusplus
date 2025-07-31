@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 基本原则 (Fundamental Principles)
+
+**⚠️ CRITICAL: Git Command Restrictions**
+- **NEVER** use git modification commands: `git add`, `git commit`, `git push`, `git merge`, `git rebase`, etc.
+- **ONLY** use git query commands: `git status`, `git log`, `git diff`, `git show`, `git branch --list`
+- **ALWAYS** provide commit messages as text output when requested, but NEVER execute the commit
+- User must manually execute all git modification operations
+- This ensures user maintains full control over repository state and commit history
+
 ## Project Overview
 
 DuckX-PLusPlus is a C++ library for creating, reading, and writing Microsoft Word DOCX files. It features a modern hybrid error handling system using both traditional exceptions and a `Result<T>` pattern for enhanced reliability and user experience.

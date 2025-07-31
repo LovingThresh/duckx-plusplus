@@ -22,6 +22,8 @@
 #include "MediaManager.hpp"
 #include "HeaderFooterBase.hpp"
 #include "StyleManager.hpp"
+#include "OutlineManager.hpp"
+#include "PageLayoutManager.hpp"
 
 namespace duckx
 {
@@ -29,6 +31,8 @@ namespace duckx
     class MediaManager;
     class HeaderFooterManager;
     class HyperlinkManager;
+    class OutlineManager;
+    class PageLayoutManager;
     class Header;
     class Footer;
 
@@ -95,6 +99,8 @@ namespace duckx
         MediaManager& media() const;
         HyperlinkManager& links() const;
         StyleManager& styles() const;
+        OutlineManager& outline() const;
+        PageLayoutManager& page_layout() const;
 
         std::string get_next_relationship_id();
         unsigned int get_unique_rid();
@@ -131,6 +137,16 @@ namespace duckx
          * @return Result indicating success or error
          */
         Result<void> register_style_set_safe(const StyleSet& style_set);
+        
+        /*!
+         * @brief Initialize page layout XML structure for PageLayoutManager
+         * @return Result indicating success or error
+         * 
+         * This function creates the necessary XML structure (w:sectPr section properties)
+         * that PageLayoutManager requires to function properly. Should be called before
+         * using PageLayoutManager operations.
+         */
+        Result<void> initialize_page_layout_structure_safe();
 
     private:
         explicit Document(std::unique_ptr<DocxFile> file);
@@ -146,6 +162,8 @@ namespace duckx
         std::unique_ptr<HeaderFooterManager> m_hf_manager;
         std::unique_ptr<HyperlinkManager> m_link_manager;
         std::unique_ptr<StyleManager> m_style_manager;
+        std::unique_ptr<OutlineManager> m_outline_manager;
+        std::unique_ptr<PageLayoutManager> m_page_layout_manager;
         int m_rid_counter = 1;
     };
 } // namespace duckx
