@@ -12,17 +12,20 @@
 - **新用户入门**：@ref sample1.cpp "sample1.cpp" → @ref sample2.cpp "sample2.cpp" → @ref sample3.cpp "sample3.cpp"
 - **现代 API 学习**：@ref sample16_body_result_api.cpp "sample16" → @ref sample25_xml_style_parser.cpp "sample25"
 - **样式系统深入**：@ref sample20_complete_style_system.cpp "sample20" → @ref sample21_style_priority_test.cpp "sample21"
+- **文档结构管理**：@ref sample29_simple_outline_demo.cpp "sample29" - 大纲生成和字段TOC
 
 ### 核心类文档
 - @ref duckx::Document "Document" - 主文档类
 - @ref duckx::Body "Body" - 文档主体
 - @ref duckx::StyleManager "StyleManager" - 样式管理
+- @ref duckx::OutlineManager "OutlineManager" - 文档大纲和目录管理
 - @ref duckx::Result "Result<T>" - 现代错误处理
 
 ### 测试验证
 - **基础功能测试**：test_document.cpp, test_body.cpp
 - **样式系统测试**：test_style_manager.cpp, test_style_application.cpp  
 - **Result<T> API 测试**：test_result_api.cpp, test_body_result_api.cpp
+- **文档结构测试**：test_outline_manager.cpp - 大纲和TOC功能验证
 
 ---
 

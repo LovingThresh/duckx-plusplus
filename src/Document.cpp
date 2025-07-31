@@ -15,6 +15,8 @@
 #include <utility>
 
 #include "StyleManager.hpp"
+#include "OutlineManager.hpp"
+#include "PageLayoutManager.hpp"
 
 namespace duckx
 {
@@ -196,6 +198,12 @@ namespace duckx
 
         // Initialize style manager
         m_style_manager = std::make_unique<StyleManager>();
+        
+        // Initialize outline manager
+        m_outline_manager = std::make_unique<OutlineManager>(this, m_style_manager.get());
+        
+        // Initialize page layout manager
+        m_page_layout_manager = std::make_unique<PageLayoutManager>(this, &m_document_xml);
     }
 
     void Document::save() const
@@ -252,6 +260,16 @@ namespace duckx
     StyleManager& Document::styles() const
     {
         return *m_style_manager;
+    }
+
+    OutlineManager& Document::outline() const
+    {
+        return *m_outline_manager;
+    }
+
+    PageLayoutManager& Document::page_layout() const
+    {
+        return *m_page_layout_manager;
     }
 
     std::string Document::get_next_relationship_id()
@@ -395,6 +413,92 @@ namespace duckx
         }
         
         return m_style_manager->register_style_set_safe(style_set);
+    }
+    
+    Result<void> Document::initialize_page_layout_structure_safe()
+    {
+        try {
+            // Find or create the w:document root node
+            pugi::xml_node root = m_document_xml.child("w:document");
+            if (!root) {
+                root = m_document_xml.append_child("w:document");
+                if (!root) {
+                    return Result<void>(errors::xml_parse_error(
+                        "Failed to create document root node"));
+                }
+                
+                // Add required namespaces
+                root.append_attribute("xmlns:w").set_value("http://schemas.openxmlformats.org/wordprocessingml/2006/main");
+                root.append_attribute("xmlns:r").set_value("http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+            }
+            
+            // Find or create the w:body node
+            pugi::xml_node body = root.child("w:body");
+            if (!body) {
+                body = root.append_child("w:body");
+                if (!body) {
+                    return Result<void>(errors::xml_parse_error(
+                        "Failed to create document body node"));
+                }
+            }
+            
+            // Find or create the w:sectPr node (section properties)
+            pugi::xml_node sect_pr = body.child("w:sectPr");
+            if (!sect_pr) {
+                sect_pr = body.append_child("w:sectPr");
+                if (!sect_pr) {
+                    return Result<void>(errors::xml_parse_error(
+                        "Failed to create section properties node"));
+                }
+                
+                // Initialize with default page layout settings
+                
+                // Page size (A4 portrait by default)
+                pugi::xml_node pg_sz = sect_pr.append_child("w:pgSz");
+                pg_sz.append_attribute("w:w").set_value("11906");    // A4 width in twips (210mm)
+                pg_sz.append_attribute("w:h").set_value("16838");    // A4 height in twips (297mm)
+                pg_sz.append_attribute("w:orient").set_value("portrait");
+                
+                // Page margins (1 inch = 1440 twips by default)
+                pugi::xml_node pg_mar = sect_pr.append_child("w:pgMar");
+                pg_mar.append_attribute("w:top").set_value("1440");
+                pg_mar.append_attribute("w:right").set_value("1440");
+                pg_mar.append_attribute("w:bottom").set_value("1440");
+                pg_mar.append_attribute("w:left").set_value("1440");
+                pg_mar.append_attribute("w:header").set_value("720");
+                pg_mar.append_attribute("w:footer").set_value("720");
+                pg_mar.append_attribute("w:gutter").set_value("0");
+                
+                // Paper source
+                pugi::xml_node paper_src = sect_pr.append_child("w:paperSrc");
+                paper_src.append_attribute("w:first").set_value("1");
+                paper_src.append_attribute("w:other").set_value("1");
+                
+                // Section type (continuous by default)
+                pugi::xml_node sect_pr_type = sect_pr.append_child("w:type");
+                sect_pr_type.append_attribute("w:val").set_value("nextPage");
+            }
+            
+            // Update the Body object to use the new structure
+            m_body = Body(body);
+            
+            // Debug: Print XML structure to verify it was created correctly
+            #ifdef DEBUG
+            xml_string_writer debug_writer;
+            m_document_xml.print(debug_writer, "  ", pugi::format_default);
+            std::cout << "DEBUG: Created XML structure:\n" << debug_writer.result << std::endl;
+            #endif
+            
+            // Reinitialize all managers to use the updated XML structure
+            m_page_layout_manager = std::make_unique<PageLayoutManager>(this, &m_document_xml);
+            m_outline_manager = std::make_unique<OutlineManager>(this, m_style_manager.get());
+            
+            return Result<void>();
+        }
+        catch (const std::exception& e) {
+            return Result<void>(errors::xml_parse_error(
+                absl::StrFormat("Failed to initialize page layout structure: %s", e.what())));
+        }
     }
     
 } // namespace duckx

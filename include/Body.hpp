@@ -68,6 +68,12 @@ namespace duckx
          */
         Result<Table> add_table_safe(int rows, int cols);
 
+        /*!
+         * @brief Get the underlying XML node
+         * @return XML node for direct manipulation
+         */
+        pugi::xml_node get_body_node() const { return m_bodyNode; }
+
     private:
         pugi::xml_node m_bodyNode;
         Paragraph m_paragraph;

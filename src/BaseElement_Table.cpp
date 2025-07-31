@@ -1,22 +1,1054 @@
 /*!
- * @file BaseElement_Table.cpp
- * @brief Implementation of table-related classes (Table, TableRow, TableCell)
+ * @file BaseElement.cpp
+ * @brief Implementation of base element classes for DOCX document structure
  * 
- * Contains implementations for table structure, formatting, borders,
- * margins, and Result<T> API for all table elements.
+ * Contains implementations for paragraphs, runs, tables, rows, and cells
+ * including formatting, navigation, and XML manipulation functionality.
  */
-#include "BaseElement_Table.hpp"
+#include "BaseElement.hpp"
 
-#include <algorithm>
-#include <vector>
+#include <cctype>
+#include <map>
+#include <tuple>
+#include <unordered_map>
+#include <zip.h>
 
+#include "Document.hpp"
+#include "HyperlinkManager.hpp"
 #include "StyleManager.hpp"
 
 namespace duckx
 {
-    // ============================================================================
-    // TableCell implementations
-    // ============================================================================
+    // Mapping of XML node names to element type integers
+    std::unordered_map<std::string, int> node_map = {
+        {"w:p", 0},   // Paragraph
+        {"w:tbl", 1}, // Table
+        {"w:r", 2},   // Run
+        {"w:tr", 3},  // Table row
+        {"w:tc", 4}   // Table cell
+    };
+
+    /*! @brief Convert points to twips (twentieths of a point) */
+    long long points_to_twips(const double pts)
+    {
+        return static_cast<long long>(pts * 20.0);
+    }
+
+    /*! @brief Convert line spacing to OOXML format */
+    long long line_spacing_to_ooxml(const double spacing)
+    {
+        return static_cast<long long>(spacing * 240.0);
+    }
+
+    /*! @brief Convert highlight color enum to string */
+    static std::string highlight_color_to_string(const HighlightColor color)
+    {
+        static const std::map<HighlightColor, std::string> color_map = {
+            {HighlightColor::BLACK, "black"},
+            {HighlightColor::BLUE, "blue"},
+            {HighlightColor::CYAN, "cyan"},
+            {HighlightColor::GREEN, "green"},
+            {HighlightColor::MAGENTA, "magenta"},
+            {HighlightColor::RED, "red"},
+            {HighlightColor::YELLOW, "yellow"},
+            {HighlightColor::WHITE, "white"},
+            {HighlightColor::DARK_BLUE, "darkBlue"},
+            {HighlightColor::DARK_CYAN, "darkCyan"},
+            {HighlightColor::DARK_GREEN, "darkGreen"},
+            {HighlightColor::DARK_MAGENTA, "darkMagenta"},
+            {HighlightColor::DARK_RED, "darkRed"},
+            {HighlightColor::DARK_YELLOW, "darkYellow"},
+            {HighlightColor::LIGHT_GRAY, "lightGray"}
+        };
+
+        const auto it = color_map.find(color);
+        if (it != color_map.end())
+        {
+            return it->second;
+        }
+        return ""; // Return an empty string if not found
+    }
+
+    static bool check_boolean_property(const pugi::xml_node& rPr, const char* tag_name)
+    {
+        if (!rPr) return false;
+
+        const auto tag = rPr.child(tag_name);
+        if (!tag) return false;
+
+        // The property is present. Now check if it's explicitly set to false.
+        const auto val_attr = tag.attribute("w:val");
+        if (val_attr && (std::string(val_attr.as_string()) == "false" || std::string(val_attr.as_string()) == "0"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    DocxElement::DocxElement(const pugi::xml_node parentNode, const pugi::xml_node currentNode)
+        : m_parentNode(parentNode), m_currentNode(currentNode) {}
+
+    pugi::xml_node DocxElement::get_node() const
+    {
+        return m_currentNode;
+    }
+
+    bool DocxElement::has_next_sibling() const
+    {
+        return !find_next_any_sibling().empty();
+    }
+
+    DocxElement::SiblingInfo DocxElement::peek_next_sibling() const
+    {
+        const pugi::xml_node next = find_next_any_sibling();
+        if (!next)
+        {
+            return {};
+        }
+
+        const ElementType type = determine_element_type(next);
+        const std::string tag_name = next.name();
+
+        return {type, tag_name};
+    }
+
+    pugi::xml_node DocxElement::find_next_sibling(const std::string& name) const
+    {
+        const pugi::xml_node sibling = m_currentNode.next_sibling(name.c_str());
+        return sibling;
+    }
+
+    pugi::xml_node DocxElement::find_next_any_sibling() const
+    {
+        if (!m_currentNode)
+            return {};
+
+        return m_currentNode.next_sibling();
+    }
+
+    DocxElement::ElementType DocxElement::map_string_to_element_type(const std::string& node_name)
+    {
+        const auto it = node_map.find(node_name);
+        const int type = (it != node_map.end()) ? it->second : -1;
+        switch (type)
+        {
+            case 0: return ElementType::PARAGRAPH;
+            case 1: return ElementType::TABLE;
+            case 2: return ElementType::RUN;
+            case 3: return ElementType::TABLE_ROW;
+            case 4: return ElementType::TABLE_CELL;
+            default: return ElementType::UNKNOWN;
+        }
+    }
+
+    DocxElement::ElementType DocxElement::determine_element_type(const pugi::xml_node node)
+    {
+        if (!node)
+            return ElementType::UNKNOWN;
+
+        const std::string node_name = node.name();
+
+        if (node_name == "w:p")
+            return ElementType::PARAGRAPH;
+        else if (node_name == "w:tbl")
+            return ElementType::TABLE;
+        else if (node_name == "w:r")
+            return ElementType::RUN;
+        else if (node_name == "w:tr")
+            return ElementType::TABLE_ROW;
+        else if (node_name == "w:tc")
+            return ElementType::TABLE_CELL;
+        else
+            return ElementType::UNKNOWN;
+    }
+
+    Run::Run(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    bool Run::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return find_next_sibling("w:r") != nullptr;
+    }
+
+    bool Run::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !find_next_sibling("w:r").empty();
+    }
+
+    void Run::set_parent(const pugi::xml_node node)
+    {
+        m_parentNode = node;
+        m_currentNode = m_parentNode.child("w:r");
+    }
+
+    void Run::set_current(const pugi::xml_node node)
+    {
+        m_currentNode = node;
+    }
+
+    std::string Run::get_text() const
+    {
+        return m_currentNode.child("w:t").text().get();
+    }
+
+    bool Run::is_bold() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        return check_boolean_property(rPr, "w:b");
+    }
+
+    bool Run::is_italic() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        return check_boolean_property(rPr, "w:i");
+    }
+
+    bool Run::is_underline() const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto tag = rPr.child("w:u");
+        if (!tag) return false;
+
+        // Underline can be turned off with w:val="none"
+        const auto val_attr = tag.attribute("w:val");
+        if (val_attr && std::string(val_attr.as_string()) == "none")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Run::get_font(std::string& font_name) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto rFonts = rPr.child("w:rFonts");
+        if (!rFonts) return false;
+
+        // The "ascii" attribute is typically the one to use for standard characters.
+        const auto font_attr = rFonts.attribute("w:ascii");
+        if (font_attr)
+        {
+            font_name = font_attr.as_string();
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_font_size(double& size) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto sz = rPr.child("w:sz");
+        if (!sz) return false;
+
+        const auto val_attr = sz.attribute("w:val");
+        if (val_attr)
+        {
+            // Font size in docx is stored in "half-points"
+            size = val_attr.as_double() / 2.0;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_color(std::string& color) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto color_node = rPr.child("w:color");
+        if (!color_node) return false;
+
+        const auto val_attr = color_node.attribute("w:val");
+        if (val_attr)
+        {
+            color = val_attr.as_string();
+            // Don't return "auto" colors as they are not explicit RGB values
+            if (color == "auto") return false;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool Run::get_highlight(HighlightColor& color) const
+    {
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (!rPr) return false;
+
+        const auto highlight_node = rPr.child("w:highlight");
+        if (!highlight_node) return false;
+
+        const auto val_attr = highlight_node.attribute("w:val");
+        if (!val_attr) return false;
+
+        const std::string val_str = val_attr.as_string();
+
+        static const std::map<std::string, HighlightColor> color_map = {
+            {"black", HighlightColor::BLACK}, {"blue", HighlightColor::BLUE},
+            {"cyan", HighlightColor::CYAN}, {"green", HighlightColor::GREEN},
+            {"magenta", HighlightColor::MAGENTA}, {"red", HighlightColor::RED},
+            {"yellow", HighlightColor::YELLOW}, {"white", HighlightColor::WHITE},
+            {"darkBlue", HighlightColor::DARK_BLUE}, {"darkCyan", HighlightColor::DARK_CYAN},
+            {"darkGreen", HighlightColor::DARK_GREEN}, {"darkMagenta", HighlightColor::DARK_MAGENTA},
+            {"darkRed", HighlightColor::DARK_RED}, {"darkYellow", HighlightColor::DARK_YELLOW},
+            {"lightGray", HighlightColor::LIGHT_GRAY}
+        };
+
+        const auto it = color_map.find(val_str);
+        if (it != color_map.end())
+        {
+            color = it->second;
+            return true;
+        }
+
+        return false;
+    }
+
+    formatting_flag Run::get_formatting() const
+    {
+        formatting_flag flag = none;
+        if (is_bold()) flag |= bold;
+        if (is_italic()) flag |= italic;
+        if (is_underline()) flag |= underline;
+
+        const auto rPr = m_currentNode.child("w:rPr");
+        if (rPr)
+        {
+            if (check_boolean_property(rPr, "w:strike")) flag |= strikethrough;
+            if (check_boolean_property(rPr, "w:smallCaps")) flag |= smallcaps;
+            if (check_boolean_property(rPr, "w:shadow")) flag |= shadow;
+
+            if (const auto vertAlign = rPr.child("w:vertAlign"))
+            {
+                const std::string val = vertAlign.attribute("w:val").as_string();
+                if (val == "superscript") flag |= superscript;
+                else if (val == "subscript") flag |= subscript;
+            }
+        }
+
+        return flag;
+    }
+
+    bool Run::set_text(const std::string& text) const
+    {
+        return m_currentNode.child("w:t").text().set(text.c_str());
+    }
+
+    bool Run::set_text(const char* text) const
+    {
+        return m_currentNode.child("w:t").text().set(text);
+    }
+
+    Run& Run::set_font(const std::string& font_name)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node rFonts_node = rPr_node.child("w:rFonts");
+        if (!rFonts_node)
+        {
+            rFonts_node = rPr_node.append_child("w:rFonts");
+        }
+
+        // 设置所有字体类型，以确保在各种情况下都能正确显示
+        // 使用 attribute() 方法来设置或更新属性，而不是 append_attribute()
+        if (!rFonts_node.attribute("w:ascii")) {
+            rFonts_node.append_attribute("w:ascii");
+        }
+        if (!rFonts_node.attribute("w:hAnsi")) {
+            rFonts_node.append_attribute("w:hAnsi");
+        }
+        if (!rFonts_node.attribute("w:eastAsia")) {
+            rFonts_node.append_attribute("w:eastAsia");
+        }
+        if (!rFonts_node.attribute("w:cs")) {
+            rFonts_node.append_attribute("w:cs");
+        }
+        
+        // 设置属性值（这会覆盖现有值）
+        rFonts_node.attribute("w:ascii").set_value(font_name.c_str());
+        rFonts_node.attribute("w:hAnsi").set_value(font_name.c_str());
+        rFonts_node.attribute("w:eastAsia").set_value(font_name.c_str());
+        rFonts_node.attribute("w:cs").set_value(font_name.c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_font_size(const double size)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node sz_node = rPr_node.child("w:sz");
+        if (!sz_node)
+        {
+            sz_node = rPr_node.append_child("w:sz");
+        }
+
+        // 字号单位是 "half-points"，所以需要乘以2
+        const int half_points = static_cast<int>(std::round(size * 2.0));
+        
+        // 确保 w:val 属性存在，然后设置其值（覆盖而不是追加）
+        if (!sz_node.attribute("w:val")) {
+            sz_node.append_attribute("w:val");
+        }
+        sz_node.attribute("w:val").set_value(std::to_string(half_points).c_str());
+
+        // 还有一个 <w:szCs> 节点用于复杂字符（如亚洲语言），最好也设置一下
+        pugi::xml_node szCs_node = rPr_node.child("w:szCs");
+        if (!szCs_node)
+        {
+            szCs_node = rPr_node.append_child("w:szCs");
+        }
+        
+        // 同样修复 szCs 节点的属性设置
+        if (!szCs_node.attribute("w:val")) {
+            szCs_node.append_attribute("w:val");
+        }
+        szCs_node.attribute("w:val").set_value(std::to_string(half_points).c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_color(const std::string& color)
+    {
+        pugi::xml_node rPr_node = get_or_create_rPr();
+        pugi::xml_node color_node = rPr_node.child("w:color");
+        if (!color_node)
+        {
+            color_node = rPr_node.append_child("w:color");
+        }
+
+        // 修复重复属性问题：确保属性存在后设置值，而不是追加
+        if (!color_node.attribute("w:val")) {
+            color_node.append_attribute("w:val");
+        }
+        color_node.attribute("w:val").set_value(color.c_str());
+
+        return *this;
+    }
+
+    Run& Run::set_highlight(const HighlightColor color)
+    {
+        pugi::xml_node rPr = get_or_create_rPr();
+
+        pugi::xml_node highlight_node = rPr.child("w:highlight");
+
+        if (color == HighlightColor::NONE)
+        {
+            if (highlight_node)
+            {
+                rPr.remove_child(highlight_node);
+            }
+        }
+        else
+        {
+            const std::string color_str = highlight_color_to_string(color);
+            if (!color_str.empty())
+            {
+                if (!highlight_node)
+                {
+                    highlight_node = rPr.append_child("w:highlight");
+                }
+
+                pugi::xml_attribute val_attr = highlight_node.attribute("w:val");
+                if (!val_attr)
+                {
+                    val_attr = highlight_node.append_attribute("w:val");
+                }
+                val_attr.set_value(color_str.c_str());
+            }
+        }
+
+        return *this;
+    }
+
+    Run& Run::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:r");
+        return *this;
+    }
+
+    bool Run::try_advance()
+    {
+        const pugi::xml_node next_run = find_next_sibling("w:r");
+        if (!next_run.empty())
+        {
+            m_currentNode = next_run;
+            return true;
+        }
+        return false;
+    }
+
+    bool Run::can_advance() const
+    {
+        return !find_next_sibling("w:r").empty();
+    }
+
+    bool Run::move_to_next_run()
+    {
+        const pugi::xml_node next_run = find_next_sibling("w:r");
+        if (!next_run)
+            return false;
+
+        m_currentNode = next_run;
+        return true;
+    }
+
+    pugi::xml_node Run::get_or_create_rPr()
+    {
+        pugi::xml_node rPr_node = m_currentNode.child("w:rPr");
+        if (!rPr_node)
+        {
+            rPr_node = m_currentNode.insert_child_before("w:rPr", m_currentNode.first_child());
+        }
+        return rPr_node;
+    }
+
+    Paragraph::Paragraph(const pugi::xml_node parent, const pugi::xml_node current)
+        : DocxElement(parent, current) {}
+
+    void Paragraph::set_parent(const pugi::xml_node node)
+    {
+        m_parentNode = node;
+        m_currentNode = m_parentNode.child("w:p");
+
+        m_run.set_parent(m_currentNode);
+    }
+
+    void Paragraph::set_current(const pugi::xml_node node)
+    {
+        m_currentNode = node;
+    }
+
+    bool Paragraph::has_next() const
+    {
+        if (!m_currentNode) return false;
+        return find_next_sibling("w:p") != nullptr;
+    }
+
+    bool Paragraph::has_next_same_type() const
+    {
+        if (!m_currentNode)
+            return false;
+
+        return !find_next_sibling("w:p").empty();
+    }
+
+    Paragraph& Paragraph::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:p");
+        m_run.set_parent(m_currentNode);
+        return *this;
+    }
+
+    bool Paragraph::try_advance()
+    {
+        const pugi::xml_node next_run = find_next_sibling("w:p");
+        if (!next_run.empty())
+        {
+            m_currentNode = next_run;
+            return true;
+        }
+        return false;
+    }
+
+    bool Paragraph::can_advance() const
+    {
+        return !find_next_sibling("w:p").empty();
+    }
+
+    bool Paragraph::move_to_next_paragraph()
+    {
+        const pugi::xml_node next_para = find_next_sibling("w:p");
+        if (!next_para)
+            return false;
+
+        m_currentNode = next_para;
+        m_run.set_parent(m_currentNode);
+        return true;
+    }
+
+    Alignment Paragraph::get_alignment() const
+    {
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
+        {
+            const auto jc = pPr.child("w:jc");
+            if (jc)
+            {
+                const std::string val = jc.attribute("w:val").as_string();
+                if (val == "center") return Alignment::CENTER;
+                if (val == "right") return Alignment::RIGHT;
+                if (val == "both") return Alignment::BOTH;
+            }
+        }
+        return Alignment::LEFT;
+    }
+
+    bool Paragraph::get_line_spacing(double& line_spacing) const
+    {
+        line_spacing = 1.0; // Default line spacing is 1.0 (single spacing)
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
+        {
+            const auto spacingNode = pPr.child("w:spacing");
+            if (spacingNode)
+            {
+                const auto line = spacingNode.attribute("w:line");
+                if (line)
+                {
+                    line_spacing = line.as_double() / 240.0;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_spacing(double& before_pts, double& after_pts) const
+    {
+        before_pts = 0.0;
+        after_pts = 0.0;
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
+        {
+            const auto spacingNode = pPr.child("w:spacing");
+            if (spacingNode)
+            {
+                bool found = false;
+                const auto before = spacingNode.attribute("w:before");
+                if (before)
+                {
+                    before_pts = before.as_double() / 20.0;
+                    found = true;
+                }
+                const auto after = spacingNode.attribute("w:after");
+                if (after)
+                {
+                    after_pts = after.as_double() / 20.0;
+                    found = true;
+                }
+                return found;
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const
+    {
+        left_pts = 0.0;
+        right_pts = 0.0;
+        first_line_pts = 0.0;
+        
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
+        {
+            const auto indNode = pPr.child("w:ind");
+            if (indNode)
+            {
+                bool found = false;
+                const auto left = indNode.attribute("w:left");
+                if (left)
+                {
+                    left_pts = left.as_double() / 20.0;
+                    found = true;
+                }
+                const auto right = indNode.attribute("w:right");
+                if (right)
+                {
+                    right_pts = right.as_double() / 20.0;
+                    found = true;
+                }
+                const auto firstLine = indNode.attribute("w:firstLine");
+                if (firstLine)
+                {
+                    first_line_pts = firstLine.as_double() / 20.0;
+                    found = true;
+                }
+                const auto hanging = indNode.attribute("w:hanging");
+                if (hanging)
+                {
+                    first_line_pts = -hanging.as_double() / 20.0;
+                    found = true;
+                }
+                return found;
+            }
+        }
+        return false;
+    }
+
+    bool Paragraph::get_list_style(ListType& type, int& level, int& numId) const
+    {
+        const auto pPr = m_currentNode.child("w:pPr");
+        if (pPr)
+        {
+            const auto numPr = pPr.child("w:numPr");
+            if (numPr)
+            {
+                const auto ilvl = numPr.child("w:ilvl");
+                if (ilvl)
+                {
+                    level = ilvl.attribute("w:val").as_int(-1);
+                }
+                else
+                {
+                    level = -1;
+                }
+
+                const auto id = numPr.child("w:numId");
+                if (id)
+                {
+                    numId = id.attribute("w:val").as_int(-1);
+                }
+                else
+                {
+                    numId = -1;
+                }
+
+                // As before, we can't easily determine the type (BULLET/NUMBER)
+                // without parsing the numbering.xml, so we'll default to BULLET
+                type = ListType::BULLET;
+
+                return numId > 0;
+            }
+        }
+        return false;
+    }
+
+    absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs()
+    {
+        if (m_currentNode)
+        {
+            m_run.set_current(m_currentNode.child("w:r"));
+        }
+        else
+        {
+            m_run.set_current(pugi::xml_node());
+        }
+
+        m_run.set_parent(m_currentNode);
+
+        return make_element_range(m_run);
+    }
+
+    absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs() const
+    {
+        Run temp_run;
+
+        if (m_currentNode)
+        {
+            temp_run.set_current(m_currentNode.child("w:r"));
+        }
+        else
+        {
+            temp_run.set_current(pugi::xml_node());
+        }
+
+        temp_run.set_parent(m_currentNode);
+
+        return make_element_range(temp_run);
+    }
+
+    Run& Paragraph::add_run(const std::string& text, formatting_flag f)
+    {
+        return add_run(text.c_str(), f);
+    }
+
+    Run& Paragraph::add_run(const char* text, formatting_flag f)
+    {
+        // Add new run
+        pugi::xml_node new_run = m_currentNode.append_child("w:r");
+        // Insert meta to new run
+        pugi::xml_node meta = new_run.append_child("w:rPr");
+
+        if (f & bold)
+            meta.append_child("w:b");
+
+        if (f & italic)
+            meta.append_child("w:i");
+
+        if (f & underline)
+            meta.append_child("w:u").append_attribute("w:val").set_value("single");
+
+        if (f & strikethrough)
+            meta.append_child("w:strike").append_attribute("w:val").set_value("true");
+
+        if (f & superscript)
+            meta.append_child("w:vertAlign").append_attribute("w:val").set_value("superscript");
+        else if (f & subscript)
+            meta.append_child("w:vertAlign").append_attribute("w:val").set_value("subscript");
+
+        if (f & smallcaps)
+            meta.append_child("w:smallCaps").append_attribute("w:val").set_value("true");
+
+        if (f & shadow)
+            meta.append_child("w:shadow").append_attribute("w:val").set_value("true");
+
+        pugi::xml_node new_run_text = new_run.append_child("w:t");
+
+        if (text != nullptr && *text != 0) {
+            // Safe character range check for isspace() - must be in range [0, 255] or EOF (-1)
+            unsigned char first_char = static_cast<unsigned char>(text[0]);
+            size_t text_len = strlen(text);
+            unsigned char last_char = text_len > 0 ? static_cast<unsigned char>(text[text_len - 1]) : 0;
+            
+            if (isspace(first_char) || (text_len > 0 && isspace(last_char))) {
+                new_run_text.append_attribute("xml:space").set_value("preserve");
+            }
+        }
+        new_run_text.text().set(text ? text : "");
+
+        return *new Run(m_currentNode, new_run);
+    }
+
+    Run Paragraph::add_hyperlink(const Document& doc, const std::string& text, const std::string& url)
+    {
+        const HyperlinkManager& link_manager = doc.links();
+
+        const std::string rId = link_manager.add_relationship(url);
+
+        pugi::xml_node hyperlink_node = m_currentNode.append_child("w:hyperlink");
+        hyperlink_node.append_attribute("r:id").set_value(rId.c_str());
+
+        pugi::xml_node run_node = hyperlink_node.append_child("w:r");
+
+        pugi::xml_node rpr_node = run_node.append_child("w:rPr");
+
+        rpr_node.append_child("w:rStyle").append_attribute("w:val").set_value("Hyperlink");
+
+        pugi::xml_node color_node = rpr_node.append_child("w:color");
+        color_node.append_attribute("w:val").set_value("0563C1");
+
+        pugi::xml_node underline_node = rpr_node.append_child("w:u");
+        underline_node.append_attribute("w:val").set_value("single");
+
+        pugi::xml_node text_node = run_node.append_child("w:t");
+        text_node.text().set(text.c_str());
+        if (!text.empty() && (isspace(text.front()) || isspace(text.back())))
+        {
+            text_node.append_attribute("xml:space").set_value("preserve");
+        }
+
+        return {hyperlink_node, run_node};
+    }
+
+    Paragraph& Paragraph::set_alignment(const Alignment align)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+
+        // 2. 查找或创建 <w:jc> (justification) 节点
+        pugi::xml_node jc_node = pPr_node.child("w:jc");
+        if (!jc_node)
+        {
+            jc_node = pPr_node.append_child("w:jc");
+        }
+
+        auto align_str = "left";
+        switch (align)
+        {
+            case Alignment::LEFT:
+                align_str = "left";
+                break;
+            case Alignment::CENTER:
+                align_str = "center";
+                break;
+            case Alignment::RIGHT:
+                align_str = "right";
+                break;
+            case Alignment::BOTH:
+                align_str = "both";
+                break;
+        }
+
+        pugi::xml_attribute val_attr = jc_node.attribute("w:val");
+        if (!val_attr)
+        {
+            val_attr = jc_node.append_attribute("w:val");
+        }
+        val_attr.set_value(align_str);
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_spacing(const double before_pts, const double after_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node spacing_node = pPr_node.child("w:spacing");
+        if (!spacing_node)
+        {
+            spacing_node = pPr_node.append_child("w:spacing");
+        }
+
+        if (before_pts >= 0)
+        {
+            // 修复重复属性问题：确保属性存在后设置值
+            if (!spacing_node.attribute("w:before")) {
+                spacing_node.append_attribute("w:before");
+            }
+            spacing_node.attribute("w:before").set_value(points_to_twips(before_pts));
+        }
+        if (after_pts >= 0)
+        {
+            // 修复重复属性问题：确保属性存在后设置值
+            if (!spacing_node.attribute("w:after")) {
+                spacing_node.append_attribute("w:after");
+            }
+            spacing_node.attribute("w:after").set_value(points_to_twips(after_pts));
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_line_spacing(const double line_spacing)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node spacing_node = pPr_node.child("w:spacing");
+        if (!spacing_node)
+        {
+            spacing_node = pPr_node.append_child("w:spacing");
+        }
+        spacing_node.append_attribute("w:line").set_value(line_spacing_to_ooxml(line_spacing));
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_indentation(const double left_pts, const double right_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node ind_node = pPr_node.child("w:ind");
+        if (!ind_node)
+        {
+            ind_node = pPr_node.append_child("w:ind");
+        }
+
+        if (left_pts >= 0)
+        {
+            ind_node.append_attribute("w:left").set_value(points_to_twips(left_pts));
+        }
+        if (right_pts >= 0)
+        {
+            ind_node.append_attribute("w:right").set_value(points_to_twips(right_pts));
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_first_line_indent(const double first_line_pts)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node ind_node = pPr_node.child("w:ind");
+        if (!ind_node)
+        {
+            ind_node = pPr_node.append_child("w:ind");
+        }
+
+        if (first_line_pts > 0)
+        {
+            // 首行缩进
+            ind_node.append_attribute("w:firstLine").set_value(points_to_twips(first_line_pts));
+            ind_node.remove_attribute("w:hanging"); // 确保与悬挂缩进互斥
+        }
+        else if (first_line_pts < 0)
+        {
+            // 悬挂缩进
+            ind_node.append_attribute("w:hanging").set_value(points_to_twips(-first_line_pts));
+            ind_node.remove_attribute("w:firstLine"); // 确保与首行缩进互斥
+        }
+        else
+        {
+            // == 0
+            // 移除缩进
+            ind_node.remove_attribute("w:firstLine");
+            ind_node.remove_attribute("w:hanging");
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_list_style(const ListType type, const int level)
+    {
+        pugi::xml_node pPr_node = get_or_create_pPr();
+        pugi::xml_node numPr_node = pPr_node.child("w:numPr");
+
+        if (type == ListType::NONE)
+        {
+            // 如果要移除列表样式，则删除整个 <w:numPr> 节点
+            if (numPr_node)
+            {
+                pPr_node.remove_child(numPr_node);
+            }
+            return *this;
+        }
+
+        // 如果 <w:numPr> 不存在，则创建一个
+        if (!numPr_node)
+        {
+            numPr_node = pPr_node.append_child("w:numPr");
+        }
+
+        // --- 设置层级 <w:ilvl> ---
+        pugi::xml_node ilvl_node = numPr_node.child("w:ilvl");
+        if (!ilvl_node)
+        {
+            ilvl_node = numPr_node.append_child("w:ilvl");
+        }
+        ilvl_node.append_attribute("w:val").set_value(level);
+
+        // --- 设置列表ID <w:numId> ---
+        pugi::xml_node numId_node = numPr_node.child("w:numId");
+        if (!numId_node)
+        {
+            numId_node = numPr_node.append_child("w:numId");
+        }
+
+        // 根据类型，引用我们在 numbering.xml 中预定义的 ID
+        const int list_id = (type == ListType::BULLET) ? 1 : 2;
+        numId_node.append_attribute("w:val").set_value(list_id);
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::insert_paragraph_after(const std::string& text, formatting_flag f)
+    {
+        const pugi::xml_node new_para = m_parentNode.insert_child_after("w:p", m_currentNode);
+
+        const auto p = new Paragraph();
+        p->set_current(new_para);
+        p->add_run(text, f);
+
+        return *p;
+    }
+
+    pugi::xml_node Paragraph::get_or_create_pPr()
+    {
+        pugi::xml_node pPr_node = m_currentNode.child("w:pPr");
+        if (!pPr_node)
+        {
+            // Try to insert before first child, but if that fails, just append
+            pugi::xml_node first_child = m_currentNode.first_child();
+            if (first_child) {
+                pPr_node = m_currentNode.insert_child_before("w:pPr", first_child);
+            }
+            
+            // If insert_child_before failed or there was no first child, append
+            if (!pPr_node) {
+                pPr_node = m_currentNode.append_child("w:pPr");
+            }
+        }
+        return pPr_node;
+    }
 
     TableCell::TableCell(const pugi::xml_node parent, const pugi::xml_node current)
         : DocxElement(parent, current) {}
@@ -105,7 +1137,6 @@ namespace duckx
         return new_para;
     }
 
-    // Legacy API implementations
     TableCell& TableCell::set_width(double width_pts)
     {
         pugi::xml_node tc_pr = get_or_create_tc_pr();
@@ -259,7 +1290,6 @@ namespace duckx
         return *this;
     }
 
-    // Getters
     double TableCell::get_width() const
     {
         const auto tc_pr = m_currentNode.child("w:tcPr");
@@ -431,7 +1461,6 @@ namespace duckx
         return "";
     }
 
-    // Helper methods
     pugi::xml_node TableCell::get_or_create_tc_pr()
     {
         pugi::xml_node tc_pr = m_currentNode.child("w:tcPr");
@@ -450,7 +1479,6 @@ namespace duckx
         return tc_borders;
     }
 
-    // Modern Result<T> API implementations
     Result<TableCell*> TableCell::set_width_safe(double width_pts)
     {
         if (width_pts < 0) {
@@ -613,228 +1641,9 @@ namespace duckx
     }
 
     // ============================================================================
-    // TableRow implementations 
+    // TableRow Result<T> API implementations (Modern, recommended)
     // ============================================================================
 
-    TableRow::TableRow(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
-    {
-        m_tableCell.set_parent(m_currentNode);
-        m_tableCell.set_current(m_currentNode.child("w:tc"));
-    }
-
-    void TableRow::set_parent(pugi::xml_node node)
-    {
-        m_parentNode = node;
-    }
-
-    void TableRow::set_current(pugi::xml_node node)
-    {
-        m_currentNode = node;
-        m_tableCell.set_parent(m_currentNode);
-        m_tableCell.set_current(m_currentNode.child("w:tc"));
-    }
-
-    bool TableRow::has_next() const
-    {
-        return m_currentNode.next_sibling("w:tr") != nullptr;
-    }
-
-    bool TableRow::has_next_same_type() const
-    {
-        return m_currentNode.next_sibling("w:tr") != nullptr;
-    }
-
-    TableRow& TableRow::advance()
-    {
-        m_currentNode = m_currentNode.next_sibling("w:tr");
-        m_tableCell.set_parent(m_currentNode);
-        m_tableCell.set_current(m_currentNode.child("w:tc"));
-        return *this;
-    }
-
-    bool TableRow::try_advance()
-    {
-        pugi::xml_node next = m_currentNode.next_sibling("w:tr");
-        if (next) {
-            m_currentNode = next;
-            m_tableCell.set_parent(m_currentNode);
-            m_tableCell.set_current(m_currentNode.child("w:tc"));
-            return true;
-        }
-        return false;
-    }
-
-    bool TableRow::can_advance() const
-    {
-        return has_next();
-    }
-
-    bool TableRow::move_to_next_row()
-    {
-        return try_advance();
-    }
-
-    absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> TableRow::cells()
-    {
-        TableCell first_cell(m_currentNode, m_currentNode.child("w:tc"));
-        return ElementRange<TableCell>(first_cell);
-    }
-
-    TableCell& TableRow::add_cell()
-    {
-        pugi::xml_node new_cell = m_currentNode.append_child("w:tc");
-        pugi::xml_node new_p = new_cell.append_child("w:p");
-        
-        // Update the TableCell to point to the new cell
-        m_tableCell.set_current(new_cell);
-        return m_tableCell;
-    }
-
-    TableCell& TableRow::get_cell(int index)
-    {
-        pugi::xml_node cell = m_currentNode.child("w:tc");
-        for (int i = 0; i < index && cell; ++i) {
-            cell = cell.next_sibling("w:tc");
-        }
-        
-        if (cell) {
-            m_tableCell.set_current(cell);
-        }
-        return m_tableCell;
-    }
-
-    int TableRow::cell_count() const
-    {
-        int count = 0;
-        for (pugi::xml_node cell = m_currentNode.child("w:tc"); cell; cell = cell.next_sibling("w:tc")) {
-            ++count;
-        }
-        return count;
-    }
-
-    // TableRow getters
-    double TableRow::get_height() const
-    {
-        const auto tr_pr = m_currentNode.child("w:trPr");
-        if (tr_pr) {
-            const auto tr_height = tr_pr.child("w:trHeight");
-            if (tr_height) {
-                const auto val_attr = tr_height.attribute("w:val");
-                if (val_attr) {
-                    return val_attr.as_double() / 20.0; // Convert from twips to points
-                }
-            }
-        }
-        return 0.0;
-    }
-
-    std::string TableRow::get_height_rule() const
-    {
-        const auto tr_pr = m_currentNode.child("w:trPr");
-        if (tr_pr) {
-            const auto tr_height = tr_pr.child("w:trHeight");
-            if (tr_height) {
-                const auto rule_attr = tr_height.attribute("w:hRule");
-                if (rule_attr) {
-                    return rule_attr.as_string();
-                }
-            }
-        }
-        return "auto";
-    }
-
-    bool TableRow::is_header_row() const
-    {
-        const auto tr_pr = m_currentNode.child("w:trPr");
-        if (tr_pr) {
-            const auto tbl_header = tr_pr.child("w:tblHeader");
-            return tbl_header != nullptr;
-        }
-        return false;
-    }
-
-    bool TableRow::get_cant_split() const
-    {
-        const auto tr_pr = m_currentNode.child("w:trPr");
-        if (tr_pr) {
-            const auto cant_split_node = tr_pr.child("w:cantSplit");
-            return cant_split_node != nullptr;
-        }
-        return false;
-    }
-
-    // TableRow helper method
-    pugi::xml_node TableRow::get_or_create_tr_pr()
-    {
-        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
-        if (!tr_pr) {
-            tr_pr = m_currentNode.prepend_child("w:trPr");
-        }
-        return tr_pr;
-    }
-
-    // TableRow legacy setters
-    TableRow& TableRow::set_height(double height_pts)
-    {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        pugi::xml_node tr_height = tr_pr.child("w:trHeight");
-        if (!tr_height) {
-            tr_height = tr_pr.append_child("w:trHeight");
-        }
-        
-        tr_height.remove_attribute("w:val");
-        tr_height.append_attribute("w:val").set_value(static_cast<int>(height_pts * 20)); // Convert to twips
-        return *this;
-    }
-
-    TableRow& TableRow::set_height_rule(const std::string& rule)
-    {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        pugi::xml_node tr_height = tr_pr.child("w:trHeight");
-        if (!tr_height) {
-            tr_height = tr_pr.append_child("w:trHeight");
-        }
-        
-        tr_height.remove_attribute("w:hRule");
-        tr_height.append_attribute("w:hRule").set_value(rule.c_str());
-        return *this;
-    }
-
-    TableRow& TableRow::set_header_row(bool is_header)
-    {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        
-        pugi::xml_node tbl_header = tr_pr.child("w:tblHeader");
-        if (is_header) {
-            if (!tbl_header) {
-                tbl_header = tr_pr.append_child("w:tblHeader");
-            }
-        } else {
-            if (tbl_header) {
-                tr_pr.remove_child(tbl_header);
-            }
-        }
-        return *this;
-    }
-
-    TableRow& TableRow::set_cant_split(bool cant_split)
-    {
-        pugi::xml_node tr_pr = get_or_create_tr_pr();
-        
-        pugi::xml_node cant_split_node = tr_pr.child("w:cantSplit");
-        if (cant_split) {
-            if (!cant_split_node) {
-                cant_split_node = tr_pr.append_child("w:cantSplit");
-            }
-        } else {
-            if (cant_split_node) {
-                tr_pr.remove_child(cant_split_node);
-            }
-        }
-        return *this;
-    }
-
-    // TableRow Result<T> API
     Result<TableRow*> TableRow::set_height_safe(double height_pts)
     {
         if (height_pts < 0) {
@@ -884,109 +1693,121 @@ namespace duckx
     }
 
     // ============================================================================
-    // Table implementations
+    // Table Result<T> API implementations (Modern, recommended)
     // ============================================================================
 
-    Table::Table(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
+    Result<Table*> Table::set_alignment_safe(const std::string& alignment)
     {
-        m_tableRow.set_parent(m_currentNode);
-        m_tableRow.set_current(m_currentNode.child("w:tr"));
-    }
-
-    void Table::set_parent(pugi::xml_node node)
-    {
-        m_parentNode = node;
-    }
-
-    void Table::set_current(pugi::xml_node node)
-    {
-        m_currentNode = node;
-        m_tableRow.set_parent(m_currentNode);
-        m_tableRow.set_current(m_currentNode.child("w:tr"));
-    }
-
-    bool Table::has_next() const
-    {
-        return m_currentNode.next_sibling("w:tbl") != nullptr;
-    }
-
-    bool Table::has_next_same_type() const
-    {
-        return m_currentNode.next_sibling("w:tbl") != nullptr;
-    }
-
-    Table& Table::advance()
-    {
-        m_currentNode = m_currentNode.next_sibling("w:tbl");
-        m_tableRow.set_parent(m_currentNode);
-        m_tableRow.set_current(m_currentNode.child("w:tr"));
-        return *this;
-    }
-
-    bool Table::try_advance()
-    {
-        pugi::xml_node next = m_currentNode.next_sibling("w:tbl");
-        if (next) {
-            m_currentNode = next;
-            m_tableRow.set_parent(m_currentNode);
-            m_tableRow.set_current(m_currentNode.child("w:tr"));
-            return true;
-        }
-        return false;
-    }
-
-    bool Table::can_advance() const
-    {
-        return has_next();
-    }
-
-    bool Table::move_to_next_table()
-    {
-        return try_advance();
-    }
-
-    absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> Table::rows()
-    {
-        TableRow first_row(m_currentNode, m_currentNode.child("w:tr"));
-        return ElementRange<TableRow>(first_row);
-    }
-
-    TableRow& Table::add_row()
-    {
-        pugi::xml_node new_row = m_currentNode.append_child("w:tr");
-        
-        // Add a default cell to the new row
-        pugi::xml_node new_cell = new_row.append_child("w:tc");
-        pugi::xml_node new_p = new_cell.append_child("w:p");
-        
-        // Update the TableRow to point to the new row
-        m_tableRow.set_current(new_row);
-        return m_tableRow;
-    }
-
-    TableRow& Table::get_row(int index)
-    {
-        pugi::xml_node row = m_currentNode.child("w:tr");
-        for (int i = 0; i < index && row; ++i) {
-            row = row.next_sibling("w:tr");
+        if (alignment.empty()) {
+            return Result<Table*>(errors::invalid_argument("alignment", "Alignment cannot be empty"));
         }
         
-        if (row) {
-            m_tableRow.set_current(row);
+        if (alignment != "left" && alignment != "center" && alignment != "right") {
+            return Result<Table*>(errors::validation_failed("alignment", "Invalid table alignment",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_alignment", alignment)
+                    .with_info("valid_alignments", "left, center, right")));
         }
-        return m_tableRow;
+        
+        set_alignment(alignment);
+        return Result<Table*>(this);
     }
 
-    int Table::row_count() const
+    Result<Table*> Table::set_width_safe(double width_pts)
     {
-        int count = 0;
-        for (pugi::xml_node row = m_currentNode.child("w:tr"); row; row = row.next_sibling("w:tr")) {
-            ++count;
+        if (width_pts <= 0) {
+            return Result<Table*>(errors::invalid_argument("width_pts", "Width must be positive",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
         }
-        return count;
+        
+        if (width_pts > 2000.0) { // Reasonable maximum for table width
+            return Result<Table*>(errors::validation_failed("width_pts", "Width exceeds maximum allowed value",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "2000.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
+        }
+        
+        set_width(width_pts);
+        return Result<Table*>(this);
     }
 
-    // Table getters
+    Result<Table*> Table::set_border_style_safe(const std::string& style)
+    {
+        if (style.empty()) {
+            return Result<Table*>(errors::invalid_argument("style", "Border style cannot be empty"));
+        }
+        
+        const std::vector<std::string> valid_styles = {"single", "double", "dashed", "dotted", "none"};
+        if (std::find(valid_styles.begin(), valid_styles.end(), style) == valid_styles.end()) {
+            return Result<Table*>(errors::validation_failed("style", "Invalid border style",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_style", style)
+                    .with_info("valid_styles", "single, double, dashed, dotted, none")));
+        }
+        
+        set_border_style(style);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_border_width_safe(double width_pts)
+    {
+        if (width_pts < 0) {
+            return Result<Table*>(errors::invalid_argument("width_pts", "Border width must be non-negative",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_value", std::to_string(width_pts))));
+        }
+        
+        if (width_pts > 20.0) { // Reasonable maximum
+            return Result<Table*>(errors::validation_failed("width_pts", "Border width exceeds maximum",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("max_width", "20.0")
+                    .with_info("provided_width", std::to_string(width_pts))));
+        }
+        
+        set_border_width(width_pts);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_border_color_safe(const std::string& color)
+    {
+        if (color.empty()) {
+            return Result<Table*>(errors::invalid_argument("color", "Border color cannot be empty"));
+        }
+        
+        // Basic hex color validation
+        if (color.length() != 6 || !std::all_of(color.begin(), color.end(), [](char c) { return std::isxdigit(c); })) {
+            return Result<Table*>(errors::validation_failed("color", "Invalid hex color format",
+                ErrorContext(__FILE__, __func__, __LINE__)
+                    .with_info("provided_color", color)
+                    .with_info("expected_format", "6-digit hex (e.g., 000000)")));
+        }
+        
+        set_border_color(color);
+        return Result<Table*>(this);
+    }
+
+    Result<Table*> Table::set_cell_margins_safe(double top_pts, double right_pts, double bottom_pts, double left_pts)
+    {
+        const double margins[] = {top_pts, right_pts, bottom_pts, left_pts};
+        const char* names[] = {"top_pts", "right_pts", "bottom_pts", "left_pts"};
+        
+        for (int i = 0; i < 4; ++i) {
+            if (margins[i] < 0) {
+                return Result<Table*>(errors::invalid_argument(names[i], "Margin must be non-negative",
+                    ErrorContext(__FILE__, __func__, __LINE__)
+                        .with_info("provided_value", std::to_string(margins[i]))));
+            }
+        }
+        
+        set_cell_margins(top_pts, right_pts, bottom_pts, left_pts);
+        return Result<Table*>(this);
+    }
+
+    // ============================================================================
+    // Table Getter implementations
+    // ============================================================================
+
     std::string Table::get_alignment() const
     {
         const auto tbl_pr = m_currentNode.child("w:tblPr");
@@ -1113,7 +1934,10 @@ namespace duckx
         return Result<std::array<double, 4>>(errors::element_not_found("cell_margins", ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
     }
 
-    // Table legacy setters
+    // ============================================================================
+    // Table Setter implementations (Legacy API)
+    // ============================================================================
+
     Table& Table::set_alignment(const std::string& alignment)
     {
         pugi::xml_node tbl_pr = m_currentNode.child("w:tblPr");
@@ -1251,113 +2075,485 @@ namespace duckx
         return *this;
     }
 
-    // Table Result<T> API
-    Result<Table*> Table::set_alignment_safe(const std::string& alignment)
+    // ============================================================================
+    // TableRow Setter implementations (Legacy API)
+    // ============================================================================
+
+    TableRow& TableRow::set_height(double height_pts)
     {
-        if (alignment.empty()) {
-            return Result<Table*>(errors::invalid_argument("alignment", "Alignment cannot be empty"));
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
         }
         
-        if (alignment != "left" && alignment != "center" && alignment != "right") {
-            return Result<Table*>(errors::validation_failed("alignment", "Invalid table alignment",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("provided_alignment", alignment)
-                    .with_info("valid_alignments", "left, center, right")));
+        pugi::xml_node tr_height = tr_pr.child("w:trHeight");
+        if (!tr_height) {
+            tr_height = tr_pr.append_child("w:trHeight");
         }
         
-        set_alignment(alignment);
-        return Result<Table*>(this);
+        tr_height.remove_attribute("w:val");
+        tr_height.append_attribute("w:val").set_value(static_cast<int>(height_pts * 20)); // Convert to twips
+        return *this;
     }
 
-    Result<Table*> Table::set_width_safe(double width_pts)
+    TableRow& TableRow::set_height_rule(const std::string& rule)
     {
-        if (width_pts <= 0) {
-            return Result<Table*>(errors::invalid_argument("width_pts", "Width must be positive",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("provided_value", std::to_string(width_pts))));
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
         }
         
-        if (width_pts > 2000.0) { // Reasonable maximum for table width
-            return Result<Table*>(errors::validation_failed("width_pts", "Width exceeds maximum allowed value",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("max_width", "2000.0")
-                    .with_info("provided_width", std::to_string(width_pts))));
+        pugi::xml_node tr_height = tr_pr.child("w:trHeight");
+        if (!tr_height) {
+            tr_height = tr_pr.append_child("w:trHeight");
         }
         
-        set_width(width_pts);
-        return Result<Table*>(this);
+        tr_height.remove_attribute("w:hRule");
+        tr_height.append_attribute("w:hRule").set_value(rule.c_str());
+        return *this;
     }
 
-    Result<Table*> Table::set_border_style_safe(const std::string& style)
+    TableRow& TableRow::set_header_row(bool is_header)
     {
-        if (style.empty()) {
-            return Result<Table*>(errors::invalid_argument("style", "Border style cannot be empty"));
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
         }
         
-        const std::vector<std::string> valid_styles = {"single", "double", "dashed", "dotted", "none"};
-        if (std::find(valid_styles.begin(), valid_styles.end(), style) == valid_styles.end()) {
-            return Result<Table*>(errors::validation_failed("style", "Invalid border style",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("provided_style", style)
-                    .with_info("valid_styles", "single, double, dashed, dotted, none")));
-        }
-        
-        set_border_style(style);
-        return Result<Table*>(this);
-    }
-
-    Result<Table*> Table::set_border_width_safe(double width_pts)
-    {
-        if (width_pts < 0) {
-            return Result<Table*>(errors::invalid_argument("width_pts", "Border width must be non-negative",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("provided_value", std::to_string(width_pts))));
-        }
-        
-        if (width_pts > 20.0) { // Reasonable maximum
-            return Result<Table*>(errors::validation_failed("width_pts", "Border width exceeds maximum",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("max_width", "20.0")
-                    .with_info("provided_width", std::to_string(width_pts))));
-        }
-        
-        set_border_width(width_pts);
-        return Result<Table*>(this);
-    }
-
-    Result<Table*> Table::set_border_color_safe(const std::string& color)
-    {
-        if (color.empty()) {
-            return Result<Table*>(errors::invalid_argument("color", "Border color cannot be empty"));
-        }
-        
-        // Basic hex color validation
-        if (color.length() != 6 || !std::all_of(color.begin(), color.end(), [](char c) { return std::isxdigit(c); })) {
-            return Result<Table*>(errors::validation_failed("color", "Invalid hex color format",
-                ErrorContext(__FILE__, __func__, __LINE__)
-                    .with_info("provided_color", color)
-                    .with_info("expected_format", "6-digit hex (e.g., 000000)")));
-        }
-        
-        set_border_color(color);
-        return Result<Table*>(this);
-    }
-
-    Result<Table*> Table::set_cell_margins_safe(double top_pts, double right_pts, double bottom_pts, double left_pts)
-    {
-        const double margins[] = {top_pts, right_pts, bottom_pts, left_pts};
-        const char* names[] = {"top_pts", "right_pts", "bottom_pts", "left_pts"};
-        
-        for (int i = 0; i < 4; ++i) {
-            if (margins[i] < 0) {
-                return Result<Table*>(errors::invalid_argument(names[i], "Margin must be non-negative",
-                    ErrorContext(__FILE__, __func__, __LINE__)
-                        .with_info("provided_value", std::to_string(margins[i]))));
+        pugi::xml_node tbl_header = tr_pr.child("w:tblHeader");
+        if (is_header) {
+            if (!tbl_header) {
+                tbl_header = tr_pr.append_child("w:tblHeader");
+            }
+        } else {
+            if (tbl_header) {
+                tr_pr.remove_child(tbl_header);
             }
         }
+        return *this;
+    }
+
+    TableRow& TableRow::set_cant_split(bool cant_split)
+    {
+        pugi::xml_node tr_pr = m_currentNode.child("w:trPr");
+        if (!tr_pr) {
+            tr_pr = m_currentNode.prepend_child("w:trPr");
+        }
         
-        set_cell_margins(top_pts, right_pts, bottom_pts, left_pts);
-        return Result<Table*>(this);
+        pugi::xml_node cant_split_node = tr_pr.child("w:cantSplit");
+        if (cant_split) {
+            if (!cant_split_node) {
+                cant_split_node = tr_pr.append_child("w:cantSplit");
+            }
+        } else {
+            if (cant_split_node) {
+                tr_pr.remove_child(cant_split_node);
+            }
+        }
+        return *this;
+    }
+
+    // ============================================================================
+    // TableRow Getter implementations
+    // ============================================================================
+
+    double TableRow::get_height() const
+    {
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tr_height = tr_pr.child("w:trHeight");
+            if (tr_height) {
+                const auto val_attr = tr_height.attribute("w:val");
+                if (val_attr) {
+                    return val_attr.as_double() / 20.0; // Convert from twips to points
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    std::string TableRow::get_height_rule() const
+    {
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tr_height = tr_pr.child("w:trHeight");
+            if (tr_height) {
+                const auto rule_attr = tr_height.attribute("w:hRule");
+                if (rule_attr) {
+                    return rule_attr.as_string();
+                }
+            }
+        }
+        return "auto";
+    }
+
+    bool TableRow::is_header_row() const
+    {
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto tbl_header = tr_pr.child("w:tblHeader");
+            return tbl_header != nullptr;
+        }
+        return false;
+    }
+
+    bool TableRow::get_cant_split() const
+    {
+        const auto tr_pr = m_currentNode.child("w:trPr");
+        if (tr_pr) {
+            const auto cant_split_node = tr_pr.child("w:cantSplit");
+            return cant_split_node != nullptr;
+        }
+        return false;
+    }
+
+    // ============================================================================
+    // Table Basic implementations (Navigation and Element Management)
+    // ============================================================================
+
+    Table::Table(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
+    {
+        m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
+    }
+
+    void Table::set_parent(pugi::xml_node node)
+    {
+        m_parentNode = node;
+    }
+
+    void Table::set_current(pugi::xml_node node)
+    {
+        m_currentNode = node;
+        m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
+    }
+
+    bool Table::has_next() const
+    {
+        return m_currentNode.next_sibling("w:tbl") != nullptr;
+    }
+
+    bool Table::has_next_same_type() const
+    {
+        return m_currentNode.next_sibling("w:tbl") != nullptr;
+    }
+
+    Table& Table::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tbl");
+        m_tableRow.set_parent(m_currentNode);
+        m_tableRow.set_current(m_currentNode.child("w:tr"));
+        return *this;
+    }
+
+    bool Table::try_advance()
+    {
+        pugi::xml_node next = m_currentNode.next_sibling("w:tbl");
+        if (next) {
+            m_currentNode = next;
+            m_tableRow.set_parent(m_currentNode);
+            m_tableRow.set_current(m_currentNode.child("w:tr"));
+            return true;
+        }
+        return false;
+    }
+
+    bool Table::can_advance() const
+    {
+        return has_next();
+    }
+
+    bool Table::move_to_next_table()
+    {
+        return try_advance();
+    }
+
+    absl::enable_if_t<is_docx_element<TableRow>::value, ElementRange<TableRow>> Table::rows()
+    {
+        TableRow first_row(m_currentNode, m_currentNode.child("w:tr"));
+        return ElementRange<TableRow>(first_row);
+    }
+
+    TableRow& Table::add_row()
+    {
+        pugi::xml_node new_row = m_currentNode.append_child("w:tr");
+        
+        // Add a default cell to the new row
+        pugi::xml_node new_cell = new_row.append_child("w:tc");
+        pugi::xml_node new_p = new_cell.append_child("w:p");
+        
+        // Update the TableRow to point to the new row
+        m_tableRow.set_current(new_row);
+        return m_tableRow;
+    }
+
+    TableRow& Table::get_row(int index)
+    {
+        pugi::xml_node row = m_currentNode.child("w:tr");
+        for (int i = 0; i < index && row; ++i) {
+            row = row.next_sibling("w:tr");
+        }
+        
+        if (row) {
+            m_tableRow.set_current(row);
+        }
+        return m_tableRow;
+    }
+
+    int Table::row_count() const
+    {
+        int count = 0;
+        for (pugi::xml_node row = m_currentNode.child("w:tr"); row; row = row.next_sibling("w:tr")) {
+            ++count;
+        }
+        return count;
+    }
+
+    // ============================================================================
+    // TableRow Basic implementations (Navigation and Element Management)
+    // ============================================================================
+
+    TableRow::TableRow(pugi::xml_node parent, pugi::xml_node current) : DocxElement(parent, current)
+    {
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
+    }
+
+    void TableRow::set_parent(pugi::xml_node node)
+    {
+        m_parentNode = node;
+    }
+
+    void TableRow::set_current(pugi::xml_node node)
+    {
+        m_currentNode = node;
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
+    }
+
+    bool TableRow::has_next() const
+    {
+        return m_currentNode.next_sibling("w:tr") != nullptr;
+    }
+
+    bool TableRow::has_next_same_type() const
+    {
+        return m_currentNode.next_sibling("w:tr") != nullptr;
+    }
+
+    TableRow& TableRow::advance()
+    {
+        m_currentNode = m_currentNode.next_sibling("w:tr");
+        m_tableCell.set_parent(m_currentNode);
+        m_tableCell.set_current(m_currentNode.child("w:tc"));
+        return *this;
+    }
+
+    bool TableRow::try_advance()
+    {
+        pugi::xml_node next = m_currentNode.next_sibling("w:tr");
+        if (next) {
+            m_currentNode = next;
+            m_tableCell.set_parent(m_currentNode);
+            m_tableCell.set_current(m_currentNode.child("w:tc"));
+            return true;
+        }
+        return false;
+    }
+
+    bool TableRow::can_advance() const
+    {
+        return has_next();
+    }
+
+    bool TableRow::move_to_next_row()
+    {
+        return try_advance();
+    }
+
+    absl::enable_if_t<is_docx_element<TableCell>::value, ElementRange<TableCell>> TableRow::cells()
+    {
+        TableCell first_cell(m_currentNode, m_currentNode.child("w:tc"));
+        return ElementRange<TableCell>(first_cell);
+    }
+
+    TableCell& TableRow::add_cell()
+    {
+        pugi::xml_node new_cell = m_currentNode.append_child("w:tc");
+        pugi::xml_node new_p = new_cell.append_child("w:p");
+        
+        // Update the TableCell to point to the new cell
+        m_tableCell.set_current(new_cell);
+        return m_tableCell;
+    }
+
+    TableCell& TableRow::get_cell(int index)
+    {
+        pugi::xml_node cell = m_currentNode.child("w:tc");
+        for (int i = 0; i < index && cell; ++i) {
+            cell = cell.next_sibling("w:tc");
+        }
+        
+        if (cell) {
+            m_tableCell.set_current(cell);
+        }
+        return m_tableCell;
+    }
+
+    int TableRow::cell_count() const
+    {
+        int count = 0;
+        for (pugi::xml_node cell = m_currentNode.child("w:tc"); cell; cell = cell.next_sibling("w:tc")) {
+            ++count;
+        }
+        return count;
+    }
+
+    // ============================================================================
+    // Style Application Implementation
+    // ============================================================================
+
+    // Run Style Application Methods
+    Result<void> Run::apply_style_safe(const StyleManager& style_manager, const std::string& style_name)
+    {
+        // Verify style exists and is compatible
+        auto style_result = style_manager.get_style_safe(style_name);
+        if (!style_result.ok()) {
+            return Result<void>(style_result.error());
+        }
+        
+        const Style* style = style_result.value();
+        if (style->type() != StyleType::CHARACTER && style->type() != StyleType::MIXED) {
+            return Result<void>(errors::style_property_invalid(
+                absl::StrFormat("Style '%s' is not a character or mixed style", style_name),
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Get or create run properties node
+        pugi::xml_node rpr = get_or_create_rPr();
+        if (!rpr) {
+            return Result<void>(errors::xml_manipulation_failed(
+                "Failed to create run properties node",
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Apply style reference
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (!style_ref) {
+            style_ref = rpr.append_child("w:rStyle");
+        }
+        style_ref.attribute("w:val") ? 
+            style_ref.attribute("w:val").set_value(style_name.c_str()) :
+            style_ref.append_attribute("w:val").set_value(style_name.c_str());
+        
+        return Result<void>{};
+    }
+
+    Result<std::string> Run::get_style_safe() const
+    {
+        pugi::xml_node rpr = m_currentNode.child("w:rPr");
+        if (!rpr) {
+            return Result<std::string>{std::string{}}; // No style applied, return empty string
+        }
+        
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (!style_ref) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_attribute val_attr = style_ref.attribute("w:val");
+        if (!val_attr) {
+            return Result<std::string>{std::string{}}; // No style value
+        }
+        
+        return Result<std::string>{std::string(val_attr.value())};
+    }
+
+    Result<void> Run::remove_style_safe()
+    {
+        pugi::xml_node rpr = m_currentNode.child("w:rPr");
+        if (!rpr) {
+            return Result<void>{}; // No properties to remove
+        }
+        
+        pugi::xml_node style_ref = rpr.child("w:rStyle");
+        if (style_ref) {
+            rpr.remove_child(style_ref);
+        }
+        
+        return Result<void>{};
+    }
+
+    // Paragraph Style Application Methods
+    Result<void> Paragraph::apply_style_safe(const StyleManager& style_manager, const std::string& style_name)
+    {
+        // Verify style exists and is compatible
+        auto style_result = style_manager.get_style_safe(style_name);
+        if (!style_result.ok()) {
+            return Result<void>(style_result.error());
+        }
+        
+        const Style* style = style_result.value();
+        if (style->type() != StyleType::PARAGRAPH && style->type() != StyleType::MIXED) {
+            return Result<void>(errors::style_property_invalid(
+                absl::StrFormat("Style '%s' is not a paragraph or mixed style", style_name),
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Get or create paragraph properties node
+        pugi::xml_node ppr = get_or_create_pPr();
+        if (!ppr) {
+            return Result<void>(errors::xml_manipulation_failed(
+                "Failed to create paragraph properties node",
+                DUCKX_ERROR_CONTEXT_STYLE("apply_style", style_name)));
+        }
+        
+        // Apply style reference
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (!style_ref) {
+            style_ref = ppr.append_child("w:pStyle");
+        }
+        style_ref.attribute("w:val") ? 
+            style_ref.attribute("w:val").set_value(style_name.c_str()) :
+            style_ref.append_attribute("w:val").set_value(style_name.c_str());
+        
+        return Result<void>{};
+    }
+
+    Result<std::string> Paragraph::get_style_safe() const
+    {
+        pugi::xml_node ppr = m_currentNode.child("w:pPr");
+        if (!ppr) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (!style_ref) {
+            return Result<std::string>{std::string{}}; // No style applied
+        }
+        
+        pugi::xml_attribute val_attr = style_ref.attribute("w:val");
+        if (!val_attr) {
+            return Result<std::string>{std::string{}}; // No style value
+        }
+        
+        return Result<std::string>{std::string(val_attr.value())};
+    }
+
+    Result<void> Paragraph::remove_style_safe()
+    {
+        pugi::xml_node ppr = m_currentNode.child("w:pPr");
+        if (!ppr) {
+            return Result<void>{}; // No properties to remove
+        }
+        
+        pugi::xml_node style_ref = ppr.child("w:pStyle");
+        if (style_ref) {
+            ppr.remove_child(style_ref);
+        }
+        
+        return Result<void>{};
     }
 
     // Table Style Application Methods

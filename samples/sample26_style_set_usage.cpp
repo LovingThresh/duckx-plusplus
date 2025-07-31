@@ -29,7 +29,7 @@ int main()
     
     try {
         // Create a new document
-        auto doc_result = Document::create_safe(test_utils::get_temp_path("style_set_demo.docx"));
+        auto doc_result = Document::create_safe(test_utils::get_temp_path("sample26_style_set_demo.docx"));
         if (!doc_result.ok()) {
             std::cerr << "Failed to create document: " << doc_result.error().message() << std::endl;
             return 1;

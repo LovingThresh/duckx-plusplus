@@ -16,3 +16,5 @@
 #include "Image.hpp"
 #include "TextBox.hpp"
 #include "StyleManager.hpp"
+#include "OutlineManager.hpp"
+#include "PageLayoutManager.hpp"
