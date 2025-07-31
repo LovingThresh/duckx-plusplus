@@ -20,14 +20,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Define resource files from their source locations
 set(DUCKX_RESOURCE_FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/test/my_test.docx"
-        "${CMAKE_CURRENT_SOURCE_DIR}/img/logo.png"
         "${CMAKE_CURRENT_SOURCE_DIR}/docs/predefined_styles/technical_documentation.xml"
 )
 
 # Simple function to copy resource files using configure_file only
 function(copy_duckx_resources_simple target_dir)
-    foreach(resource_file ${DUCKX_RESOURCE_FILES})
-        if(EXISTS ${resource_file})
+    foreach (resource_file ${DUCKX_RESOURCE_FILES})
+        if (EXISTS ${resource_file})
             get_filename_component(resource_filename ${resource_file} NAME)
             # Use only configure_file - no custom commands to avoid conflicts
             configure_file(
@@ -35,8 +34,8 @@ function(copy_duckx_resources_simple target_dir)
                     ${target_dir}/${resource_filename}
                     COPYONLY
             )
-        endif()
-    endforeach()
+        endif ()
+    endforeach ()
 endfunction()
 
 # ====== Compiler Settings ======
@@ -198,9 +197,9 @@ source_group("Source Files\\ThirdParty\\PugiXML" FILES
 
 include(GenerateExportHeader)
 generate_export_header(duckx
-        BASE_NAME          "duckx"
-        EXPORT_MACRO_NAME  "DUCKX_API"
-        EXPORT_FILE_NAME   "duckx_export.h"
+        BASE_NAME "duckx"
+        EXPORT_MACRO_NAME "DUCKX_API"
+        EXPORT_FILE_NAME "duckx_export.h"
 )
 
 mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
@@ -306,37 +305,37 @@ install(
 # Optional Doxygen documentation generation
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" OFF)
 
-if(BUILD_DOCUMENTATION)
+if (BUILD_DOCUMENTATION)
     find_package(Doxygen REQUIRED)
-    
-    if(DOXYGEN_FOUND)
+
+    if (DOXYGEN_FOUND)
         # Set input and output files
         set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
         set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-        
+
         # Configure the Doxyfile (optional: use variables from CMake)
         configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-        
+
         # Create a target for generating documentation
         add_custom_target(docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "Generating API documentation with Doxygen"
-            VERBATIM
+                COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                COMMENT "Generating API documentation with Doxygen"
+                VERBATIM
         )
-        
+
         # Optional: Install documentation
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/html")
+        if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/html")
             install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/html/"
-                DESTINATION "${CMAKE_INSTALL_DOCDIR}/api"
-                OPTIONAL
+                    DESTINATION "${CMAKE_INSTALL_DOCDIR}/api"
+                    OPTIONAL
             )
-        endif()
-        
+        endif ()
+
         message(STATUS "Doxygen found: ${DOXYGEN_EXECUTABLE}")
         message(STATUS "Documentation will be generated to: docs/doxygen/html/")
         message(STATUS "Use 'make docs' or 'cmake --build . --target docs' to generate documentation")
-    else()
+    else ()
         message(WARNING "Doxygen not found. Documentation cannot be built.")
-    endif()
-endif()
+    endif ()
+endif ()
