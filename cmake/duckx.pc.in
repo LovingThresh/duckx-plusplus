@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: DuckX
+Description: Modern C++ library for creating and reading Microsoft Word DOCX files
+Version: @PROJECT_VERSION@
+URL: https://github.com/amiremohamadi/DuckX
+
+Requires:
+Libs: -L${libdir} -lduckx
+Libs.private: @DUCKX_PC_LIBS_PRIVATE@
+Cflags: -I${includedir}/duckx @DUCKX_PC_CFLAGS@

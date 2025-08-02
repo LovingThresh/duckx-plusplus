@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **ALWAYS** provide commit messages as text output when requested, but NEVER execute the commit
 - User must manually execute all git modification operations
 - This ensures user maintains full control over repository state and commit history
-
+- git commit message follow .github/git-commit-instructions.md
 ## Project Overview
 
 DuckX-PLusPlus is a C++ library for creating, reading, and writing Microsoft Word DOCX files. It features a modern hybrid error handling system using both traditional exceptions and a `Result<T>` pattern for enhanced reliability and user experience.

@@ -20,6 +20,23 @@ foreach(sample_file ${SAMPLE_SRCS})
     list(APPEND SAMPLE_TARGETS ${sample_name})
 endforeach()
 
+# ====== Windows DLL Management for Shared Builds ======
+# For Windows shared builds, copy DLLs to the samples directory after each sample is built
+if(WIN32 AND BUILD_SHARED_LIBS AND SAMPLE_TARGETS)
+    # Add DLL copying command to each sample target
+    foreach(sample_target ${SAMPLE_TARGETS})
+        add_custom_command(TARGET ${sample_target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:duckx>
+                "${CMAKE_CURRENT_BINARY_DIR}/"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:abseil_dll>
+                "${CMAKE_CURRENT_BINARY_DIR}/"
+            COMMENT "Copying DLLs for sample ${sample_target}"
+        )
+    endforeach()
+endif()
+
 # Add a custom target to build and run all samples in one go.
 if(SAMPLE_TARGETS)
     add_custom_target(run_samples

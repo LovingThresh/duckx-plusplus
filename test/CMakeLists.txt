@@ -71,8 +71,33 @@ copy_test_resources_simple("${CMAKE_BINARY_DIR}/test")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/temp")
 copy_test_resources_simple("${CMAKE_BINARY_DIR}/temp")
 
+# ====== Windows DLL Management for Shared Builds ======
+# For Windows shared builds, copy DLLs to the same directory as the test executable
+if(WIN32 AND BUILD_SHARED_LIBS)
+    # Copy DLLs to the test directory where the executable is located
+    add_custom_command(TARGET run_gtests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:duckx>
+            "${CMAKE_CURRENT_BINARY_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:gtest>
+            "${CMAKE_CURRENT_BINARY_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:gtest_main>
+            "${CMAKE_CURRENT_BINARY_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:gmock_main>
+            "${CMAKE_CURRENT_BINARY_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:abseil_dll>
+            "${CMAKE_CURRENT_BINARY_DIR}/"
+        COMMENT "Copying DLLs to test execution directory"
+    )
+endif()
+
 # ====== Google Test Integration ======
 include(GoogleTest)
+
 gtest_discover_tests(run_gtests)
 
 # ====== IDE Integration ======

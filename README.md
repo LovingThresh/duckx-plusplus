@@ -381,17 +381,20 @@ Run tests with:
 
 See [ROADMAP.md](docs/ROADMAP.md) for detailed development plans:
 
-### Near-term Releases (v0.0.6 → v0.8.0)
-- **v0.1.0**: Complete Result<T> API coverage and error handling standardization
-- **v0.2.0 - v0.4.0**: Enhanced table formatting and document properties management
-- **v0.5.0 - v0.6.0**: Performance optimization and style system implementation ✅ **Completed**
-- **v0.6.5**: XML Style System implementation ✅ **Completed**
-- **v0.7.0**: Testing and documentation enhancement
+### Current Status
+- **Latest Stable**: v0.7.0 (July 2025) - Document structure management
+- **Development**: v0.8.0 (August 2025) - Windows platform enhancements
 
-### Major Milestones
-- **v0.6.0** (Q3 2025): ✅ **Completed** - Style system implementation with comprehensive comment standardization
-- **v0.8.0** (Q3 2025): Feature-complete Beta version with engineering tools Phase 1
-- **v1.0.0** (Q4 2025): Stable release with template system and advanced engineering features
+### Release Roadmap
+- **v0.8.0** (Aug 2025): Full Windows MSVC compatibility and DLL support
+- **v0.9.0** (Sep 2025): Engineering documentation tools Phase 1
+- **v1.0.0** (Q4 2025): Production-ready release with API stability guarantee
+
+### Recent Releases
+- **v0.7.0**: Document outline and TOC generation ✅
+- **v0.6.5**: XML style parser and templates ✅
+- **v0.6.0**: Complete style system implementation ✅
+- **v0.1.0 - v0.5.0**: Core functionality and performance ✅
 
 ## 🤝 Contributing
 
