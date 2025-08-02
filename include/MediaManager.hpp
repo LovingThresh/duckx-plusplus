@@ -41,6 +41,15 @@ namespace duckx
     public:
         MediaManager(Document* owner_doc, DocxFile* file, pugi::xml_document* rels_xml, pugi::xml_document* doc_xml,
                      pugi::xml_document* content_types_xml);
+        ~MediaManager() = default;
+        
+        // Delete copy operations
+        MediaManager(const MediaManager&) = delete;
+        MediaManager& operator=(const MediaManager&) = delete;
+        
+        // Default move operations
+        MediaManager(MediaManager&&) = default;
+        MediaManager& operator=(MediaManager&&) = default;
 
         /*! @brief Add an image to a paragraph and return the created run */
         Run add_image(const Paragraph& p, const Image& image);

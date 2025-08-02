@@ -1,0 +1,25 @@
+@PACKAGE_INIT@
+
+# Find dependencies
+include(CMakeFindDependencyMacro)
+
+# Check if we need Abseil
+set(DUCKX_ENABLE_ABSL @DUCKX_ENABLE_ABSL@)
+set(DUCKX_USE_SYSTEM_ABSL @DUCKX_USE_SYSTEM_ABSL@)
+
+if(DUCKX_ENABLE_ABSL)
+    if(DUCKX_USE_SYSTEM_ABSL)
+        find_dependency(absl REQUIRED)
+    endif()
+endif()
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/duckxTargets.cmake")
+
+# Check required components (if any)
+check_required_components(duckx)
+
+# Provide variables for compatibility
+set(DUCKX_FOUND TRUE)
+set(DUCKX_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set(DUCKX_LIBRARIES duckx::duckx)

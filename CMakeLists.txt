@@ -1,9 +1,21 @@
 # ====== Project Configuration ======
 cmake_minimum_required(VERSION 3.10)
-project(duckx VERSION 0.2 LANGUAGES CXX C) # Explicitly state C for zip.c
+
+# Suppress deprecation warnings from third-party libraries
+if(POLICY CMP0048)
+    cmake_policy(SET CMP0048 NEW)
+endif()
+
+# Set policy to suppress cmake_minimum_required deprecation warnings in subdirectories
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "Turn off deprecated warnings" FORCE)
+
+project(duckx VERSION 0.8.0 LANGUAGES CXX C) # Explicitly state C for zip.c
+
+# Extract version components for version.rc
+set(PROJECT_VERSION_PATCH 0)
 
 # Standard options
-option(BUILD_SHARED_LIBS "Build shared instead of static library" OFF)
+option(BUILD_SHARED_LIBS "Build shared instead of static library" OFF)  # Default to OFF for static library build
 option(BUILD_SAMPLES "Build provided samples" OFF)
 option(DUCKX_USE_SYSTEM_ABSL "Use system-installed Abseil instead of bundled" OFF)
 option(DUCKX_ENABLE_ABSL "Enable Abseil integration" ON)
@@ -42,13 +54,44 @@ endfunction()
 # ====== Compiler Settings ======
 if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    # Use DLL runtime for shared library builds
+    if (BUILD_SHARED_LIBS)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    else()
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
+    
+    # Enable Windows DLL exports
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    
+    # Disable warning C4251: 'identifier' : class 'type' needs to have dll-interface
+    # This warning occurs when a DLL-exported class uses STL or other non-exported types
+    add_compile_options(/wd4251)
 endif ()
+
+# Symbol visibility for non-Windows platforms
+if (NOT WIN32 AND BUILD_SHARED_LIBS)
+    # Hide symbols by default on Unix-like systems
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+    set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
+    
+    # Use -fPIC for shared libraries
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # Suppress Abseil deprecated builtin warnings on macOS/Clang
 if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-deprecated-builtins)
 endif ()
+
+# Fix macOS ARM64 Abseil shared library linking issues
+if (APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" AND BUILD_SHARED_LIBS)
+    # Force static linking for Abseil on macOS ARM64 to avoid symbol resolution issues
+    set(ABSL_BUILD_DLL OFF CACHE BOOL "Force static Abseil on macOS ARM64" FORCE)
+    set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    message(STATUS "macOS ARM64: Using static Abseil to avoid linking issues")
+endif()
 
 # ====== Abseil Integration ======
 if (DUCKX_USE_SYSTEM_ABSL)
@@ -64,6 +107,14 @@ else ()
         set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "Propagate C++ standard to Abseil" FORCE)
         set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable Abseil installation" FORCE)
 
+        # For Linux shared library builds, force Abseil to be static to avoid symbol visibility issues
+        if (NOT WIN32 AND NOT APPLE AND BUILD_SHARED_LIBS AND NOT DEFINED BUILD_SHARED_LIBS_SAVED)
+            message(STATUS "Linux shared library build: Force static Abseil to avoid symbol issues")
+            set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+            set(BUILD_SHARED_LIBS OFF)
+            set(ABSL_BUILD_DLL OFF CACHE BOOL "Force static Abseil for Linux shared builds" FORCE)
+        endif ()
+        
         # For static linking preference
         if (NOT BUILD_SHARED_LIBS)
             set(ABSL_BUILD_DLL OFF CACHE BOOL "Build Abseil as DLL" FORCE)
@@ -71,7 +122,12 @@ else ()
 
         # Add Abseil as subdirectory
         # EXCLUDE_FROM_ALL prevents abseil targets from being built by default unless needed
+        # Temporarily suppress deprecation warnings for third-party library
+        set(CMAKE_WARN_DEPRECATED_SAVE ${CMAKE_WARN_DEPRECATED})
+        set(CMAKE_WARN_DEPRECATED OFF)
         add_subdirectory(thirdparty/abseil-cpp EXCLUDE_FROM_ALL)
+        # Restore original warning setting
+        set(CMAKE_WARN_DEPRECATED ${CMAKE_WARN_DEPRECATED_SAVE})
 
         # Create convenience target for commonly used Abseil libraries
         add_library(duckx_absl INTERFACE)
@@ -98,6 +154,17 @@ else ()
     endif ()
 endif ()
 
+# Restore BUILD_SHARED_LIBS for main library after Abseil configuration
+if (DEFINED BUILD_SHARED_LIBS_SAVED)
+    if (APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        message(STATUS "macOS ARM64: Restored BUILD_SHARED_LIBS for main library")
+    elseif (NOT WIN32 AND NOT APPLE)
+        message(STATUS "Linux shared library build: Restored BUILD_SHARED_LIBS for main library")
+    endif()
+    set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
+    unset(BUILD_SHARED_LIBS_SAVED)
+endif()
+
 # ====== Source Files Definition ======
 # Project header files
 file(GLOB DUCKX_PROJECT_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
@@ -120,25 +187,54 @@ set(DUCKX_THIRD_PARTY_SOURCES
 # ====== Library Target ======
 # Add the library
 # Including headers here helps IDEs like Visual Studio associate them with the target.
-if (BUILD_SHARED_LIBS)
-    add_library(duckx SHARED
-            ${DUCKX_PROJECT_SOURCES}
-            ${DUCKX_THIRD_PARTY_SOURCES}
-            ${DUCKX_PROJECT_HEADERS}
-            ${DUCKX_THIRD_PARTY_HEADERS}
-    )
-else ()
-    add_library(duckx STATIC
-            ${DUCKX_PROJECT_SOURCES}
-            ${DUCKX_THIRD_PARTY_SOURCES}
-            ${DUCKX_PROJECT_HEADERS}
-            ${DUCKX_THIRD_PARTY_HEADERS}
-    )
-endif ()
-set_target_properties(duckx PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
+add_library(duckx
+        ${DUCKX_PROJECT_SOURCES}
+        ${DUCKX_THIRD_PARTY_SOURCES}
+        ${DUCKX_PROJECT_HEADERS}
+        ${DUCKX_THIRD_PARTY_HEADERS}
+)
 
-# Add debug compile definitions for Debug builds
-target_compile_definitions(duckx PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
+# Add Windows version resource for DLLs
+if(WIN32 AND BUILD_SHARED_LIBS)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
+        @ONLY
+    )
+    target_sources(duckx PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
+endif()
+
+# Set target properties
+set_target_properties(duckx PROPERTIES
+    CXX_STANDARD ${CMAKE_CXX_STANDARD}
+    CXX_STANDARD_REQUIRED ON
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    POSITION_INDEPENDENT_CODE ON
+)
+
+# Add compile definitions
+target_compile_definitions(duckx
+    PRIVATE
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<BOOL:${BUILD_SHARED_LIBS}>:DUCKX_BUILD_DLL>
+    PUBLIC
+        $<$<BOOL:${BUILD_SHARED_LIBS}>:DUCKX_DLL>
+)
+
+# Additional MSVC-specific compile options for the library
+if(MSVC AND BUILD_SHARED_LIBS)
+    target_compile_options(duckx PRIVATE /wd4251)
+endif()
+
+# Windows-specific settings for DLL
+if(WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties(duckx PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+        PREFIX ""
+        IMPORT_PREFIX ""
+    )
+endif()
 
 # Create an alias for modern CMake usage (duckx::duckx)
 add_library(duckx::duckx ALIAS duckx)
@@ -199,12 +295,32 @@ source_group("Source Files\\ThirdParty\\PugiXML" FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp"
 )
 
-include(GenerateExportHeader)
-generate_export_header(duckx
-        BASE_NAME          "duckx"
-        EXPORT_MACRO_NAME  "DUCKX_API"
-        EXPORT_FILE_NAME   "duckx_export.h"
-)
+# Generate export header for shared library builds
+if(BUILD_SHARED_LIBS)
+    include(GenerateExportHeader)
+    generate_export_header(duckx
+            BASE_NAME          "duckx"
+            EXPORT_MACRO_NAME  "DUCKX_API"
+            EXPORT_FILE_NAME   "duckx_export.h"
+            STATIC_DEFINE      "DUCKX_STATIC_LIBRARY"
+    )
+    
+    # Install the generated export header
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/duckx_export.h"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duckx
+    )
+else()
+    # For static builds, create a dummy export header
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/duckx_export.h"
+        "#ifndef DUCKX_EXPORT_H\n"
+        "#define DUCKX_EXPORT_H\n"
+        "#define DUCKX_API\n"
+        "#define DUCKX_NO_EXPORT\n"
+        "#define DUCKX_DEPRECATED\n"
+        "#endif\n"
+    )
+endif()
 
 mark_as_advanced(CLEAR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 
@@ -277,23 +393,133 @@ if (DUCKX_ENABLE_ABSL AND NOT DUCKX_USE_SYSTEM_ABSL AND EXISTS "${CMAKE_CURRENT_
     list(APPEND DUCKX_INSTALL_TARGETS duckx_absl)
 endif ()
 
+# Install targets with proper destinations
 install(
         TARGETS ${DUCKX_INSTALL_TARGETS}
-        EXPORT duckxConfig  # Export this target for find_package by downstream projects
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # For static libs (.a, .lib)
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # For shared libs (.so, .dylib), Windows .lib part of DLL
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # For .dll on Windows, executables
-        # The INCLUDES DESTINATION propagates the include directories for the installed target.
-        # Combined with target_include_directories' $<INSTALL_INTERFACE:...>, this makes headers findable.
+        EXPORT duckxTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Install CMake configuration files (for find_package(duckx CONFIG))
+# For Windows DLL builds, also install the import library and PDB files
+if(WIN32 AND BUILD_SHARED_LIBS)
+    # Install import library
+    install(FILES $<TARGET_LINKER_FILE:duckx>
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+    
+    # Install PDB files for debugging (MSVC only)
+    if(MSVC)
+        install(FILES $<TARGET_PDB_FILE:duckx>
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                CONFIGURATIONS Debug RelWithDebInfo
+                OPTIONAL
+        )
+    endif()
+endif()
+
+# Install CMake configuration files
 install(
-        EXPORT duckxConfig
+        EXPORT duckxTargets
+        FILE duckxTargets.cmake
         NAMESPACE duckx::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/duckx
 )
+
+# Create and install package configuration files
+include(CMakePackageConfigHelpers)
+
+# Check if config template exists, if not create a simple one
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/duckxConfig.cmake.in")
+    # Create a simple config file template
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/duckxConfig.cmake.in"
+"@PACKAGE_INIT@
+
+# Find dependencies
+include(CMakeFindDependencyMacro)
+
+# Check if we need Abseil
+set(DUCKX_ENABLE_ABSL @DUCKX_ENABLE_ABSL@)
+set(DUCKX_USE_SYSTEM_ABSL @DUCKX_USE_SYSTEM_ABSL@)
+
+if(DUCKX_ENABLE_ABSL)
+    if(DUCKX_USE_SYSTEM_ABSL)
+        find_dependency(absl REQUIRED)
+    endif()
+endif()
+
+# Include the targets file
+include(\"\${CMAKE_CURRENT_LIST_DIR}/duckxTargets.cmake\")
+
+# Check required components (if any)
+check_required_components(duckx)
+
+# Provide variables for compatibility
+set(DUCKX_FOUND TRUE)
+set(DUCKX_INCLUDE_DIRS \"@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@\")
+set(DUCKX_LIBRARIES duckx::duckx)
+")
+    
+    # Use the generated template
+    configure_package_config_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/duckxConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/duckxConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/duckx
+    )
+else()
+    # Use the existing template
+    configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/duckxConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/duckxConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/duckx
+    )
+endif()
+
+# Generate the version file for the config file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/duckxConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+# Install the configuration files
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/duckxConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/duckxConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/duckx
+)
+
+# ====== pkg-config Support ======
+# Generate and install pkg-config file for Unix-like systems
+if(NOT WIN32)
+    # Set private libs based on dependencies
+    set(DUCKX_PC_LIBS_PRIVATE "")
+    if(DUCKX_ENABLE_ABSL AND NOT DUCKX_USE_SYSTEM_ABSL)
+        # If using bundled Abseil, users need to link against it
+        set(DUCKX_PC_LIBS_PRIVATE "-labsl_strings -labsl_base")
+    endif()
+    
+    # Set C flags for pkg-config
+    set(DUCKX_PC_CFLAGS "")
+    if(CMAKE_CXX_STANDARD)
+        set(DUCKX_PC_CFLAGS "-std=c++${CMAKE_CXX_STANDARD}")
+    endif()
+    
+    # Configure pkg-config file
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/duckx.pc.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/duckx.pc"
+        @ONLY
+    )
+    
+    # Install pkg-config file
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/duckx.pc"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+endif()
 
 # Install header files
 # Project headers and potentially bundled third-party headers that are part of the public API.

@@ -30,6 +30,15 @@ namespace duckx
     {
     public:
         HyperlinkManager(Document* doc, pugi::xml_document* rels_xml);
+        ~HyperlinkManager() = default;
+        
+        // Delete copy operations
+        HyperlinkManager(const HyperlinkManager&) = delete;
+        HyperlinkManager& operator=(const HyperlinkManager&) = delete;
+        
+        // Default move operations
+        HyperlinkManager(HyperlinkManager&&) = default;
+        HyperlinkManager& operator=(HyperlinkManager&&) = default;
 
         /*! @brief Add a hyperlink relationship and return its ID */
         std::string add_relationship(const std::string& url) const;

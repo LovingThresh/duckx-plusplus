@@ -323,3 +323,190 @@ jobs:
         echo "Checking sample executables..."
         ls -la build/samples/
         echo "✅ Sample build verification complete"
+
+  # Windows DLL Build and Test
+  build-windows-dll:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+        
+    - name: Setup Visual Studio
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Configure CMake for DLL Build
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON -DBUILD_SAMPLES=ON -DBUILD_TESTING=ON -DDUCKX_USE_SYSTEM_ABSL=OFF -DDUCKX_ENABLE_ABSL=ON
+        
+    - name: Build with Verbose Output
+      run: |
+        cmake --build build --config ${{ matrix.build_type }} --parallel --verbose
+        
+    - name: Check DLL Build Artifacts
+      run: |
+        echo "=== Checking DLL files ==="
+        Get-ChildItem -Recurse build -Include "*.dll" | Select-Object FullName
+        echo "=== Checking library structure ==="
+        Get-ChildItem -Recurse build -Include "*.lib", "*.exe" | Select-Object FullName -First 15
+      shell: powershell
+        
+    - name: Run DLL Tests
+      run: |
+        cd build
+        ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
+        
+    - name: Run Unified DLL Test Suite
+      run: |
+        cd build
+        cmake --build . --target run_gtests --config ${{ matrix.build_type }}
+        cd test
+        if [ -f "./${{ matrix.build_type }}/run_gtests.exe" ]; then
+          ./${{ matrix.build_type }}/run_gtests.exe --gtest_brief=1
+        elif [ -f "./run_gtests.exe" ]; then
+          ./run_gtests.exe --gtest_brief=1
+        else
+          echo "❌ DLL Test executable not found"
+          exit 1
+        fi
+      shell: bash
+      
+    - name: Test DLL Sample Execution
+      run: |
+        echo "=== Testing DLL samples ==="
+        cd build/samples
+        if [ -d "./${{ matrix.build_type }}" ]; then
+          cd "${{ matrix.build_type }}"
+        fi
+        # Test a few representative samples
+        sample_count=0
+        for sample in sample1.exe sample10.exe sample15.exe; do
+          if [ -f "$sample" ]; then
+            echo "Testing $sample..."
+            ./$sample && echo "✅ $sample executed successfully" || echo "⚠️ $sample failed"
+            sample_count=$((sample_count + 1))
+            if [ $sample_count -ge 3 ]; then break; fi
+          fi
+        done
+        if [ $sample_count -eq 0 ]; then
+          echo "❌ No DLL samples found to test"
+          exit 1
+        fi
+      shell: bash
+
+  # Linux Shared Library Build and Test (GCC and Clang)
+  build-linux-shared:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+        
+    - name: Cache APT packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          /var/cache/apt/archives
+          /var/lib/apt/lists
+        key: ${{ runner.os }}-apt-shared-${{ hashFiles('.github/workflows/ci.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-shared-
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential ninja-build
+        
+    - name: Setup Compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        elif [ "${{ matrix.compiler }}" = "clang" ]; then
+          sudo apt-get install -y clang
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+        
+    - name: Configure CMake for Shared Library Build
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_SHARED_LIBS=ON \
+          -DBUILD_SAMPLES=ON \
+          -DBUILD_TESTING=ON \
+          -DDUCKX_USE_SYSTEM_ABSL=OFF \
+          -DDUCKX_ENABLE_ABSL=ON \
+          -G Ninja
+        
+    - name: Build with Verbose Output
+      run: |
+        cmake --build build --parallel --verbose
+        
+    - name: Check Shared Library Build Artifacts
+      run: |
+        echo "=== Checking shared libraries ==="
+        find build -name "*.so*" -type f
+        echo "=== Checking executable dependencies ==="
+        if [ -f "build/test/run_gtests" ]; then
+          echo "Test executable dependencies:"
+          ldd build/test/run_gtests | grep -E "(duckx|absl)" || echo "No duckx/absl dependencies found"
+        fi
+        echo "=== Checking sample dependencies ==="
+        for sample in build/samples/sample1 build/samples/sample10; do
+          if [ -f "$sample" ]; then
+            echo "Dependencies for $sample:"
+            ldd "$sample" | grep -E "(duckx|absl)" || echo "No duckx/absl dependencies found"
+            break
+          fi
+        done
+        
+    - name: Run Shared Library Tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+        
+    - name: Run Unified Shared Library Test Suite
+      run: |
+        cd build
+        cmake --build . --target run_gtests
+        cd test
+        if [ -f "./run_gtests" ]; then
+          ./run_gtests --gtest_brief=1
+        else
+          echo "❌ Shared library test executable not found"
+          exit 1
+        fi
+      
+    - name: Test Shared Library Sample Execution
+      run: |
+        echo "=== Testing shared library samples ==="
+        cd build/samples
+        sample_count=0
+        for sample in ./sample1 ./sample10 ./sample15; do
+          if [ -f "$sample" ]; then
+            echo "Testing $sample..."
+            $sample && echo "✅ $sample executed successfully" || echo "⚠️ $sample failed"
+            sample_count=$((sample_count + 1))
+            if [ $sample_count -ge 3 ]; then break; fi
+          fi
+        done
+        if [ $sample_count -eq 0 ]; then
+          echo "❌ No shared library samples found to test"
+          exit 1
+        fi

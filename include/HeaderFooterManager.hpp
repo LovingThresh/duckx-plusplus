@@ -45,6 +45,14 @@ namespace duckx
         HeaderFooterManager(Document* m_owner_doc, DocxFile* file, pugi::xml_document* doc_xml,
             pugi::xml_document* rels_xml, pugi::xml_document* content_types_xml);
         ~HeaderFooterManager() = default;
+        
+        // Delete copy operations (due to unique_ptr members)
+        HeaderFooterManager(const HeaderFooterManager&) = delete;
+        HeaderFooterManager& operator=(const HeaderFooterManager&) = delete;
+        
+        // Default move operations
+        HeaderFooterManager(HeaderFooterManager&&) = default;
+        HeaderFooterManager& operator=(HeaderFooterManager&&) = default;
 
         /*! @brief Save all headers and footers to the document */
         void save_all() const;
