@@ -471,12 +471,12 @@ void demonstrate_comprehensive_workflow(Body& body, StyleManager& style_manager)
         }
         
         // Add runs with different character styles
-        Run& normal_run = body_para->add_run("This document demonstrates ");
-        Run& emphasized_run = body_para->add_run("advanced style management");
+        Run normal_run = body_para->add_run("This document demonstrates ");
+        Run emphasized_run = body_para->add_run("advanced style management");
         body_para->add_run(" capabilities including ");
-        Run& code_run = body_para->add_run("property extraction");
+        Run code_run = body_para->add_run("property extraction");
         body_para->add_run(" and ");
-        Run& bold_run = body_para->add_run("inheritance resolution");
+        Run bold_run = body_para->add_run("inheritance resolution");
         body_para->add_run(".");
         
         // Apply character styles

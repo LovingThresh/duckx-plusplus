@@ -84,11 +84,19 @@ namespace duckx
          * @return Result indicating success or error details
          */
         Result<void> save_safe() const;
+
+        /*!
+         * @brief Safely saves the document to a new path
+         * @param path Target DOCX path
+         * @return Result indicating success or error details
+         */
+        Result<void> save_as_safe(const std::string& path) const;
         
         // Legacy exception-based API (for backward compatibility)
         static Document open(const std::string& path);
         static Document create(const std::string& path);
         void save() const;
+        void save_as(const std::string& path) const;
 
         Document(Document&& other) noexcept;
         Document& operator=(Document&& other) noexcept;

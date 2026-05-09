@@ -83,7 +83,7 @@ TEST_F(StyleApplicationImplementationTest, ApplyCharacterPropertiesDirectly)
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
     
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
     
     // Create character properties
     CharacterStyleProperties props;
@@ -200,7 +200,7 @@ TEST_F(StyleApplicationImplementationTest, ApplyCharacterStyleViaStyleManager)
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
     
-    duckx::Run& run = para->add_run("Styled text");
+    duckx::Run run = para->add_run("Styled text");
     
     auto apply_result = style_manager->apply_character_style_safe(run, "Test Char Style");
     EXPECT_TRUE(apply_result.ok()) << "Failed to apply character style: " << apply_result.error().to_string();
@@ -247,7 +247,7 @@ TEST_F(StyleApplicationImplementationTest, ApplyIncompatibleCharacterStyle)
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
     
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
     
     auto apply_result = style_manager->apply_character_style_safe(run, "Table Only Style");
     EXPECT_FALSE(apply_result.ok());

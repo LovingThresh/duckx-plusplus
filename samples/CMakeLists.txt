@@ -1,5 +1,5 @@
 # Find all .cpp files in the current directory (samples/)
-file(GLOB SAMPLE_SRCS "*.cpp")
+file(GLOB SAMPLE_SRCS CONFIGURE_DEPENDS "*.cpp")
 # MODIFICATION: Sort the files using natural number order (so 7 comes before 12)
 list(SORT SAMPLE_SRCS COMPARE NATURAL)
 

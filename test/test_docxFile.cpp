@@ -18,6 +18,7 @@
 
 #if defined(_WIN32)
 #include <direct.h> // For _mkdir
+#include <windows.h>
 #else
 #include <sys/stat.h> // For mkdir
 #include <sys/types.h>
@@ -339,3 +340,77 @@ TEST_F(DocxFileTest, SaveWithNoChanges)
     EXPECT_TRUE(verifier.has_entry("word/document.xml"));
     verifier.close();
 }
+
+TEST_F(DocxFileTest, SaveAsCreatesModifiedCopyWithoutChangingOriginal)
+{
+    const std::string original_path = get_test_path("save_as_original.docx");
+    const std::string copy_path = get_test_path("save_as_copy.docx");
+
+    {
+        duckx::DocxFile writer;
+        ASSERT_TRUE(writer.create(original_path));
+        writer.write_entry("docProps/app.xml", "<app>Original</app>");
+        writer.save();
+    }
+
+    {
+        duckx::DocxFile modifier;
+        ASSERT_TRUE(modifier.open(original_path));
+        modifier.write_entry("docProps/app.xml", "<app>Modified</app>");
+        ASSERT_NO_THROW(modifier.save_as(copy_path));
+    }
+
+    {
+        duckx::DocxFile original_reader;
+        ASSERT_TRUE(original_reader.open(original_path));
+        EXPECT_EQ(original_reader.read_entry("docProps/app.xml"), "<app>Original</app>");
+    }
+
+    {
+        duckx::DocxFile copy_reader;
+        ASSERT_TRUE(copy_reader.open(copy_path));
+        EXPECT_EQ(copy_reader.read_entry("docProps/app.xml"), "<app>Modified</app>");
+    }
+}
+
+#if defined(_WIN32)
+TEST_F(DocxFileTest, SaveAsWorksWhenOriginalFileIsLocked)
+{
+    const std::string original_path = get_test_path("locked_original.docx");
+    const std::string copy_path = get_test_path("locked_copy.docx");
+
+    {
+        duckx::DocxFile writer;
+        ASSERT_TRUE(writer.create(original_path));
+        writer.write_entry("docProps/app.xml", "<app>BeforeLock</app>");
+        writer.save();
+    }
+
+    duckx::DocxFile modifier;
+    ASSERT_TRUE(modifier.open(original_path));
+    modifier.write_entry("docProps/app.xml", "<app>AfterLock</app>");
+
+    HANDLE lock_handle = CreateFileA(
+        original_path.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr);
+    ASSERT_NE(lock_handle, INVALID_HANDLE_VALUE);
+
+    EXPECT_THROW(modifier.save(), std::runtime_error);
+    EXPECT_NO_THROW(modifier.save_as(copy_path));
+
+    CloseHandle(lock_handle);
+
+    duckx::DocxFile original_reader;
+    ASSERT_TRUE(original_reader.open(original_path));
+    EXPECT_EQ(original_reader.read_entry("docProps/app.xml"), "<app>BeforeLock</app>");
+
+    duckx::DocxFile copy_reader;
+    ASSERT_TRUE(copy_reader.open(copy_path));
+    EXPECT_EQ(copy_reader.read_entry("docProps/app.xml"), "<app>AfterLock</app>");
+}
+#endif

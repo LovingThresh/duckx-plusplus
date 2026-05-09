@@ -18,6 +18,10 @@
 #include <string>
 #include <stdexcept>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 // Mock classes for dependencies that are not the focus of this test
 // We assume these are tested elsewhere and provide minimal implementations or mocks.
 // For this test, we will perform more of an integration test since Document's
@@ -27,16 +31,19 @@ class DocumentTest : public ::testing::Test {
 protected:
     std::string test_docx_path;
     std::string another_test_docx_path;
+    std::string save_as_docx_path;
 
     void SetUp() override {
         test_docx_path = "test_document.docx";
         another_test_docx_path = "another_test_document.docx";
+        save_as_docx_path = "saved_as_document.docx";
     }
 
     void TearDown() override {
         // Clean up created files
         remove(test_docx_path.c_str());
         remove(another_test_docx_path.c_str());
+        remove(save_as_docx_path.c_str());
     }
 };
 
@@ -140,6 +147,56 @@ TEST_F(DocumentTest, Save) {
     ASSERT_NE(it, paragraphs.end());
     EXPECT_EQ(it->runs().begin()->get_text(), "Testing save functionality.");
 }
+
+TEST_F(DocumentTest, SaveAsWritesToNewPath)
+{
+    auto doc = duckx::Document::create(test_docx_path);
+    doc.body().add_paragraph("Original document content.");
+    doc.save();
+
+    auto reopened = duckx::Document::open(test_docx_path);
+    reopened.body().add_paragraph("Saved to another file.");
+    ASSERT_NO_THROW(reopened.save_as(save_as_docx_path));
+
+    auto original_doc = duckx::Document::open(test_docx_path);
+    EXPECT_EQ(std::distance(original_doc.body().paragraphs().begin(), original_doc.body().paragraphs().end()), 1);
+
+    auto saved_as_doc = duckx::Document::open(save_as_docx_path);
+    EXPECT_EQ(std::distance(saved_as_doc.body().paragraphs().begin(), saved_as_doc.body().paragraphs().end()), 2);
+}
+
+#if defined(_WIN32)
+TEST_F(DocumentTest, SaveAsWorksWhenOriginalIsLocked)
+{
+    auto doc = duckx::Document::create(test_docx_path);
+    doc.body().add_paragraph("Before lock.");
+    doc.save();
+
+    auto reopened = duckx::Document::open(test_docx_path);
+    reopened.body().add_paragraph("After lock.");
+
+    HANDLE lock_handle = CreateFileA(
+        test_docx_path.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr);
+    ASSERT_NE(lock_handle, INVALID_HANDLE_VALUE);
+
+    EXPECT_THROW(reopened.save(), std::runtime_error);
+    EXPECT_NO_THROW(reopened.save_as(save_as_docx_path));
+
+    CloseHandle(lock_handle);
+
+    auto original_doc = duckx::Document::open(test_docx_path);
+    EXPECT_EQ(std::distance(original_doc.body().paragraphs().begin(), original_doc.body().paragraphs().end()), 1);
+
+    auto saved_as_doc = duckx::Document::open(save_as_docx_path);
+    EXPECT_EQ(std::distance(saved_as_doc.body().paragraphs().begin(), saved_as_doc.body().paragraphs().end()), 2);
+}
+#endif
 
 TEST_F(DocumentTest, BodyAccessor) {
     auto doc = duckx::Document::create(test_docx_path);

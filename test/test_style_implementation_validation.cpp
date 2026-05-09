@@ -57,7 +57,7 @@ TEST_F(StyleImplementationValidationTest, ValidateApplyCharacterPropertiesMethod
     auto para_result = body->add_paragraph_safe("");
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
     
     // Create test properties
     CharacterStyleProperties props;
@@ -113,7 +113,7 @@ TEST_F(StyleImplementationValidationTest, ValidateApplyCharacterStyleMethodExist
     auto para_result = body->add_paragraph_safe("");
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
     
     // This should compile and execute without error
     auto result = style_manager->apply_character_style_safe(run, "Test Char Style");

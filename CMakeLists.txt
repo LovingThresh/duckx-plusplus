@@ -61,9 +61,6 @@ if (MSVC)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif()
     
-    # Enable Windows DLL exports
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    
     # Disable warning C4251: 'identifier' : class 'type' needs to have dll-interface
     # This warning occurs when a DLL-exported class uses STL or other non-exported types
     add_compile_options(/wd4251)
@@ -230,7 +227,6 @@ endif()
 # Windows-specific settings for DLL
 if(WIN32 AND BUILD_SHARED_LIBS)
     set_target_properties(duckx PROPERTIES
-        WINDOWS_EXPORT_ALL_SYMBOLS ON
         PREFIX ""
         IMPORT_PREFIX ""
     )
@@ -242,23 +238,45 @@ add_library(duckx::duckx ALIAS duckx)
 # ====== Library Dependencies ======
 # Link with Abseil
 if (DUCKX_USE_SYSTEM_ABSL)
-    target_link_libraries(duckx PUBLIC
-            absl::strings
-            absl::str_format
-            absl::status
-            absl::statusor
-            absl::flags
-            absl::flags_parse
-            absl::time
-            absl::flat_hash_map
-            absl::flat_hash_set
-            absl::base
-            absl::memory
-            absl::meta
-            absl::type_traits
-    )
+    if (BUILD_SHARED_LIBS)
+        target_link_libraries(duckx PRIVATE
+                absl::strings
+                absl::str_format
+                absl::status
+                absl::statusor
+                absl::flags
+                absl::flags_parse
+                absl::time
+                absl::flat_hash_map
+                absl::flat_hash_set
+                absl::base
+                absl::memory
+                absl::meta
+                absl::type_traits
+        )
+    else ()
+        target_link_libraries(duckx PUBLIC
+                absl::strings
+                absl::str_format
+                absl::status
+                absl::statusor
+                absl::flags
+                absl::flags_parse
+                absl::time
+                absl::flat_hash_map
+                absl::flat_hash_set
+                absl::base
+                absl::memory
+                absl::meta
+                absl::type_traits
+        )
+    endif ()
 else ()
-    target_link_libraries(duckx PUBLIC duckx::absl)
+    if (BUILD_SHARED_LIBS)
+        target_link_libraries(duckx PRIVATE duckx::absl)
+    else ()
+        target_link_libraries(duckx PUBLIC duckx::absl)
+    endif ()
 endif ()
 
 # ====== Include Directories ======
@@ -274,7 +292,14 @@ target_include_directories(duckx PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/duckx>
 )
+
+if (NOT DUCKX_USE_SYSTEM_ABSL)
+    target_include_directories(duckx PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/abseil-cpp>
+    )
+endif ()
 
 # ====== IDE Organization ======
 # Organize files into filters for Visual Studio
@@ -389,7 +414,7 @@ include(GNUInstallDirs)
 
 # Determine which targets to install based on configuration
 set(DUCKX_INSTALL_TARGETS duckx)
-if (DUCKX_ENABLE_ABSL AND NOT DUCKX_USE_SYSTEM_ABSL AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/abseil-cpp/CMakeLists.txt")
+if (NOT BUILD_SHARED_LIBS AND DUCKX_ENABLE_ABSL AND NOT DUCKX_USE_SYSTEM_ABSL AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/abseil-cpp/CMakeLists.txt")
     list(APPEND DUCKX_INSTALL_TARGETS duckx_absl)
 endif ()
 
@@ -418,6 +443,13 @@ if(WIN32 AND BUILD_SHARED_LIBS)
                 OPTIONAL
         )
     endif()
+endif()
+
+# Install bundled Abseil runtime for Windows DLL builds
+if(WIN32 AND BUILD_SHARED_LIBS AND NOT DUCKX_USE_SYSTEM_ABSL AND TARGET abseil_dll)
+    install(FILES $<TARGET_FILE:abseil_dll>
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
 endif()
 
 # Install CMake configuration files
@@ -530,6 +562,20 @@ install(
         FILES ${DUCKX_PROJECT_HEADERS} ${DUCKX_THIRD_PARTY_HEADERS} # Bundling third-party headers with project headers
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duckx
 )
+
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp")
+    install(
+            FILES "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml/pugixml.cpp"
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/duckx
+    )
+endif ()
+
+if (DUCKX_ENABLE_ABSL AND NOT DUCKX_USE_SYSTEM_ABSL AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/abseil-cpp/absl")
+    install(
+            DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/abseil-cpp/absl"
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif ()
 
 # ====== Doxygen Documentation Support ======
 # Optional Doxygen documentation generation

@@ -14,6 +14,7 @@
 #include <chrono>
 #include <Document.hpp>
 #include <string>
+#include <vector>
 
 namespace dx = duckx;
 
@@ -128,6 +129,24 @@ TEST_F(RunTest, TextOperations)
     EXPECT_EQ(duckx_run.get_text(), "Another Text");
 }
 
+TEST_F(RunTest, ReplaceText)
+{
+    const auto para_node = body.child("w:p");
+    const auto run_node = para_node.child("w:r");
+
+    const dx::Run duckx_run(para_node, run_node);
+
+    EXPECT_TRUE(duckx_run.set_text("red blue red"));
+    EXPECT_EQ(2u, duckx_run.replace_text("red", "green"));
+    EXPECT_EQ("green blue green", duckx_run.get_text());
+
+    EXPECT_EQ(0u, duckx_run.replace_text("missing", "value"));
+    EXPECT_EQ("green blue green", duckx_run.get_text());
+
+    EXPECT_EQ(0u, duckx_run.replace_text("", "value"));
+    EXPECT_EQ("green blue green", duckx_run.get_text());
+}
+
 TEST_F(RunTest, FormattingOperations)
 {
     const auto para_node = body.child("w:p");
@@ -240,6 +259,119 @@ TEST_F(ParagraphTest, RunOperations)
     EXPECT_EQ(it, runs_range.end());
 }
 
+TEST_F(ParagraphTest, RunsIncludeHyperlinkRunsInDocumentOrder)
+{
+    auto para_node = body.append_child("w:p");
+
+    auto before_run = para_node.append_child("w:r");
+    before_run.append_child("w:t").text().set("before");
+
+    auto hyperlink = para_node.append_child("w:hyperlink");
+    auto link_run = hyperlink.append_child("w:r");
+    link_run.append_child("w:t").text().set("link");
+
+    auto second_link_run = hyperlink.append_child("w:r");
+    second_link_run.append_child("w:t").text().set(" text");
+
+    auto after_run = para_node.append_child("w:r");
+    after_run.append_child("w:t").text().set("after");
+
+    dx::Paragraph para(body, para_node);
+
+    std::vector<std::string> texts;
+    for (const auto& run : para.runs())
+    {
+        texts.push_back(run.get_text());
+    }
+
+    const std::vector<std::string> expected = {"before", "link", " text", "after"};
+    EXPECT_EQ(expected, texts);
+}
+
+TEST_F(ParagraphTest, ReplaceTextAcrossRuns)
+{
+    auto para_node = body.append_child("w:p");
+
+    auto first_run = para_node.append_child("w:r");
+    first_run.append_child("w:t").text().set("Hello Wo");
+
+    auto second_run = para_node.append_child("w:r");
+    second_run.append_child("w:t").text().set("rld and World");
+
+    dx::Paragraph para(body, para_node);
+
+    EXPECT_EQ(2u, para.replace_text("World", "DuckX"));
+
+    auto it = para.runs().begin();
+    ASSERT_NE(it, para.runs().end());
+    EXPECT_EQ("Hello DuckX", it->get_text());
+
+    ++it;
+    ASSERT_NE(it, para.runs().end());
+    EXPECT_EQ(" and DuckX", it->get_text());
+}
+
+TEST_F(ParagraphTest, ReplaceTextAcrossHyperlinkRuns)
+{
+    auto para_node = body.append_child("w:p");
+
+    auto before_run = para_node.append_child("w:r");
+    before_run.append_child("w:t").text().set("Click Du");
+
+    auto hyperlink = para_node.append_child("w:hyperlink");
+    auto link_run = hyperlink.append_child("w:r");
+    link_run.append_child("w:t").text().set("ck");
+
+    auto second_link_run = hyperlink.append_child("w:r");
+    second_link_run.append_child("w:t").text().set("X now");
+
+    dx::Paragraph para(body, para_node);
+
+    EXPECT_EQ(1u, para.replace_text("DuckX", "here"));
+
+    std::vector<std::string> texts;
+    for (const auto& run : para.runs())
+    {
+        texts.push_back(run.get_text());
+    }
+
+    const std::vector<std::string> expected = {"Click here", "", " now"};
+    EXPECT_EQ(expected, texts);
+}
+
+TEST_F(ParagraphTest, SetTextReplacesWholeParagraph)
+{
+    const auto para_node = body.child("w:p");
+
+    dx::Paragraph para(body, para_node);
+    para.set_text("Whole paragraph");
+
+    std::vector<std::string> texts;
+    for (const auto& run : para.runs())
+    {
+        texts.push_back(run.get_text());
+    }
+
+    const std::vector<std::string> expected = {"Whole paragraph", ""};
+    EXPECT_EQ(expected, texts);
+}
+
+TEST_F(ParagraphTest, SetTextCreatesRunForEmptyParagraph)
+{
+    auto para_node = body.append_child("w:p");
+
+    dx::Paragraph para(body, para_node);
+    para.set_text("Created text");
+
+    auto runs = para.runs();
+    auto it = runs.begin();
+    ASSERT_NE(it, runs.end());
+    EXPECT_EQ("Created text", it->get_text());
+
+    ++it;
+    EXPECT_EQ(it, runs.end());
+}
+
 TEST_F(ParagraphTest, AddRun)
 {
     const auto para_node = body.child("w:p");
@@ -247,14 +379,15 @@ TEST_F(ParagraphTest, AddRun)
     dx::Paragraph para(body, para_node);
 
     // 添加新的run
-    const dx::Run& new_run = para.add_run("New run text", dx::bold | dx::italic);
+    const dx::Run new_run = para.add_run("New run text", dx::bold | dx::italic);
     EXPECT_EQ(new_run.get_text(), "New run text");
     EXPECT_TRUE(new_run.is_bold());
     EXPECT_TRUE(new_run.is_italic());
 
     // 添加run（const char*版本）
-    const dx::Run& another_run = para.add_run("Another run");
+    const dx::Run another_run = para.add_run("Another run");
     EXPECT_EQ(another_run.get_text(), "Another run");
+    EXPECT_EQ(new_run.get_text(), "New run text");
 }
 
 TEST_F(ParagraphTest, ParagraphFormatting)

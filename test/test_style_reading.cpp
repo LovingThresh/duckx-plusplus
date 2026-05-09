@@ -123,7 +123,7 @@ TEST_F(StyleReadingTest, ReadEmptyCharacterProperties)
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
     
-    duckx::Run& run = para->add_run("Plain text");
+    duckx::Run run = para->add_run("Plain text");
     
     // Read its properties
     auto props_result = style_manager->read_character_properties_safe(run);
@@ -146,7 +146,7 @@ TEST_F(StyleReadingTest, ReadCharacterWithAppliedStyle)
     ASSERT_TRUE(para_result.ok());
     Paragraph* para = &para_result.value();
     
-    duckx::Run& run = para->add_run("Styled text");
+    duckx::Run run = para->add_run("Styled text");
     
     // Apply a character style
     auto apply_result = run.apply_style_safe(*style_manager, "Code");
@@ -171,7 +171,7 @@ TEST_F(StyleReadingTest, ReadCharacterWithDirectFormatting)
     Paragraph* para = &para_result.value();
     
     // Create run with formatting flags
-    duckx::Run& run = para->add_run("Formatted text", bold | italic);
+    duckx::Run run = para->add_run("Formatted text", bold | italic);
     
     // Apply some direct formatting using existing methods
     run.set_font("Arial").set_font_size(14.0);
@@ -287,7 +287,7 @@ TEST_F(StyleReadingTest, ExtractStyleFromRun)
     Paragraph* para = &para_result.value();
     
     // Create run with bold formatting
-    duckx::Run& run = para->add_run("Sample run", bold);
+    duckx::Run run = para->add_run("Sample run", bold);
     
     // Apply formatting using existing methods
     run.set_font("Times New Roman").set_font_size(12.0);

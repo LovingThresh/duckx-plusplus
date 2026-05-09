@@ -175,9 +175,9 @@ int main()
             }
             
             // Add runs with different character styles
-            Run& normal_run = mixed_para->add_run("This text uses normal formatting, while ");
-            Run& emphasis_run = mixed_para->add_run("this text uses custom character styling");
-            Run& end_run = mixed_para->add_run(" to show the difference.");
+            Run normal_run = mixed_para->add_run("This text uses normal formatting, while ");
+            Run emphasis_run = mixed_para->add_run("this text uses custom character styling");
+            Run end_run = mixed_para->add_run(" to show the difference.");
             
             // Apply character style to the emphasis run
             auto char_style_result = emphasis_run.apply_style_safe(style_manager, "Important Text");
@@ -219,7 +219,7 @@ int main()
             }
             
             // Add code content with Code character style
-            Run& code_run = code_para->add_run(
+            Run code_run = code_para->add_run(
                 "// Example usage\n"
                 "auto& styles = doc.styles();\n"
                 "auto paragraph = body.add_paragraph_safe(\"Hello World\");\n"

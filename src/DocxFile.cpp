@@ -7,11 +7,17 @@
  */
 #include "DocxFile.hpp"
 
+#include <cerrno>
+#include <cstring>
+#include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <stdexcept>
 
 #if defined(_WIN32)
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <ctime>
@@ -20,12 +26,69 @@
 
 namespace duckx
 {
+    namespace
+    {
+        bool replace_file_with_temp(const std::string& temp_path, const std::string& target_path, std::string* error_message)
+        {
+#if defined(_WIN32)
+            DWORD last_error = ERROR_SUCCESS;
+            for (int attempt = 0; attempt < 10; ++attempt)
+            {
+                if (MoveFileExA(temp_path.c_str(), target_path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
+                {
+                    return true;
+                }
+
+                last_error = GetLastError();
+                if (last_error != ERROR_SHARING_VIOLATION &&
+                    last_error != ERROR_LOCK_VIOLATION &&
+                    last_error != ERROR_ACCESS_DENIED)
+                {
+                    break;
+                }
+
+                Sleep(50);
+            }
+
+            if (error_message != nullptr)
+            {
+                std::ostringstream oss;
+                oss << "Failed to replace '" << target_path << "' (Win32 error " << last_error << ")";
+                if (last_error == ERROR_SHARING_VIOLATION || last_error == ERROR_LOCK_VIOLATION || last_error == ERROR_ACCESS_DENIED)
+                {
+                    oss << ". The file is likely open in Word or locked by another process. "
+                           "Keep the document open in DuckX and call save_as() to write to another path.";
+                }
+                *error_message = oss.str();
+            }
+            return false;
+#else
+            if (std::rename(temp_path.c_str(), target_path.c_str()) == 0)
+            {
+                return true;
+            }
+
+            if (error_message != nullptr)
+            {
+                std::ostringstream oss;
+                oss << "Failed to replace '" << target_path << "': " << std::strerror(errno);
+                *error_message = oss.str();
+            }
+            return false;
+#endif
+        }
+    } // namespace
+
     DocxFile::DocxFile() = default;
 
-    DocxFile::~DocxFile() = default;
+    DocxFile::~DocxFile()
+    {
+        close();
+    }
 
     bool DocxFile::open(const std::string& path)
     {
+        close();
         m_path = path;
         zip_t* zip = zip_open(m_path.c_str(), 0, 'r');
         if (!zip)
@@ -33,12 +96,17 @@ namespace duckx
             return false;
         }
         zip_close(zip); // 仅检查文件是否存在且可读，不保持打开
+
+        m_read_path = m_path;
+        create_read_snapshot(m_path);
         return true;
     }
 
     bool DocxFile::create(const std::string& path)
     {
+        close();
         m_path = path;
+        m_read_path = path;
         zip_t* zip = zip_open(path.c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
         if (!zip)
         {
@@ -46,6 +114,7 @@ namespace duckx
         }
         create_basic_structure(zip);
         zip_close(zip);
+        create_read_snapshot(m_path);
         return true;
     }
 
@@ -53,7 +122,9 @@ namespace duckx
     {
         // 因为我们不是一直保持文件打开，这个方法可以为空，或者用于清理资源
         m_path.clear();
+        m_read_path.clear();
         m_dirty_entries.clear();
+        clear_snapshot();
     }
 
     bool DocxFile::has_entry(const std::string& entry_name) const
@@ -63,7 +134,8 @@ namespace duckx
             return true;
         }
 
-        zip_t* zip = zip_open(m_path.c_str(), 0, 'r');
+        const std::string archive_path = m_read_path.empty() ? m_path : m_read_path;
+        zip_t* zip = zip_open(archive_path.c_str(), 0, 'r');
         if (!zip)
             return false;
 
@@ -84,13 +156,14 @@ namespace duckx
             return m_dirty_entries[entry_name];
         }
 
-        zip_t* zip = zip_open(m_path.c_str(), 0, 'r');
+        const std::string archive_path = m_read_path.empty() ? m_path : m_read_path;
+        zip_t* zip = zip_open(archive_path.c_str(), 0, 'r');
         if (!zip)
         {
             // 如果文件不存在但我们想读取一个空文档，就返回空文档XML
             if (entry_name == "word/document.xml")
                 return get_empty_document_xml();
-            throw std::runtime_error("Failed to open zip file: " + m_path);
+            throw std::runtime_error("Failed to open zip file: " + archive_path);
         }
 
         if (zip_entry_open(zip, entry_name.c_str()) != 0)
@@ -120,12 +193,27 @@ namespace duckx
 
     void DocxFile::save()
     {
-        if (m_path.empty())
+        save_as(m_path);
+    }
+
+    void DocxFile::save_as(const std::string& path)
+    {
+        if (path.empty())
         {
             throw std::runtime_error("File path is not set. Cannot save.");
         }
 
-        const std::string temp_file = m_path + ".tmp";
+        save_to_path(path);
+    }
+
+    void DocxFile::save_to_path(const std::string& output_path)
+    {
+        if (output_path == m_path && m_snapshot_path.empty() && !m_path.empty())
+        {
+            create_read_snapshot(m_path);
+        }
+
+        const std::string temp_file = output_path + ".tmp";
 
         // 创建临时zip文件
         zip_t* new_zip = zip_open(temp_file.c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
@@ -143,7 +231,8 @@ namespace duckx
         }
 
         // 打开原始zip文件，拷贝所有未被修改的文件
-        zip_t* orig_zip = zip_open(m_path.c_str(), 0, 'r');
+        const std::string archive_path = m_read_path.empty() ? m_path : m_read_path;
+        zip_t* orig_zip = zip_open(archive_path.c_str(), 0, 'r');
         if (orig_zip)
         {
             const int entry_count = zip_total_entries(orig_zip);
@@ -171,9 +260,107 @@ namespace duckx
 
         zip_close(new_zip);
 
-        // 替换原始文件
-        remove(m_path.c_str());
-        rename(temp_file.c_str(), m_path.c_str());
+        std::string error_message;
+        if (!replace_file_with_temp(temp_file, output_path, &error_message))
+        {
+            std::remove(temp_file.c_str());
+            throw std::runtime_error(error_message);
+        }
+
+        if (output_path == m_path)
+        {
+            create_read_snapshot(m_path);
+        }
+    }
+
+    bool DocxFile::create_read_snapshot(const std::string& source_path)
+    {
+        clear_snapshot();
+
+        const std::string snapshot_path = create_temp_snapshot_path();
+        if (snapshot_path.empty())
+        {
+            m_read_path = source_path;
+            return false;
+        }
+
+        if (!copy_file_binary(source_path, snapshot_path))
+        {
+            std::remove(snapshot_path.c_str());
+            m_read_path = source_path;
+            return false;
+        }
+
+        zip_t* zip = zip_open(snapshot_path.c_str(), 0, 'r');
+        if (!zip)
+        {
+            std::remove(snapshot_path.c_str());
+            m_read_path = source_path;
+            return false;
+        }
+        zip_close(zip);
+
+        m_snapshot_path = snapshot_path;
+        m_read_path = m_snapshot_path;
+        return true;
+    }
+
+    void DocxFile::clear_snapshot()
+    {
+        if (!m_snapshot_path.empty())
+        {
+            std::remove(m_snapshot_path.c_str());
+            m_snapshot_path.clear();
+        }
+    }
+
+    std::string DocxFile::create_temp_snapshot_path()
+    {
+#if defined(_WIN32)
+        char temp_dir[MAX_PATH] = {};
+        const DWORD temp_dir_length = GetTempPathA(MAX_PATH, temp_dir);
+        if (temp_dir_length == 0 || temp_dir_length > MAX_PATH)
+        {
+            return {};
+        }
+
+        char temp_file[MAX_PATH] = {};
+        if (GetTempFileNameA(temp_dir, "dkx", 0, temp_file) == 0)
+        {
+            return {};
+        }
+
+        std::remove(temp_file);
+        return temp_file;
+#else
+        char temp_file[] = "/tmp/duckxXXXXXX";
+        const int fd = mkstemp(temp_file);
+        if (fd == -1)
+        {
+            return {};
+        }
+        close(fd);
+        std::remove(temp_file);
+        return temp_file;
+#endif
+    }
+
+    bool DocxFile::copy_file_binary(const std::string& source_path, const std::string& target_path)
+    {
+        std::ifstream src(source_path, std::ios::binary);
+        if (!src)
+        {
+            return false;
+        }
+
+        std::ofstream dst(target_path, std::ios::binary | std::ios::trunc);
+        if (!dst)
+        {
+            return false;
+        }
+
+        dst << src.rdbuf();
+        return src.good() || src.eof();
     }
 
     void DocxFile::create_basic_structure(zip_t* zip)

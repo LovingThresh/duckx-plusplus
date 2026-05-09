@@ -70,7 +70,7 @@ TEST_F(BasicStyleSystemTest, BasicCharacterFormattingWorks)
     Paragraph* para = &para_result.value();
     
     // Create run with formatting using existing method
-    duckx::Run& run = para->add_run("Formatted text", bold | italic);
+    duckx::Run run = para->add_run("Formatted text", bold | italic);
     run.set_font("Arial").set_font_size(14.0).set_color("FF0000");
     
     // Read properties using our new style reading system

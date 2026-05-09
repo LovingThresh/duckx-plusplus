@@ -57,7 +57,7 @@ TEST_F(CompleteStyleImplementationTest, AllPropertyApplicationMethodsWork)
     EXPECT_TRUE(para_apply_result.ok()) << "apply_paragraph_properties_safe should work";
     
     // Test character properties application
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
     
     CharacterStyleProperties char_props;
     char_props.font_name = "Arial";
@@ -128,7 +128,7 @@ TEST_F(CompleteStyleImplementationTest, AllStyleApplicationMethodsWork)
     EXPECT_TRUE(apply_para_result.ok()) << "apply_paragraph_style_safe should work";
     
     // Test character style application
-    duckx::Run& run = para->add_run(" with styled text");
+    duckx::Run run = para->add_run(" with styled text");
     
     auto apply_char_result = style_manager->apply_character_style_safe(run, "Custom Char");
     EXPECT_TRUE(apply_char_result.ok()) << "apply_character_style_safe should work";
@@ -175,7 +175,7 @@ TEST_F(CompleteStyleImplementationTest, GenericStyleApplicationWorks)
     EXPECT_TRUE(apply_result.ok()) << "Generic apply_style_safe should work on paragraph";
     
     // Test generic style application on run
-    duckx::Run& run = para->add_run(" more text");
+    duckx::Run run = para->add_run(" more text");
     
     auto apply_run_result = style_manager->apply_style_safe(run, "Mixed Style");
     EXPECT_TRUE(apply_run_result.ok()) << "Generic apply_style_safe should work on run";
@@ -215,7 +215,7 @@ TEST_F(CompleteStyleImplementationTest, CompleteStyleWorkflowWorks)
     auto apply_para_result = style_manager->apply_paragraph_style_safe(*para, "Workflow Test Style");
     ASSERT_TRUE(apply_para_result.ok());
     
-    duckx::Run& run = para->add_run(" - with character formatting");
+    duckx::Run run = para->add_run(" - with character formatting");
     auto apply_char_result = style_manager->apply_character_style_safe(run, "Workflow Test Style");
     ASSERT_TRUE(apply_char_result.ok());
     

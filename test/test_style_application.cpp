@@ -148,7 +148,7 @@ TEST_F(StyleApplicationTest, ApplyBuiltinCharacterStyle)
     ASSERT_TRUE(para_result.ok());
     duckx::Paragraph* para = &para_result.value();
 
-    duckx::Run& run = para->add_run("Code text");
+    duckx::Run run = para->add_run("Code text");
 
     // Apply Code style
     auto apply_result = run.apply_style_safe(*style_manager, "Code");
@@ -179,7 +179,7 @@ TEST_F(StyleApplicationTest, ApplyCustomCharacterStyle)
     ASSERT_TRUE(para_result.ok());
     duckx::Paragraph* para = &para_result.value();
 
-    duckx::Run& run = para->add_run("Custom styled text");
+    duckx::Run run = para->add_run("Custom styled text");
 
     // Apply custom character style
     auto apply_result = run.apply_style_safe(*style_manager, "Custom Char");
@@ -209,7 +209,7 @@ TEST_F(StyleApplicationTest, ApplyMixedStyleToRun)
     ASSERT_TRUE(para_result.ok());
     duckx::Paragraph* para = &para_result.value();
 
-    duckx::Run& run = para->add_run("Mixed style text");
+    duckx::Run run = para->add_run("Mixed style text");
 
     // Apply mixed style to run (should work for character properties)
     auto apply_result = run.apply_style_safe(*style_manager, "Mixed Style");
@@ -232,7 +232,7 @@ TEST_F(StyleApplicationTest, ApplyIncompatibleStyleToRun)
     ASSERT_TRUE(para_result.ok());
     duckx::Paragraph* para = &para_result.value();
 
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
 
     // Try to apply paragraph style to run (should fail)
     auto apply_result = run.apply_style_safe(*style_manager, "Para Only");
@@ -247,7 +247,7 @@ TEST_F(StyleApplicationTest, RemoveCharacterStyle)
     ASSERT_TRUE(para_result.ok());
     duckx::Paragraph* para = &para_result.value();
 
-    duckx::Run& run = para->add_run("Test text");
+    duckx::Run run = para->add_run("Test text");
 
     auto apply_result = run.apply_style_safe(*style_manager, "Code");
     ASSERT_TRUE(apply_result.ok());
@@ -401,8 +401,8 @@ TEST_F(StyleApplicationTest, CompleteStyleWorkflow)
     EXPECT_TRUE(para_apply_result.ok()) << "Failed to apply Test Para style: " << para_apply_result.error().to_string();
 
     // Add runs with different character styles
-    duckx::Run& normal_run = para->add_run("Normal text ");
-    duckx::Run& styled_run = para->add_run("styled text");
+    duckx::Run normal_run = para->add_run("Normal text ");
+    duckx::Run styled_run = para->add_run("styled text");
 
     auto char_apply_result = styled_run.apply_style_safe(*style_manager, "Test Char");
     EXPECT_TRUE(char_apply_result.ok());

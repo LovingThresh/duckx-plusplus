@@ -8,13 +8,131 @@
 #include "BaseElement_Run.hpp"
 
 #include <cctype>
-#include <map>
 #include <cmath>
+#include <cstring>
+#include <map>
 
 #include "StyleManager.hpp"
 
 namespace duckx
 {
+    namespace
+    {
+        bool is_node_named(const pugi::xml_node node, const char* name)
+        {
+            return node && std::strcmp(node.name(), name) == 0;
+        }
+
+        pugi::xml_node first_iterable_run(const pugi::xml_node node)
+        {
+            if (is_node_named(node, "w:r"))
+            {
+                return node;
+            }
+
+            if (is_node_named(node, "w:hyperlink"))
+            {
+                return node.child("w:r");
+            }
+
+            return {};
+        }
+
+        pugi::xml_node first_run_child(const pugi::xml_node parent)
+        {
+            if (!parent)
+            {
+                return {};
+            }
+
+            for (pugi::xml_node child = parent.first_child(); child; child = child.next_sibling())
+            {
+                pugi::xml_node run = first_iterable_run(child);
+                if (run)
+                {
+                    return run;
+                }
+            }
+
+            return {};
+        }
+
+        pugi::xml_node next_run_after_anchor(const pugi::xml_node anchor)
+        {
+            for (pugi::xml_node sibling = anchor.next_sibling(); sibling; sibling = sibling.next_sibling())
+            {
+                pugi::xml_node run = first_iterable_run(sibling);
+                if (run)
+                {
+                    return run;
+                }
+            }
+
+            return {};
+        }
+
+        pugi::xml_node next_run_in_scope(const pugi::xml_node scope, const pugi::xml_node current)
+        {
+            if (!current)
+            {
+                return {};
+            }
+
+            if (!scope)
+            {
+                return current.next_sibling("w:r");
+            }
+
+            if (current.parent() != scope)
+            {
+                pugi::xml_node nested_sibling = current.next_sibling("w:r");
+                if (nested_sibling)
+                {
+                    return nested_sibling;
+                }
+            }
+
+            pugi::xml_node anchor = current.parent();
+            if (anchor == scope)
+            {
+                anchor = current;
+            }
+
+            return next_run_after_anchor(anchor);
+        }
+
+        bool needs_space_preserve(const std::string& text)
+        {
+            if (text.empty())
+            {
+                return false;
+            }
+
+            const unsigned char first_char = static_cast<unsigned char>(text.front());
+            const unsigned char last_char = static_cast<unsigned char>(text.back());
+            return std::isspace(first_char) || std::isspace(last_char);
+        }
+
+        std::size_t replace_all(std::string& text, const std::string& search_text, const std::string& replacement_text)
+        {
+            if (search_text.empty())
+            {
+                return 0;
+            }
+
+            std::size_t count = 0;
+            std::size_t pos = 0;
+            while ((pos = text.find(search_text, pos)) != std::string::npos)
+            {
+                text.replace(pos, search_text.length(), replacement_text);
+                pos += replacement_text.length();
+                ++count;
+            }
+
+            return count;
+        }
+    } // namespace
+
     /*! @brief Convert highlight color enum to string */
     static std::string highlight_color_to_string(const HighlightColor color)
     {
@@ -67,7 +185,7 @@ namespace duckx
     bool Run::has_next() const
     {
         if (!m_currentNode) return false;
-        return find_next_sibling("w:r") != nullptr;
+        return next_run_in_scope(m_parentNode, m_currentNode) != nullptr;
     }
 
     bool Run::has_next_same_type() const
@@ -75,13 +193,13 @@ namespace duckx
         if (!m_currentNode)
             return false;
 
-        return !find_next_sibling("w:r").empty();
+        return !next_run_in_scope(m_parentNode, m_currentNode).empty();
     }
 
     void Run::set_parent(const pugi::xml_node node)
     {
         m_parentNode = node;
-        m_currentNode = m_parentNode.child("w:r");
+        m_currentNode = first_run_child(m_parentNode);
     }
 
     void Run::set_current(const pugi::xml_node node)
@@ -243,12 +361,49 @@ namespace duckx
 
     bool Run::set_text(const std::string& text) const
     {
-        return m_currentNode.child("w:t").text().set(text.c_str());
+        if (!m_currentNode)
+        {
+            return false;
+        }
+
+        pugi::xml_node current_node = m_currentNode;
+        pugi::xml_node text_node = current_node.child("w:t");
+        if (!text_node)
+        {
+            text_node = current_node.append_child("w:t");
+        }
+
+        if (needs_space_preserve(text))
+        {
+            pugi::xml_attribute space_attr = text_node.attribute("xml:space");
+            if (!space_attr)
+            {
+                space_attr = text_node.append_attribute("xml:space");
+            }
+            space_attr.set_value("preserve");
+        }
+        else
+        {
+            text_node.remove_attribute("xml:space");
+        }
+
+        return text_node.text().set(text.c_str());
     }
 
     bool Run::set_text(const char* text) const
     {
-        return m_currentNode.child("w:t").text().set(text);
+        return set_text(std::string(text ? text : ""));
+    }
+
+    std::size_t Run::replace_text(const std::string& search_text, const std::string& replacement_text) const
+    {
+        std::string text = get_text();
+        const std::size_t count = replace_all(text, search_text, replacement_text);
+        if (count > 0)
+        {
+            set_text(text);
+        }
+        return count;
     }
 
     Run& Run::set_font(const std::string& font_name)
@@ -379,13 +534,13 @@ namespace duckx
 
     Run& Run::advance()
     {
-        m_currentNode = m_currentNode.next_sibling("w:r");
+        m_currentNode = next_run_in_scope(m_parentNode, m_currentNode);
         return *this;
     }
 
     bool Run::try_advance()
     {
-        const pugi::xml_node next_run = find_next_sibling("w:r");
+        const pugi::xml_node next_run = next_run_in_scope(m_parentNode, m_currentNode);
         if (!next_run.empty())
         {
             m_currentNode = next_run;
@@ -396,12 +551,12 @@ namespace duckx
 
     bool Run::can_advance() const
     {
-        return !find_next_sibling("w:r").empty();
+        return !next_run_in_scope(m_parentNode, m_currentNode).empty();
     }
 
     bool Run::move_to_next_run()
     {
-        const pugi::xml_node next_run = find_next_sibling("w:r");
+        const pugi::xml_node next_run = next_run_in_scope(m_parentNode, m_currentNode);
         if (!next_run)
             return false;
 

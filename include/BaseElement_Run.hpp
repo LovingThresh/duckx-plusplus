@@ -10,6 +10,7 @@
 #pragma once
 
 #include "BaseElement_Core.hpp"
+#include <cstddef>
 
 namespace duckx
 {
@@ -49,6 +50,8 @@ namespace duckx
         Run& set_highlight(HighlightColor color);
         /*! @brief Get the text content of this run */
         std::string get_text() const;
+        /*! @brief Replace text within this run and return the replacement count */
+        std::size_t replace_text(const std::string& search_text, const std::string& replacement_text) const;
 
         formatting_flag get_formatting() const;
         bool is_bold() const;

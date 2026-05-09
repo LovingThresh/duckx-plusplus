@@ -90,7 +90,7 @@ int main()
         Paragraph& para2 = para2_result.value();
         
         // Create run with formatting using existing API
-        Run& run = para2.add_run("Formatted text", bold | italic);
+        Run run = para2.add_run("Formatted text", bold | italic);
         run.set_font("Arial").set_font_size(16.0).set_color("0000FF");
         
         std::cout << "✓ Applied character formatting" << std::endl;
@@ -198,7 +198,7 @@ int main()
                     std::cerr << "Failed to apply paragraph properties: " << apply_para_result.error().to_string() << std::endl;
                 }
                 
-                Run& styled_run = para3.add_run(" with styled text");
+                Run styled_run = para3.add_run(" with styled text");
                 auto apply_char_result = style_manager.apply_character_properties_safe(styled_run, char_props);
                 if (apply_char_result.ok()) {
                     std::cout << "✓ Applied custom character properties" << std::endl;

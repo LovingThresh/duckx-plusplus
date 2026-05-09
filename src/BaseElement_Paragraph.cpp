@@ -9,6 +9,7 @@
 
 #include <cctype>
 #include <cstring>
+#include <vector>
 
 #include "Document.hpp"
 #include "HyperlinkManager.hpp"
@@ -16,6 +17,42 @@
 
 namespace duckx
 {
+    namespace
+    {
+        pugi::xml_node first_run_child(const pugi::xml_node parent)
+        {
+            if (!parent)
+            {
+                return {};
+            }
+
+            for (pugi::xml_node child = parent.first_child(); child; child = child.next_sibling())
+            {
+                if (std::strcmp(child.name(), "w:r") == 0)
+                {
+                    return child;
+                }
+
+                if (std::strcmp(child.name(), "w:hyperlink") == 0)
+                {
+                    pugi::xml_node hyperlink_run = child.child("w:r");
+                    if (hyperlink_run)
+                    {
+                        return hyperlink_run;
+                    }
+                }
+            }
+
+            return {};
+        }
+
+        struct TextPosition
+        {
+            std::size_t run_index;
+            std::size_t text_offset;
+        };
+    } // namespace
+
     /*! @brief Convert line spacing to OOXML format */
     long long line_spacing_to_ooxml(const double spacing)
     {
@@ -29,8 +66,6 @@ namespace duckx
     {
         m_parentNode = node;
         m_currentNode = m_parentNode.child("w:p");
-
-        m_run.set_parent(m_currentNode);
     }
 
     void Paragraph::set_current(const pugi::xml_node node)
@@ -55,7 +90,6 @@ namespace duckx
     Paragraph& Paragraph::advance()
     {
         m_currentNode = m_currentNode.next_sibling("w:p");
-        m_run.set_parent(m_currentNode);
         return *this;
     }
 
@@ -82,7 +116,6 @@ namespace duckx
             return false;
 
         m_currentNode = next_para;
-        m_run.set_parent(m_currentNode);
         return true;
     }
 
@@ -235,46 +268,119 @@ namespace duckx
         return false;
     }
 
+    std::size_t Paragraph::replace_text(const std::string& search_text, const std::string& replacement_text)
+    {
+        if (search_text.empty())
+        {
+            return 0;
+        }
+
+        std::vector<Run> run_list;
+        std::vector<std::string> run_texts;
+        std::vector<TextPosition> text_positions;
+        std::string paragraph_text;
+
+        for (const auto& run : runs())
+        {
+            run_list.push_back(run);
+            run_texts.push_back(run.get_text());
+
+            const std::size_t run_index = run_texts.size() - 1;
+            const std::string& text = run_texts.back();
+            for (std::size_t i = 0; i < text.size(); ++i)
+            {
+                text_positions.push_back({run_index, i});
+            }
+            paragraph_text += text;
+        }
+
+        std::vector<std::size_t> matches;
+        std::size_t pos = 0;
+        while ((pos = paragraph_text.find(search_text, pos)) != std::string::npos)
+        {
+            matches.push_back(pos);
+            pos += search_text.length();
+        }
+
+        for (std::vector<std::size_t>::const_reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it)
+        {
+            const std::size_t match_start = *it;
+            const std::size_t match_end = match_start + search_text.length() - 1;
+
+            const TextPosition start = text_positions[match_start];
+            const TextPosition end = text_positions[match_end];
+
+            if (start.run_index == end.run_index)
+            {
+                std::string& text = run_texts[start.run_index];
+                text.replace(start.text_offset, search_text.length(), replacement_text);
+                continue;
+            }
+
+            std::string& start_text = run_texts[start.run_index];
+            const std::string& end_text = run_texts[end.run_index];
+
+            const std::string prefix = start_text.substr(0, start.text_offset);
+            const std::string suffix = end_text.substr(end.text_offset + 1);
+            start_text = prefix + replacement_text;
+
+            for (std::size_t run_index = start.run_index + 1; run_index < end.run_index; ++run_index)
+            {
+                run_texts[run_index].clear();
+            }
+
+            run_texts[end.run_index] = suffix;
+        }
+
+        for (std::size_t i = 0; i < run_list.size(); ++i)
+        {
+            run_list[i].set_text(run_texts[i]);
+        }
+
+        return matches.size();
+    }
+
+    Paragraph& Paragraph::set_text(const std::string& text)
+    {
+        auto run_range = runs();
+        auto it = run_range.begin();
+        if (it == run_range.end())
+        {
+            add_run(text);
+            return *this;
+        }
+
+        it->set_text(text);
+        ++it;
+        for (; it != run_range.end(); ++it)
+        {
+            it->set_text("");
+        }
+
+        return *this;
+    }
+
+    Paragraph& Paragraph::set_text(const char* text)
+    {
+        return set_text(std::string(text ? text : ""));
+    }
+
     absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs()
     {
-        if (m_currentNode)
-        {
-            m_run.set_current(m_currentNode.child("w:r"));
-        }
-        else
-        {
-            m_run.set_current(pugi::xml_node());
-        }
-
-        m_run.set_parent(m_currentNode);
-
-        return make_element_range(m_run);
+        return make_element_range(Run(m_currentNode, first_run_child(m_currentNode)));
     }
 
     absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> Paragraph::runs() const
     {
-        Run temp_run;
-
-        if (m_currentNode)
-        {
-            temp_run.set_current(m_currentNode.child("w:r"));
-        }
-        else
-        {
-            temp_run.set_current(pugi::xml_node());
-        }
-
-        temp_run.set_parent(m_currentNode);
-
-        return make_element_range(temp_run);
+        return make_element_range(Run(m_currentNode, first_run_child(m_currentNode)));
     }
 
-    Run& Paragraph::add_run(const std::string& text, formatting_flag f)
+    Run Paragraph::add_run(const std::string& text, formatting_flag f)
     {
         return add_run(text.c_str(), f);
     }
 
-    Run& Paragraph::add_run(const char* text, formatting_flag f)
+    Run Paragraph::add_run(const char* text, formatting_flag f)
     {
         // Add new run
         pugi::xml_node new_run = m_currentNode.append_child("w:r");
@@ -318,7 +424,7 @@ namespace duckx
         }
         new_run_text.text().set(text ? text : "");
 
-        return *new Run(m_currentNode, new_run);
+        return {m_currentNode, new_run};
     }
 
     Run Paragraph::add_hyperlink(const Document& doc, const std::string& text, const std::string& url)
@@ -349,7 +455,7 @@ namespace duckx
             text_node.append_attribute("xml:space").set_value("preserve");
         }
 
-        return {hyperlink_node, run_node};
+        return {m_currentNode, run_node};
     }
 
     Paragraph& Paragraph::set_alignment(const Alignment align)

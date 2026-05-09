@@ -41,6 +41,8 @@ namespace duckx
         bool create(const std::string& path);
         /*! @brief Save all changes to disk */
         void save();
+        /*! @brief Save all changes to a new path */
+        void save_as(const std::string& path);
         /*! @brief Close the file and release resources */
         void close();
 
@@ -77,7 +79,16 @@ namespace duckx
         static std::string get_default_numbering_xml();
 
         std::string m_path;                                    //!< File system path
+        std::string m_read_path;                               //!< Archive path used for reads/copying
+        std::string m_snapshot_path;                           //!< Temporary read snapshot for locked source files
         zip_t* m_zip_handle = nullptr;                         //!< ZIP archive handle
         std::map<std::string, std::string> m_dirty_entries;    //!< Modified entries pending write
+
+    private:
+        void save_to_path(const std::string& output_path);
+        bool create_read_snapshot(const std::string& source_path);
+        void clear_snapshot();
+        static std::string create_temp_snapshot_path();
+        static bool copy_file_binary(const std::string& source_path, const std::string& target_path);
     };
 } // namespace duckx

@@ -12,6 +12,7 @@
 #include "BaseElement_Core.hpp"
 #include "BaseElement_Run.hpp"
 #include <array>
+#include <cstddef>
 
 namespace duckx
 {
@@ -42,9 +43,9 @@ namespace duckx
         absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> runs();
         absl::enable_if_t<is_docx_element<Run>::value, ElementRange<Run>> runs() const;
         /*! @brief Add a text run with optional formatting */
-        Run& add_run(const std::string&, duckx::formatting_flag = duckx::none);
+        Run add_run(const std::string&, duckx::formatting_flag = duckx::none);
         /*! @brief Add a text run with optional formatting */
-        Run& add_run(const char*, duckx::formatting_flag = duckx::none);
+        Run add_run(const char*, duckx::formatting_flag = duckx::none);
         /*! @brief Add a hyperlink run to the paragraph */
         Run add_hyperlink(const Document& doc, const std::string& text, const std::string& url);
         /*! @brief Set paragraph text alignment */
@@ -70,6 +71,12 @@ namespace duckx
         bool get_spacing(double& before_pts, double& after_pts) const;
         bool get_indentation(double& left_pts, double& right_pts, double& first_line_pts) const;
         bool get_list_style(ListType& type, int& level, int& numId) const;
+        /*! @brief Replace all paragraph text with a single text value */
+        Paragraph& set_text(const std::string& text);
+        /*! @brief Replace all paragraph text with a single text value */
+        Paragraph& set_text(const char* text);
+        /*! @brief Replace matching text across this paragraph's runs and return the replacement count */
+        std::size_t replace_text(const std::string& search_text, const std::string& replacement_text);
 
         // Modern Result<T> API for style application (recommended)
         /*! @brief Safely apply a paragraph style by name */
@@ -81,8 +88,6 @@ namespace duckx
 
     private:
         pugi::xml_node get_or_create_pPr();
-
-        Run m_run;
     };
 
 } // namespace duckx

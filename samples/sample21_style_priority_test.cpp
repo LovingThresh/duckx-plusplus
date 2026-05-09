@@ -49,7 +49,7 @@ int main()
             Paragraph* para1 = &para1_result.value();
             para1->apply_style_safe(style_manager, "Normal");
             
-            Run& run1 = para1->add_run("This text uses only the 'Blue Text' character style.");
+            Run run1 = para1->add_run("This text uses only the 'Blue Text' character style.");
             run1.apply_style_safe(style_manager, "Blue Text");
             
             std::cout << "✓ Applied style only - should be Times New Roman, 14pt, blue" << std::endl;
@@ -61,7 +61,7 @@ int main()
             Paragraph* para2 = &para2_result.value();
             para2->apply_style_safe(style_manager, "Normal");
             
-            Run& run2 = para2->add_run("This text has style + direct formatting override.");
+            Run run2 = para2->add_run("This text has style + direct formatting override.");
             
             // First apply the style
             run2.apply_style_safe(style_manager, "Blue Text");
@@ -80,7 +80,7 @@ int main()
             Paragraph* para3 = &para3_result.value();
             para3->apply_style_safe(style_manager, "Normal");
             
-            Run& run3 = para3->add_run("This text uses only direct formatting.");
+            Run run3 = para3->add_run("This text uses only direct formatting.");
             
             // Apply direct formatting without any character style
             run3.set_font("Calibri");
@@ -101,7 +101,7 @@ int main()
             // Set paragraph-level direct formatting
             para4->set_alignment(Alignment::CENTER);  // Override alignment
             
-            Run& run4 = para4->add_run("Complex formatting test with multiple layers.");
+            Run run4 = para4->add_run("Complex formatting test with multiple layers.");
             
             // Apply character style
             run4.apply_style_safe(style_manager, "Blue Text");

@@ -241,7 +241,7 @@ void demonstrate_character_style_reading(Body& body, StyleManager& style_manager
     Paragraph* para = &para_result.value();
     
     // 1. Plain run
-    Run& plain_run = para->add_run("Plain text, ");
+    Run plain_run = para->add_run("Plain text, ");
     auto plain_props_result = style_manager.read_character_properties_safe(plain_run);
     if (plain_props_result.ok()) {
         std::cout << "\n🔤 Plain Run:" << std::endl;
@@ -252,7 +252,7 @@ void demonstrate_character_style_reading(Body& body, StyleManager& style_manager
     }
     
     // 2. Run with direct formatting
-    Run& formatted_run = para->add_run("bold and italic text, ");
+    Run formatted_run = para->add_run("bold and italic text, ");
     
     // Apply formatting using StyleManager
     CharacterStyleProperties char_props;
@@ -274,7 +274,7 @@ void demonstrate_character_style_reading(Body& body, StyleManager& style_manager
     }
     
     // 3. Run with applied style
-    Run& styled_run = para->add_run("and code-styled text.");
+    Run styled_run = para->add_run("and code-styled text.");
     auto apply_result = styled_run.apply_style_safe(style_manager, "Code");
     if (apply_result.ok()) {
         print_success("Applied Code style to run");

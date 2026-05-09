@@ -56,6 +56,28 @@ target_link_libraries(
         gmock_main
 )
 
+if (DUCKX_USE_SYSTEM_ABSL)
+    target_link_libraries(
+            run_gtests
+            PRIVATE
+            absl::strings
+            absl::str_format
+            absl::status
+            absl::statusor
+            absl::flags
+            absl::flags_parse
+            absl::time
+            absl::flat_hash_map
+            absl::flat_hash_set
+            absl::base
+            absl::memory
+            absl::meta
+            absl::type_traits
+    )
+else ()
+    target_link_libraries(run_gtests PRIVATE duckx::absl)
+endif ()
+
 # Add debug compile definitions for Debug builds (same as main library)
 target_compile_definitions(run_gtests PRIVATE $<$<CONFIG:Debug>:_DEBUG>)
 

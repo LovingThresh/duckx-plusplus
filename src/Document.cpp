@@ -85,6 +85,25 @@ namespace duckx
         }
     }
 
+    Result<void> Document::save_as_safe(const std::string& path) const
+    {
+        if (path.empty()) {
+            return Result<void>(errors::invalid_argument("path", "Path cannot be empty",
+                ErrorContext{__FILE__, __FUNCTION__, __LINE__}));
+        }
+
+        try {
+            save_as(path);
+            return Result<void>();
+        } catch (const std::exception& e) {
+            ErrorContext errorContext{__FILE__, __FUNCTION__, __LINE__};
+            errorContext.with_info("operation", "save_as");
+            errorContext.with_info("path", path);
+            errorContext.with_info("error", e.what());
+            return Result<void>(errors::file_access_denied(path, errorContext));
+        }
+    }
+
     // Legacy exception-based API (preserved for backward compatibility)
     Document Document::open(const std::string& path)
     {
@@ -235,6 +254,41 @@ namespace duckx
         m_file->write_entry("[Content_Types].xml", content_types_writer.result);
 
         m_file->save();
+    }
+
+    void Document::save_as(const std::string& path) const
+    {
+        if (!m_file)
+            return;
+
+        if (path.empty())
+        {
+            throw std::runtime_error("Failed to save document: path cannot be empty.");
+        }
+
+        m_hf_manager->save_all();
+
+        xml_string_writer writer;
+        m_document_xml.print(writer, "  ", pugi::format_default);
+
+        m_file->write_entry("word/document.xml", writer.result);
+
+        if (m_style_manager && m_style_manager->style_count() > 0) {
+            auto styles_xml_result = m_style_manager->generate_styles_xml_safe();
+            if (styles_xml_result.ok()) {
+                m_file->write_entry("word/styles.xml", styles_xml_result.value());
+            }
+        }
+
+        xml_string_writer rels_writer;
+        m_rels_xml.print(rels_writer, "", pugi::format_raw);
+        m_file->write_entry("word/_rels/document.xml.rels", rels_writer.result);
+
+        xml_string_writer content_types_writer;
+        m_content_types_xml.print(content_types_writer, "", pugi::format_raw);
+        m_file->write_entry("[Content_Types].xml", content_types_writer.result);
+
+        m_file->save_as(path);
     }
 
     Body& Document::body()
